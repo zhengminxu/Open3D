@@ -156,62 +156,43 @@ public:
 
     void Key(const KeyEvent& e) override {
         if (e.type == KeyEvent::Type::DOWN) {
-            keysDown_.insert(e.key);
-        } else if (e.type == KeyEvent::Type::UP) {
-            keysDown_.erase(e.key);
+            const float dist = 0.1f;
+            const float angleRad = 0.01f;
+
+            if (e.key == 'a') {
+                cameraControls_->MoveLocal({-dist, 0, 0});
+            }
+            if (e.key == 'd') {
+                cameraControls_->MoveLocal({dist, 0, 0});
+            }
+            if (e.key == 'w') {
+                cameraControls_->MoveLocal({0, 0, -dist});
+            }
+            if (e.key == 's') {
+                cameraControls_->MoveLocal({0, 0, dist});
+            }
+            if (e.key == 'q') {
+                cameraControls_->MoveLocal({0, dist, 0});
+            }
+            if (e.key == 'z') {
+                cameraControls_->MoveLocal({0, -dist, 0});
+            }
+            if (e.key == KEY_UP) {
+                cameraControls_->RotateLocal(angleRad, {1, 0, 0});
+            }
+            if (e.key == KEY_DOWN) {
+                cameraControls_->RotateLocal(-angleRad, {1, 0, 0});
+            }
+            if (e.key == KEY_LEFT) {
+                cameraControls_->RotateLocal(angleRad, {0, 1, 0});
+            }
+            if (e.key == KEY_RIGHT) {
+                cameraControls_->RotateLocal(-angleRad, {0, 1, 0});
+            }
         }
     }
 
     Widget::DrawResult Tick(const TickEvent& e) override {
-        const float dist = 0.1f;
-        const float angleRad = 0.01f;
-
-        bool redraw = false;
-
-        if (keysDown_.find('a') != keysDown_.end()) {
-            cameraControls_->MoveLocal({-dist, 0, 0});
-            redraw = true;
-        }
-        if (keysDown_.find('d') != keysDown_.end()) {
-            cameraControls_->MoveLocal({dist, 0, 0});
-            redraw = true;
-        }
-        if (keysDown_.find('w') != keysDown_.end()) {
-            cameraControls_->MoveLocal({0, 0, -dist});
-            redraw = true;
-        }
-        if (keysDown_.find('s') != keysDown_.end()) {
-            cameraControls_->MoveLocal({0, 0, dist});
-            redraw = true;
-        }
-        if (keysDown_.find('q') != keysDown_.end()) {
-            cameraControls_->MoveLocal({0, dist, 0});
-            redraw = true;
-        }
-        if (keysDown_.find('z') != keysDown_.end()) {
-            cameraControls_->MoveLocal({0, -dist, 0});
-            redraw = true;
-        }
-        if (keysDown_.find(KEY_UP) != keysDown_.end()) {
-            cameraControls_->RotateLocal(angleRad, {1, 0, 0});
-            redraw = true;
-        }
-        if (keysDown_.find(KEY_DOWN) != keysDown_.end()) {
-            cameraControls_->RotateLocal(-angleRad, {1, 0, 0});
-            redraw = true;
-        }
-        if (keysDown_.find(KEY_LEFT) != keysDown_.end()) {
-            cameraControls_->RotateLocal(angleRad, {0, 1, 0});
-            redraw = true;
-        }
-        if (keysDown_.find(KEY_RIGHT) != keysDown_.end()) {
-            cameraControls_->RotateLocal(-angleRad, {0, 1, 0});
-            redraw = true;
-        }
-
-        if (redraw) {
-            return Widget::DrawResult::REDRAW;
-        }
         return Widget::DrawResult::NONE;
     }
 
