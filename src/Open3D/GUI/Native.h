@@ -25,11 +25,15 @@
 #include <vector>
 
 struct SDL_Window;
+struct GLFWwindow;
 
 namespace open3d {
 namespace gui {
 
 void* GetNativeDrawable(SDL_Window* sdlWindow);
+void* GetNativeDrawable(GLFWwindow* glfwWindow);
+void UpdateNativeGLContext(GLFWwindow* glfwWindow);
+void PostNativeExposeEvent(GLFWwindow* glfwWindow);
 void ShowNativeAlert(const char* message);
 
 #ifdef __APPLE__

@@ -23,8 +23,15 @@
 
 #include <SDL_syswm.h>
 
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_COCOA 1
+#define GLFW_EXPOSE_NATIVE_NSGL 1
+#include <GLFW/glfw3native.h>
+
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
+
+#include <iostream> // debugging; remove
 
 namespace open3d {
 namespace gui {
@@ -36,6 +43,23 @@ void* GetNativeDrawable(SDL_Window* sdlWindow) {
     NSWindow* win = wmi.info.cocoa.window;
     NSView* view = [win contentView];
     return view;
+}
+
+void* GetNativeDrawable(GLFWwindow* glfwWindow) {
+    NSWindow* win = glfwGetCocoaWindow(glfwWindow);
+    NSView* view = [win contentView];
+    std::cout << "[debug] native drawable size: " << view.frame.size.width << ", " << view.frame.size.height << std::endl;
+    return view;
+}
+
+void UpdateNativeGLContext(GLFWwindow* glfwWindow) {
+    NSOpenGLContext* glContext = glfwGetNSGLContext(glfwWindow);
+    [glContext update];
+}
+
+void PostNativeExposeEvent(GLFWwindow* glfwWindow) {
+    NSWindow* win = glfwGetCocoaWindow(glfwWindow);
+    [win contentView].needsDisplay = YES;
 }
 
 void ShowNativeAlert(const char *message) {
