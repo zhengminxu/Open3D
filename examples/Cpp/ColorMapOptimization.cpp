@@ -65,12 +65,11 @@ int main(int argc, char *argv[]) {
     // Q.-Y. Zhou and V. Koltun,
     // Color Map Optimization for 3D Reconstruction with Consumer Depth Cameras,
     // SIGGRAPH 2014
-    pipelines::color_map::ColorMapOptimizationOption option;
-    option.maximum_iteration_ = 300;
-    option.non_rigid_camera_coordinate_ = true;
-    pipelines::color_map::ColorMapOptimization(*mesh, rgbd_images, *camera,
-                                               option);
-    io::WriteTriangleMesh("color_map_after_optimization.ply", *mesh);
+    pipelines::color_map::ColorMapOptimizer optimizer(*mesh, rgbd_images,
+                                                      *camera);
+    optimizer.RunNonRigidOptimization(16, 0.316, 300);
+    io::WriteTriangleMesh("color_map_after_optimization.ply",
+                          optimizer.GetMesh());
 
     return 0;
 }

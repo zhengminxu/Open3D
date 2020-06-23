@@ -181,9 +181,10 @@ void ColorMapOptimizer::RunRigidOptimization(
         int image_boundary_margin,
         int invisible_vertex_color_knn) {
     utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
-    auto images_mask = CreateDepthBoundaryMasks(
-            images_depth_, depth_threshold_for_discontinuity_check,
-            half_dilation_kernel_size_for_discontinuity_map);
+    std::vector<std::shared_ptr<geometry::Image>> images_mask =
+            CreateDepthBoundaryMasks(
+                    images_depth_, depth_threshold_for_discontinuity_check,
+                    half_dilation_kernel_size_for_discontinuity_map);
 
     utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
     std::vector<std::vector<int>> visibility_vertex_to_image;
