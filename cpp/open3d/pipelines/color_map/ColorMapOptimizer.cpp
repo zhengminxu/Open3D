@@ -255,6 +255,11 @@ void ColorMapOptimizer::RunRigidOptimization(
                                    visibility_vertex_to_image, proxy_intensity,
                                    image_boundary_margin);
     }
+
+    utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
+    SetGeometryColorAverage(mesh_, images_color_, camera_trajectory_,
+                            visibility_vertex_to_image, image_boundary_margin,
+                            invisible_vertex_color_knn);
 }
 
 void ColorMapOptimizer::RunNonRigidOptimization(
@@ -271,6 +276,7 @@ void ColorMapOptimizer::RunNonRigidOptimization(
     auto images_mask = CreateDepthBoundaryMasks(
             images_depth_, depth_threshold_for_discontinuity_check,
             half_dilation_kernel_size_for_discontinuity_map);
+    utility::LogInfo("vertex color size: {}", mesh_.vertex_colors_.size());
 
     utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
     std::vector<std::vector<int>> visibility_vertex_to_image;
@@ -280,6 +286,7 @@ void ColorMapOptimizer::RunNonRigidOptimization(
                     mesh_, images_depth_, images_mask, camera_trajectory_,
                     maximum_allowable_depth,
                     depth_threshold_for_visibility_check);
+    utility::LogInfo("vertex color size: {}", mesh_.vertex_colors_.size());
 
     utility::LogDebug("[ColorMapOptimization] :: Run Non-Rigid Optimization");
     auto warping_fields =
@@ -374,6 +381,11 @@ void ColorMapOptimizer::RunNonRigidOptimization(
                                    visibility_vertex_to_image, proxy_intensity,
                                    image_boundary_margin);
     }
+
+    utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
+    SetGeometryColorAverage(mesh_, images_color_, warping_fields,
+                            camera_trajectory_, visibility_vertex_to_image,
+                            image_boundary_margin, invisible_vertex_color_knn);
 }
 
 }  // namespace color_map
