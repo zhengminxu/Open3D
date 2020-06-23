@@ -88,7 +88,7 @@ def test_color_map():
     optimizer.run_non_rigid_optimization(
         number_of_vertical_anchors=16,
         non_rigid_anchor_point_weight=0.316,
-        maximum_iteration=300,
+        maximum_iteration=5,
         maximum_allowable_depth=2.5,
         depth_threshold_for_visibility_check=0.03,
         depth_threshold_for_discontinuity_check=0.1,

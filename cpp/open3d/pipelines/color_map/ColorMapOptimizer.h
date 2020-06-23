@@ -65,6 +65,9 @@ public:
             int image_boundary_margin = 10,
             int invisible_vertex_color_knn = 3);
 
+    geometry::TriangleMesh& GetMesh() { return mesh_; }
+    geometry::TriangleMesh const& GetMesh() const { return mesh_; }
+
 protected:
     void CreateGradientImages();
 
