@@ -52,7 +52,7 @@
 #include "open3d/io/ClassIO/PoseGraphIO.h"
 #include "open3d/io/ClassIO/TriangleMeshIO.h"
 #include "open3d/io/ClassIO/VoxelGridIO.h"
-#include "open3d/pipelines/color_map/ColorMapOptimization.h"
+#include "open3d/pipelines/color_map/ColorMapOptimizer.h"
 #include "open3d/pipelines/color_map/ImageWarpingField.h"
 #include "open3d/pipelines/integration/ScalableTSDFVolume.h"
 #include "open3d/pipelines/integration/TSDFVolume.h"
