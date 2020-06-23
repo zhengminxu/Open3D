@@ -113,15 +113,15 @@ public:
     /// boundary. half_dilation_kernel_size_for_discontinuity_map specifies the
     /// half-kernel size for the dilation applied on the visibility mask image.
     int half_dilation_kernel_size_for_discontinuity_map_;
-    ///  If a projected 3D point onto a 2D image lies in the image border within
-    ///  image_boundary_margin, the 3D point is considered invisible from the
-    ///  camera producing the image. This parmeter is not used for visibility
-    ///  check, but used when computing the final color assignment after color
-    ///  map optimization.
+    /// If a projected 3D point onto a 2D image lies in the image border within
+    /// image_boundary_margin, the 3D point is considered invisible from the
+    /// camera producing the image. This parmeter is not used for visibility
+    /// check, but used when computing the final color assignment after color
+    /// map optimization.
     int image_boundary_margin_;
-    ///  If a vertex is invisible from all images, we assign the averaged color
-    ///  of the k nearest visible vertices to fill the invisible vertex. Set to
-    ///  0 to disable this feature and all invisible vertices will be black.
+    /// If a vertex is invisible from all images, we assign the averaged color
+    /// of the k nearest visible vertices to fill the invisible vertex. Set to
+    /// 0 to disable this feature and all invisible vertices will be black.
     int invisible_vertex_color_knn_;
 };
 
