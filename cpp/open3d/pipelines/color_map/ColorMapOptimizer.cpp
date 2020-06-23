@@ -43,6 +43,35 @@ namespace open3d {
 namespace pipelines {
 namespace color_map {
 
+class ColorMapOptimizer::ColorMapOptimizerImpl {
+public:
+    ColorMapOptimizerImpl(
+            const geometry::TriangleMesh& mesh,
+            const std::vector<std::shared_ptr<geometry::RGBDImage>>&
+                    images_rgbd,
+            const camera::PinholeCameraTrajectory& camera_trajectory)
+        : mesh_(mesh),
+          images_rgbd_(images_rgbd),
+          camera_trajectory_(camera_trajectory) {}
+
+protected:
+    geometry::TriangleMesh mesh_;
+    std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
+    camera::PinholeCameraTrajectory camera_trajectory_;
+    std::vector<std::shared_ptr<geometry::Image>> images_gray_;
+    std::vector<std::shared_ptr<geometry::Image>> images_dx_;
+    std::vector<std::shared_ptr<geometry::Image>> images_dy_;
+    std::vector<std::shared_ptr<geometry::Image>> images_color_;
+    std::vector<std::shared_ptr<geometry::Image>> images_depth_;
+};
+
+ColorMapOptimizer::ColorMapOptimizer(
+        const geometry::TriangleMesh& mesh,
+        const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
+        const camera::PinholeCameraTrajectory& camera_trajectory)
+    : impl_(new ColorMapOptimizer::ColorMapOptimizerImpl(
+              mesh, images_rgbd, camera_trajectory)) {}
+
 static std::vector<ImageWarpingField> CreateWarpingFields(
         const std::vector<std::shared_ptr<geometry::Image>>& images,
         int number_of_vertical_anchors) {

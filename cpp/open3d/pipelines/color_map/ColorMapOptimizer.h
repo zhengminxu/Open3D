@@ -87,17 +87,9 @@ protected:
             double maximum_allowable_depth,
             double depth_threshold_for_visibility_check);
 
-protected:
-    geometry::TriangleMesh mesh_;
-    std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
-    camera::PinholeCameraTrajectory camera_trajectory_;
-
-protected:
-    std::vector<std::shared_ptr<geometry::Image>> images_gray_;
-    std::vector<std::shared_ptr<geometry::Image>> images_dx_;
-    std::vector<std::shared_ptr<geometry::Image>> images_dy_;
-    std::vector<std::shared_ptr<geometry::Image>> images_color_;
-    std::vector<std::shared_ptr<geometry::Image>> images_depth_;
+private:
+    class ColorMapOptimizerImpl;
+    std::unique_ptr<ColorMapOptimizerImpl> impl_;
 };
 
 }  // namespace color_map
