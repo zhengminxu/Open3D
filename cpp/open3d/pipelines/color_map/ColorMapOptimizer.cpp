@@ -43,20 +43,17 @@ namespace open3d {
 namespace pipelines {
 namespace color_map {
 
-inline std::tuple<float, float, float> Project3DPointAndGetUVDepth(
-        const Eigen::Vector3d X,
-        const camera::PinholeCameraTrajectory& camera,
-        int camid) {
-    std::pair<double, double> f =
-            camera.parameters_[camid].intrinsic_.GetFocalLength();
-    std::pair<double, double> p =
-            camera.parameters_[camid].intrinsic_.GetPrincipalPoint();
-    Eigen::Vector4d Vt = camera.parameters_[camid].extrinsic_ *
-                         Eigen::Vector4d(X(0), X(1), X(2), 1);
-    float u = float((Vt(0) * f.first) / Vt(2) + p.first);
-    float v = float((Vt(1) * f.second) / Vt(2) + p.second);
-    float z = float(Vt(2));
-    return std::make_tuple(u, v, z);
+static std::vector<ImageWarpingField> CreateWarpingFields(
+        const std::vector<std::shared_ptr<geometry::Image>>& images,
+        int number_of_vertical_anchors) {
+    std::vector<ImageWarpingField> fields;
+    for (size_t i = 0; i < images.size(); i++) {
+        int width = images[i]->width_;
+        int height = images[i]->height_;
+        fields.push_back(
+                ImageWarpingField(width, height, number_of_vertical_anchors));
+    }
+    return fields;
 }
 
 void ColorMapOptimizer::CreateGradientImages() {
@@ -196,6 +193,68 @@ void ColorMapOptimizer::RunRigidOptimization(
                     mesh_, images_depth_, images_mask, camera_trajectory_,
                     maximum_allowable_depth,
                     depth_threshold_for_visibility_check);
+
+    utility::LogDebug("[ColorMapOptimization] :: Run Rigid Optimization");
+    std::vector<double> proxy_intensity;
+    int total_num_ = 0;
+    int n_camera = int(camera_trajectory_.parameters_.size());
+    SetProxyIntensityForVertex(mesh_, images_gray_, camera_trajectory_,
+                               visibility_vertex_to_image, proxy_intensity,
+                               image_boundary_margin);
+    for (int itr = 0; itr < maximum_iteration; itr++) {
+        utility::LogDebug("[Iteration {:04d}] ", itr + 1);
+        double residual = 0.0;
+        total_num_ = 0;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int c = 0; c < n_camera; c++) {
+            Eigen::Matrix4d pose;
+            pose = camera_trajectory_.parameters_[c].extrinsic_;
+
+            auto intrinsic = camera_trajectory_.parameters_[c]
+                                     .intrinsic_.intrinsic_matrix_;
+            auto extrinsic = camera_trajectory_.parameters_[c].extrinsic_;
+            ColorMapOptimizationJacobian jac;
+            Eigen::Matrix4d intr = Eigen::Matrix4d::Zero();
+            intr.block<3, 3>(0, 0) = intrinsic;
+            intr(3, 3) = 1.0;
+
+            auto f_lambda = [&](int i, Eigen::Vector6d& J_r, double& r) {
+                jac.ComputeJacobianAndResidualRigid(
+                        i, J_r, r, mesh_, proxy_intensity, images_gray_[c],
+                        images_dx_[c], images_dy_[c], intr, extrinsic,
+                        visibility_image_to_vertex[c], image_boundary_margin);
+            };
+            Eigen::Matrix6d JTJ;
+            Eigen::Vector6d JTr;
+            double r2;
+            std::tie(JTJ, JTr, r2) =
+                    utility::ComputeJTJandJTr<Eigen::Matrix6d, Eigen::Vector6d>(
+                            f_lambda, int(visibility_image_to_vertex[c].size()),
+                            false);
+
+            bool is_success;
+            Eigen::Matrix4d delta;
+            std::tie(is_success, delta) =
+                    utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JTJ,
+                                                                         JTr);
+            pose = delta * pose;
+            camera_trajectory_.parameters_[c].extrinsic_ = pose;
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+            {
+                residual += r2;
+                total_num_ += int(visibility_image_to_vertex[c].size());
+            }
+        }
+        utility::LogDebug("Residual error : {:.6f} (avg : {:.6f})", residual,
+                          residual / total_num_);
+        SetProxyIntensityForVertex(mesh_, images_gray_, camera_trajectory_,
+                                   visibility_vertex_to_image, proxy_intensity,
+                                   image_boundary_margin);
+    }
 }
 
 void ColorMapOptimizer::RunNonRigidOptimization(
@@ -207,7 +266,115 @@ void ColorMapOptimizer::RunNonRigidOptimization(
         double depth_threshold_for_discontinuity_check,
         double half_dilation_kernel_size_for_discontinuity_map,
         int image_boundary_margin,
-        int invisible_vertex_color_knn) {}
+        int invisible_vertex_color_knn) {
+    utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
+    auto images_mask = CreateDepthBoundaryMasks(
+            images_depth_, depth_threshold_for_discontinuity_check,
+            half_dilation_kernel_size_for_discontinuity_map);
+
+    utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
+    std::vector<std::vector<int>> visibility_vertex_to_image;
+    std::vector<std::vector<int>> visibility_image_to_vertex;
+    std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
+            CreateVertexAndImageVisibility(
+                    mesh_, images_depth_, images_mask, camera_trajectory_,
+                    maximum_allowable_depth,
+                    depth_threshold_for_visibility_check);
+
+    utility::LogDebug("[ColorMapOptimization] :: Run Non-Rigid Optimization");
+    auto warping_fields =
+            CreateWarpingFields(images_gray_, number_of_vertical_anchors);
+    auto warping_fields_init =
+            CreateWarpingFields(images_gray_, number_of_vertical_anchors);
+    std::vector<double> proxy_intensity;
+    auto n_vertex = mesh_.vertices_.size();
+    int n_camera = int(camera_trajectory_.parameters_.size());
+    SetProxyIntensityForVertex(mesh_, images_gray_, warping_fields,
+                               camera_trajectory_, visibility_vertex_to_image,
+                               proxy_intensity, image_boundary_margin);
+    for (int itr = 0; itr < maximum_iteration; itr++) {
+        utility::LogDebug("[Iteration {:04d}] ", itr + 1);
+        double residual = 0.0;
+        double residual_reg = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int c = 0; c < n_camera; c++) {
+            int nonrigidval = warping_fields[c].anchor_w_ *
+                              warping_fields[c].anchor_h_ * 2;
+            double rr_reg = 0.0;
+
+            Eigen::Matrix4d pose;
+            pose = camera_trajectory_.parameters_[c].extrinsic_;
+
+            auto intrinsic = camera_trajectory_.parameters_[c]
+                                     .intrinsic_.intrinsic_matrix_;
+            auto extrinsic = camera_trajectory_.parameters_[c].extrinsic_;
+            ColorMapOptimizationJacobian jac;
+            Eigen::Matrix4d intr = Eigen::Matrix4d::Zero();
+            intr.block<3, 3>(0, 0) = intrinsic;
+            intr(3, 3) = 1.0;
+
+            auto f_lambda = [&](int i, Eigen::Vector14d& J_r, double& r,
+                                Eigen::Vector14i& pattern) {
+                jac.ComputeJacobianAndResidualNonRigid(
+                        i, J_r, r, pattern, mesh_, proxy_intensity,
+                        images_gray_[c], images_dx_[c], images_dy_[c],
+                        warping_fields[c], warping_fields_init[c], intr,
+                        extrinsic, visibility_image_to_vertex[c],
+                        image_boundary_margin);
+            };
+            Eigen::MatrixXd JTJ;
+            Eigen::VectorXd JTr;
+            double r2;
+            std::tie(JTJ, JTr, r2) =
+                    ComputeJTJandJTrNonRigid<Eigen::Vector14d, Eigen::Vector14i,
+                                             Eigen::MatrixXd, Eigen::VectorXd>(
+                            f_lambda, int(visibility_image_to_vertex[c].size()),
+                            nonrigidval, false);
+
+            double weight = non_rigid_anchor_point_weight *
+                            visibility_image_to_vertex[c].size() / n_vertex;
+            for (int j = 0; j < nonrigidval; j++) {
+                double r = weight * (warping_fields[c].flow_(j) -
+                                     warping_fields_init[c].flow_(j));
+                JTJ(6 + j, 6 + j) += weight * weight;
+                JTr(6 + j) += weight * r;
+                rr_reg += r * r;
+            }
+
+            bool success;
+            Eigen::VectorXd result;
+            std::tie(success, result) = utility::SolveLinearSystemPSD(
+                    JTJ, -JTr, /*prefer_sparse=*/false,
+                    /*check_symmetric=*/false,
+                    /*check_det=*/false, /*check_psd=*/false);
+            Eigen::Vector6d result_pose;
+            result_pose << result.block(0, 0, 6, 1);
+            auto delta = utility::TransformVector6dToMatrix4d(result_pose);
+            pose = delta * pose;
+
+            for (int j = 0; j < nonrigidval; j++) {
+                warping_fields[c].flow_(j) += result(6 + j);
+            }
+            camera_trajectory_.parameters_[c].extrinsic_ = pose;
+
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+            {
+                residual += r2;
+                residual_reg += rr_reg;
+            }
+        }
+        utility::LogDebug("Residual error : {:.6f}, reg : {:.6f}", residual,
+                          residual_reg);
+        SetProxyIntensityForVertex(mesh_, images_gray_, warping_fields,
+                                   camera_trajectory_,
+                                   visibility_vertex_to_image, proxy_intensity,
+                                   image_boundary_margin);
+    }
+}
 
 }  // namespace color_map
 }  // namespace pipelines

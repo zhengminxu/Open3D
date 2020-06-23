@@ -42,7 +42,7 @@ namespace color_map {
 class ImageWarpingField;
 class ColorMapOptimizationOption;
 
-inline std::tuple<float, float, float> Project3DPointAndGetUVDepth(
+std::tuple<float, float, float> Project3DPointAndGetUVDepth(
         const Eigen::Vector3d X,
         const camera::PinholeCameraTrajectory& camera,
         int camid);
