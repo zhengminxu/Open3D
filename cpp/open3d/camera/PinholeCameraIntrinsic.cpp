@@ -27,16 +27,33 @@
 #include "open3d/camera/PinholeCameraIntrinsic.h"
 
 #include <json/json.h>
+#include <tbb/tbb.h>
 
 #include <Eigen/Dense>
+#include <cstdio>
 
 #include "open3d/utility/Console.h"
 
 namespace open3d {
 namespace camera {
 
+class SayHello {
+    const char* id;
+
+public:
+    SayHello(const char* s) : id(s) {}
+    void operator()() const {
+        std::cout << "hello from task " << id << std::endl;
+    }
+};
+
 PinholeCameraIntrinsic::PinholeCameraIntrinsic()
-    : width_(-1), height_(-1), intrinsic_matrix_(Eigen::Matrix3d::Zero()) {}
+    : width_(-1), height_(-1), intrinsic_matrix_(Eigen::Matrix3d::Zero()) {
+    tbb::task_group tg;
+    tg.run(SayHello("1"));  // spawn 1st task and return
+    tg.run(SayHello("2"));  // spawn 2nd task and return
+    tg.wait();              // wait for tasks to complete
+}
 
 PinholeCameraIntrinsic::PinholeCameraIntrinsic(
         int width, int height, double fx, double fy, double cx, double cy) {
@@ -57,7 +74,7 @@ PinholeCameraIntrinsic::PinholeCameraIntrinsic(
 
 PinholeCameraIntrinsic::~PinholeCameraIntrinsic() {}
 
-bool PinholeCameraIntrinsic::ConvertToJsonValue(Json::Value &value) const {
+bool PinholeCameraIntrinsic::ConvertToJsonValue(Json::Value& value) const {
     value["width"] = width_;
     value["height"] = height_;
     if (!EigenMatrix3dToJsonArray(intrinsic_matrix_,
@@ -67,7 +84,7 @@ bool PinholeCameraIntrinsic::ConvertToJsonValue(Json::Value &value) const {
     return true;
 }
 
-bool PinholeCameraIntrinsic::ConvertFromJsonValue(const Json::Value &value) {
+bool PinholeCameraIntrinsic::ConvertFromJsonValue(const Json::Value& value) {
     if (!value.isObject()) {
         utility::LogWarning(
                 "PinholeCameraParameters read JSON failed: unsupported json "
