@@ -27,7 +27,6 @@
 import open3d as o3d
 import numpy as np
 import pytest
-import core_test_utils
 
 
 @pytest.mark.parametrize("device", [o3d.core.Device("CPU:0")])
