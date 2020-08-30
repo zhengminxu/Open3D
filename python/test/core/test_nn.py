@@ -32,7 +32,7 @@ import pytest
 @pytest.mark.parametrize("device", [o3d.core.Device("CPU:0")])
 def test_nn_index(device):
     t = o3d.core.Tensor.zeros((2, 3), o3d.core.Dtype.Float64, device=device)
-    nn = o3d.core.nns.NearestNeighbor(t)
+    nn = o3d.core.nns.NearestNeighborSearch(t)
     assert nn.knn_index() == True
     assert nn.multi_radius_index() == True
     assert nn.fixed_radius_index() == True
@@ -52,7 +52,7 @@ def test_knn_search_single(device):
         data_t = data_t.cuda(device[1])
         query_t = query_t.cuda(device[1])
 
-    nn = o3d.core.nns.NearestNeighbor(data_t)
+    nn = o3d.core.nns.NearestNeighborSearch(data_t)
     nn.knn_index()
     idx, dist = nn.knn_search(query_t, 3)
 
@@ -76,7 +76,7 @@ def test_knn_search_multiple(device):
         data_t = data_t.cuda(device[1])
         query_t = query_t.cuda(device[1])
 
-    nn = o3d.core.nns.NearestNeighbor(data_t)
+    nn = o3d.core.nns.NearestNeighborSearch(data_t)
     nn.knn_index()
     idx, dist = nn.knn_search(query_t, 3)
 
@@ -99,7 +99,7 @@ def test_fixed_radius_search_single(device):
         data_t = data_t.cuda(device[1])
         query_t = query_t.cuda(device[1])
 
-    nn = o3d.core.nns.NearestNeighbor(data_t)
+    nn = o3d.core.nns.NearestNeighborSearch(data_t)
     nn.fixed_radius_index()
     idx, dist, lims = nn.fixed_radius_search(query_t, 0.2)
 
@@ -124,7 +124,7 @@ def test_fixed_radius_search_multiple(device):
         data_t = data_t.cuda(device[1])
         query_t = query_t.cuda(device[1])
 
-    nn = o3d.core.nns.NearestNeighbor(data_t)
+    nn = o3d.core.nns.NearestNeighborSearch(data_t)
     nn.fixed_radius_index()
     idx, dist, lims = nn.fixed_radius_search(query_t, 0.2)
 

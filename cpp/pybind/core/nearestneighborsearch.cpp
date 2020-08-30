@@ -53,33 +53,32 @@ void pybind_core_nn(py::module &m) {
                     m_nn, "NearestNeighborSearch",
                     "NearestNeighborSearch class for nearest neighbor search.");
 
-    // nearestneighbor.def(py::init<const Tensor &>(), "data"_a)
-    //         .def("knn_index", &nns::NearestNeighborSearch::KnnIndex)
-    //         .def("radius_index",
-    //         &nns::NearestNeighborSearch::MultiRadiusIndex)
-    //         .def("fixed_radius_index",
-    //              &nns::NearestNeighborSearch::FixedRadiusIndex)
-    //         .def("hybrid_index", &nns::NearestNeighborSearch::HybridIndex)
-    //         .def("knn_search", &nns::NearestNeighborSearch::KnnSearch,
-    //              "query"_a, "knn"_a)
-    //         .def(
-    //                 "multi_radius_search",
-    //                 [](nns::NearestNeighborSearch &nn_, const Tensor &query,
-    //                    py::array radii) {
-    //                     Tensor radii_t = PyArrayToTensor(radii, true);
-    //                     if (radii_t.GetDtype() != Dtype::Float64) {
-    //                         utility::LogError("Radius type must be
-    //                         Float64!");
-    //                     }
-    //                     return nn_.MultiRadiusSearch(
-    //                             query, radii_t.ToFlatVector<double>());
-    //                 },
-    //                 "query"_a, "radii"_a)
-    //         .def("fixed_radius_search",
-    //              &nns::NearestNeighborSearch::FixedRadiusSearch, "query"_a,
-    //              "radius"_a)
-    //         .def("hybrid_search", &nns::NearestNeighborSearch::HybridSearch,
-    //              "query"_a, "radius"_a, "max_knn"_a);
+    nearestneighbor.def(py::init<const Tensor &>(), "data"_a)
+            .def("knn_index", &nns::NearestNeighborSearch::KnnIndex)
+            .def("fixed_radius_index",
+                 &nns::NearestNeighborSearch::FixedRadiusIndex)
+            .def("multi_radius_index",
+                 &nns::NearestNeighborSearch::MultiRadiusIndex)
+            .def("hybrid_index", &nns::NearestNeighborSearch::HybridIndex)
+            .def("knn_search", &nns::NearestNeighborSearch::KnnSearch,
+                 "query"_a, "knn"_a)
+            .def(
+                    "multi_radius_search",
+                    [](nns::NearestNeighborSearch &nn_, const Tensor &query,
+                       py::array radii) {
+                        Tensor radii_t = PyArrayToTensor(radii, true);
+                        if (radii_t.GetDtype() != Dtype::Float64) {
+                            utility::LogError("Radius type must be Float64!");
+                        }
+                        return nn_.MultiRadiusSearch(
+                                query, radii_t.ToFlatVector<double>());
+                    },
+                    "query"_a, "radii"_a)
+            .def("fixed_radius_search",
+                 &nns::NearestNeighborSearch::FixedRadiusSearch, "query"_a,
+                 "radius"_a)
+            .def("hybrid_search", &nns::NearestNeighborSearch::HybridSearch,
+                 "query"_a, "radius"_a, "max_knn"_a);
     // docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
     // "knn_search",
     //                                 map_nearest_neighbor_search_method_docs);
