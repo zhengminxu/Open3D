@@ -79,18 +79,17 @@ void pybind_core_nn(py::module &m) {
                  "radius"_a)
             .def("hybrid_search", &nns::NearestNeighborSearch::HybridSearch,
                  "query"_a, "radius"_a, "max_knn"_a);
-    // docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
-    // "knn_search",
-    //                                 map_nearest_neighbor_search_method_docs);
-    // docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
-    //                                 "radius_search",
-    //                                 map_nearest_neighbor_search_method_docs);
-    // docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
-    //                                 "fixed_radius_search",
-    //                                 map_nearest_neighbor_search_method_docs);
-    // docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
-    //                                 "hybrid_search",
-    //                                 map_nearest_neighbor_search_method_docs);
+    docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch", "knn_search",
+                                    map_nearest_neighbor_search_method_docs);
+    docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
+                                    "fixed_radius_search",
+                                    map_nearest_neighbor_search_method_docs);
+    docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
+                                    "multi_radius_search",
+                                    map_nearest_neighbor_search_method_docs);
+    docstring::ClassMethodDocInject(m_nn, "NearestNeighborSearch",
+                                    "hybrid_search",
+                                    map_nearest_neighbor_search_method_docs);
 }
 
 }  // namespace core
