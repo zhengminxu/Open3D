@@ -29,6 +29,7 @@
 #include <tbb/parallel_for.h>
 
 #include <nanoflann.hpp>
+#include <vector>
 
 #include "open3d/core/CoreUtil.h"
 #include "open3d/utility/Console.h"
@@ -37,7 +38,10 @@ namespace open3d {
 namespace core {
 namespace nns {
 
-NanoFlannIndex::NanoFlannIndex() { SetTensorData(); };
+NanoFlannIndex::NanoFlannIndex() {
+    std::vector<double> data(300);
+    holder_.reset(new NanoFlannIndexHolder<L2, double>(100, 3, data.data()));
+};
 
 NanoFlannIndex::NanoFlannIndex(const Tensor &dataset_points) {
     SetTensorData();
@@ -57,12 +61,7 @@ size_t NanoFlannIndex::GetDatasetSize() const {
 
 Dtype NanoFlannIndex::GetDtype() const { return dataset_points_.GetDtype(); }
 
-bool NanoFlannIndex::SetTensorData() {
-    core::Tensor ref = core::Tensor::Ones({100, 3}, core::Dtype::Float64);
-    holder_.reset(new NanoFlannIndexHolder<L2, double>(
-            100, 3, (double *)ref.GetDataPtr()));
-    return true;
-};
+bool NanoFlannIndex::SetTensorData() { return true; };
 
 std::pair<Tensor, Tensor> NanoFlannIndex::SearchKnn(const Tensor &query_points,
                                                     int knn) {
