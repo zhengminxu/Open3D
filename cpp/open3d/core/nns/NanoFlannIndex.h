@@ -50,7 +50,7 @@ namespace core {
 namespace nns {
 
 /// Distance metric enum
-enum Metric { L1, L2, Linf };
+enum Metric { L1 = 0, L2 = 1, Linf = 2 };
 
 /// Base struct for Index holder
 struct NanoFlannIndexHolderBase {};
@@ -138,7 +138,7 @@ public:
     /// \param dataset_points Dataset points for KDTree construction. Must be
     /// 2D, with shape {n, d}.
     /// \return Returns true if the construction success, otherwise false.
-    bool SetTensorData(const Tensor &dataset_points);
+    bool SetTensorData();
 
     /// Perform K nearest neighbor search.
     ///

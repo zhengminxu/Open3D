@@ -38,10 +38,7 @@
 namespace open3d {
 namespace tests {
 
-void RunTest() {
-    core::Tensor ref = core::Tensor::Ones({100, 3}, core::Dtype::Float64);
-    core::nns::NanoFlannIndex index(ref);
-}
+void RunTest() { core::nns::NanoFlannIndex nfi; }
 
 TEST(NearestNeighborSearch, KnnSearch) {
     while (true) {

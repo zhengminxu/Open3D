@@ -37,7 +37,7 @@ NearestNeighborSearch::~NearestNeighborSearch(){};
 
 bool NearestNeighborSearch::SetIndex() {
     nanoflann_index_.reset(new NanoFlannIndex());
-    return nanoflann_index_->SetTensorData(dataset_points_);
+    return nanoflann_index_->SetTensorData();
 };
 bool NearestNeighborSearch::KnnIndex() { return SetIndex(); };
 bool NearestNeighborSearch::MultiRadiusIndex() { return SetIndex(); };

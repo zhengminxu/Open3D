@@ -37,10 +37,10 @@ namespace open3d {
 namespace core {
 namespace nns {
 
-NanoFlannIndex::NanoFlannIndex(){};
+NanoFlannIndex::NanoFlannIndex() { SetTensorData(); };
 
 NanoFlannIndex::NanoFlannIndex(const Tensor &dataset_points) {
-    SetTensorData(dataset_points);
+    SetTensorData();
 };
 
 NanoFlannIndex::~NanoFlannIndex(){};
@@ -57,17 +57,10 @@ size_t NanoFlannIndex::GetDatasetSize() const {
 
 Dtype NanoFlannIndex::GetDtype() const { return dataset_points_.GetDtype(); }
 
-bool NanoFlannIndex::SetTensorData(const Tensor &dataset_points) {
-    dataset_points_ = dataset_points.Contiguous();
-    size_t dataset_size = GetDatasetSize();
-    int dimension = GetDimension();
-    const double *data_ptr =
-            static_cast<const double *>(dataset_points.GetDataPtr());
-    (void)dataset_size;
-    (void)dimension;
-    (void)data_ptr;
-    holder_.reset(new NanoFlannIndexHolder<L2, double>(dataset_size, dimension,
-                                                       data_ptr));
+bool NanoFlannIndex::SetTensorData() {
+    core::Tensor ref = core::Tensor::Ones({100, 3}, core::Dtype::Float64);
+    holder_.reset(new NanoFlannIndexHolder<L2, double>(
+            100, 3, (double *)ref.GetDataPtr()));
     return true;
 };
 
