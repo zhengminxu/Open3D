@@ -39,8 +39,8 @@ namespace nns {
 
 NanoFlannIndex::NanoFlannIndex(){};
 
-NanoFlannIndex::NanoFlannIndex(const Tensor &dataset_points){
-        // SetTensorData(dataset_points);
+NanoFlannIndex::NanoFlannIndex(const Tensor &dataset_points) {
+    SetTensorData(dataset_points);
 };
 
 NanoFlannIndex::~NanoFlannIndex(){};
@@ -58,24 +58,16 @@ size_t NanoFlannIndex::GetDatasetSize() const {
 Dtype NanoFlannIndex::GetDtype() const { return dataset_points_.GetDtype(); }
 
 bool NanoFlannIndex::SetTensorData(const Tensor &dataset_points) {
-    SizeVector shape = dataset_points.GetShape();
-    if (dataset_points.NumDims() != 2) {
-        utility::LogError(
-                "[NanoFlannIndex::SetTensorData] dataset_points must be "
-                "2D matrix, with shape {n_dataset_points, d}.");
-        return false;
-    }
     dataset_points_ = dataset_points.Contiguous();
     size_t dataset_size = GetDatasetSize();
     int dimension = GetDimension();
-    Dtype dtype = GetDtype();
-
-    DISPATCH_FLOAT32_FLOAT64_DTYPE(dtype, [&]() {
-        const scalar_t *data_ptr =
-                static_cast<const scalar_t *>(dataset_points.GetDataPtr());
-        holder_.reset(new NanoFlannIndexHolder<L2, scalar_t>(
-                dataset_size, dimension, data_ptr));
-    });
+    const double *data_ptr =
+            static_cast<const double *>(dataset_points.GetDataPtr());
+    (void)dataset_size;
+    (void)dimension;
+    (void)data_ptr;
+    holder_.reset(new NanoFlannIndexHolder<L2, double>(dataset_size, dimension,
+                                                       data_ptr));
     return true;
 };
 
