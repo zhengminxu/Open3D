@@ -39,8 +39,8 @@ namespace nns {
 
 NanoFlannIndex::NanoFlannIndex(){};
 
-NanoFlannIndex::NanoFlannIndex(const Tensor &dataset_points) {
-    SetTensorData(dataset_points);
+NanoFlannIndex::NanoFlannIndex(const Tensor &dataset_points){
+        // SetTensorData(dataset_points);
 };
 
 NanoFlannIndex::~NanoFlannIndex(){};

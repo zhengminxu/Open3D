@@ -49,27 +49,28 @@ namespace contrib {
 const core::Tensor KnnSearch(const core::Tensor& query_points,
                              const core::Tensor& dataset_points,
                              int knn) {
-    // Check dtype.
-    if (query_points.GetDtype() != core::Dtype::Float32) {
-        utility::LogError("query_points must be of dtype Float32.");
-    }
-    if (dataset_points.GetDtype() != core::Dtype::Float32) {
-        utility::LogError("dataset_points must be of dtype Float32.");
-    }
+    // // Check dtype.
+    // if (query_points.GetDtype() != core::Dtype::Float32) {
+    //     utility::LogError("query_points must be of dtype Float32.");
+    // }
+    // if (dataset_points.GetDtype() != core::Dtype::Float32) {
+    //     utility::LogError("dataset_points must be of dtype Float32.");
+    // }
 
-    // Check shape.
-    if (query_points.NumDims() != 2) {
-        utility::LogError("query_points must be of shape {n_query_points, d}.");
-    }
-    if (dataset_points.NumDims() != 2) {
-        utility::LogError(
-                "dataset_points must be of shape {n_dataset_points, d}.");
-    }
-    if (query_points.GetShape()[1] != dataset_points.GetShape()[1]) {
-        utility::LogError("Point dimensions mismatch {} != {}.",
-                          query_points.GetShape()[1],
-                          dataset_points.GetShape()[1]);
-    }
+    // // Check shape.
+    // if (query_points.NumDims() != 2) {
+    //     utility::LogError("query_points must be of shape {n_query_points,
+    //     d}.");
+    // }
+    // if (dataset_points.NumDims() != 2) {
+    //     utility::LogError(
+    //             "dataset_points must be of shape {n_dataset_points, d}.");
+    // }
+    // if (query_points.GetShape()[1] != dataset_points.GetShape()[1]) {
+    //     utility::LogError("Point dimensions mismatch {} != {}.",
+    //                       query_points.GetShape()[1],
+    //                       dataset_points.GetShape()[1]);
+    // }
 
     // Call NNS.
     // TODO: remove dytpe convertion.

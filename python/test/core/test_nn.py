@@ -43,45 +43,49 @@ def test_knn_index():
 
 
 def test_knn_search():
-    dtype = o3c.Dtype.Float64
-    device = o3c.Device("CPU:0")
+    while True:
+        dtype = o3c.Dtype.Float64
+        device = o3c.Device("CPU:0")
 
-    dataset_points = o3c.Tensor(
-        [[0.0, 0.0, 0.0], [0.0, 0.0, 0.1], [0.0, 0.0, 0.2], [0.0, 0.1, 0.0],
-         [0.0, 0.1, 0.1], [0.0, 0.1, 0.2], [0.0, 0.2, 0.0], [0.0, 0.2, 0.1],
-         [0.0, 0.2, 0.2], [0.1, 0.0, 0.0]],
-        dtype=dtype,
-        device=device)
-    nns = o3c.nns.NearestNeighborSearch(dataset_points)
-    nns.knn_index()
+        dataset_points = o3c.Tensor(
+            [[0.0, 0.0, 0.0], [0.0, 0.0, 0.1], [0.0, 0.0, 0.2], [0.0, 0.1, 0.0],
+             [0.0, 0.1, 0.1], [0.0, 0.1, 0.2], [0.0, 0.2, 0.0], [0.0, 0.2, 0.1],
+             [0.0, 0.2, 0.2], [0.1, 0.0, 0.0]],
+            dtype=dtype,
+            device=device)
+        nns = o3c.nns.NearestNeighborSearch(dataset_points)
+        nns.knn_index()
 
-    # Single query point.
-    query_points = o3c.Tensor([[0.064705, 0.043921, 0.087843]],
-                              dtype=dtype,
-                              device=device)
-    indices, distances = nns.knn_search(query_points, 3)
-    np.testing.assert_equal(indices.cpu().numpy(),
-                            np.array([[1, 4, 9]], dtype=np.int64))
-    np.testing.assert_allclose(distances.cpu().numpy(),
-                               np.array([[0.00626358, 0.00747938, 0.0108912]],
-                                        dtype=np.float64),
-                               rtol=1e-5,
-                               atol=0)
+        # Single query point.
+        query_points = o3c.Tensor([[0.064705, 0.043921, 0.087843]],
+                                  dtype=dtype,
+                                  device=device)
+        indices, distances = nns.knn_search(query_points, 3)
+        np.testing.assert_equal(indices.cpu().numpy(),
+                                np.array([[1, 4, 9]], dtype=np.int64))
+        np.testing.assert_allclose(distances.cpu().numpy(),
+                                   np.array(
+                                       [[0.00626358, 0.00747938, 0.0108912]],
+                                       dtype=np.float64),
+                                   rtol=1e-5,
+                                   atol=0)
 
-    # Multiple query points.
-    query_points = o3c.Tensor(
-        [[0.064705, 0.043921, 0.087843], [0.064705, 0.043921, 0.087843]],
-        dtype=dtype,
-        device=device)
-    indices, distances = nns.knn_search(query_points, 3)
-    np.testing.assert_equal(indices.cpu().numpy(),
-                            np.array([[1, 4, 9], [1, 4, 9]], dtype=np.int64))
-    np.testing.assert_allclose(distances.cpu().numpy(),
-                               np.array([[0.00626358, 0.00747938, 0.0108912],
-                                         [0.00626358, 0.00747938, 0.0108912]],
-                                        dtype=np.float64),
-                               rtol=1e-5,
-                               atol=0)
+        # Multiple query points.
+        query_points = o3c.Tensor(
+            [[0.064705, 0.043921, 0.087843], [0.064705, 0.043921, 0.087843]],
+            dtype=dtype,
+            device=device)
+        indices, distances = nns.knn_search(query_points, 3)
+        np.testing.assert_equal(
+            indices.cpu().numpy(),
+            np.array([[1, 4, 9], [1, 4, 9]], dtype=np.int64))
+        np.testing.assert_allclose(distances.cpu().numpy(),
+                                   np.array(
+                                       [[0.00626358, 0.00747938, 0.0108912],
+                                        [0.00626358, 0.00747938, 0.0108912]],
+                                       dtype=np.float64),
+                                   rtol=1e-5,
+                                   atol=0)
 
 
 def test_fixed_radius_search():

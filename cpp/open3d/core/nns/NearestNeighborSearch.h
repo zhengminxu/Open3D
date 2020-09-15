@@ -135,6 +135,7 @@ protected:
     std::unique_ptr<NanoFlannIndex> nanoflann_index_;
     const Tensor dataset_points_;
 };
+
 }  // namespace nns
 }  // namespace core
 }  // namespace open3d
