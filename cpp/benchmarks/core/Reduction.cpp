@@ -47,6 +47,20 @@ void Reduction(benchmark::State& state, const Device& device) {
     }
 }
 
+void Reduction2(benchmark::State& state, const Device& device) {
+    int64_t large_dim = 30033430;
+    SizeVector shape{large_dim, 3};
+    Tensor src(shape, Dtype::Float32, device);
+    Tensor warm_up = src.Sum({0});
+    (void)warm_up;
+    for (auto _ : state) {
+        Tensor dst = src.Sum({0});
+    }
+}
+
+BENCHMARK_CAPTURE(Reduction2, CPU, Device("CPU:0"))
+        ->Unit(benchmark::kMillisecond);
+
 BENCHMARK_CAPTURE(Reduction, CPU, Device("CPU:0"))
         ->Unit(benchmark::kMillisecond);
 
