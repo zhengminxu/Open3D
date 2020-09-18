@@ -44,4 +44,4 @@ RUN cmake \
     -DCMAKE_CXX_COMPILER=g++ \
     -DBUILD_UNIT_TESTS=ON \
     -DCMAKE_INSTALL_PREFIX=~/open3d_install ..
-RUN make -j$(nproc) install
+RUN make -j$(nproc)
