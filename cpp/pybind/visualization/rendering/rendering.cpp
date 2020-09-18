@@ -42,7 +42,10 @@ void pybind_rendering_classes(py::module &m) {
     py::class_<Renderer> renderer(
             m, "Renderer",
             "Renderer class that manages 3D resources. Get from gui.Window.");
-    ;
+    renderer.def("set_clear_color", &Renderer::SetClearColor,
+                 "Sets the background color for the renderer, [r, g, b, a]. "
+                 "Applies to everything being rendered, so it essentially acts "
+                 "as the background color of the window");
 
     // ---- Camera ----
     py::class_<Camera, std::shared_ptr<Camera>> cam(m, "Camera",
@@ -123,7 +126,7 @@ void pybind_rendering_classes(py::module &m) {
                      s << "Gradient.Point[" << p.value << ", (" << p.color[0]
                        << ", " << p.color[1] << ", " << p.color[2] << ", "
                        << p.color[3] << ")]";
-                     return s.str().c_str();
+                     return s.str();
                  })
             .def_readwrite("value", &Gradient::Point::value,
                            "Must be within 0.0 and 1.0")
@@ -175,11 +178,30 @@ void pybind_rendering_classes(py::module &m) {
                  "Sets the camera with the given name as the active camera for "
                  "the scene")
             .def("add_geometry",
-                 (bool (Scene::*)(const std::string &,
-                                  const geometry::Geometry3D &,
-                                  const Material &)) &
+                 (bool (Scene::*)(
+                         const std::string &, const geometry::Geometry3D &,
+                         const Material &, const std::string &, size_t)) &
                          Scene::AddGeometry,
+                 "name"_a, "geometry"_a, "material"_a,
+                 "downsampled_name"_a = "", "downsample_threshold"_a = SIZE_MAX,
                  "Adds a Geometry with a material to the scene")
+            .def("add_geometry",
+                 (bool (Scene::*)(
+                         const std::string &, const tgeometry::PointCloud &,
+                         const Material &, const std::string &, size_t)) &
+                         Scene::AddGeometry,
+                 "name"_a, "geometry"_a, "material"_a,
+                 "downsampled_name"_a = "", "downsample_threshold"_a = SIZE_MAX,
+                 "Adds a Geometry with a material to the scene")
+            .def("has_geometry", &Scene::HasGeometry,
+                 "Returns True if a geometry with the provided name exists in "
+                 "the scene.")
+            .def("update_geometry", &Scene::UpdateGeometry,
+                 "Updates the flagged arrays from the tgeometry.PointCloud. "
+                 "The "
+                 "flags should be ORed from Scene.UPDATE_POINTS_FLAG, "
+                 "Scene.UPDATE_NORMALS_FLAG, Scene.UPDATE_COLORS_FLAG, and "
+                 "Scene.UPDATE_UV0_FLAG")
             .def("enable_indirect_light", &Scene::EnableIndirectLight,
                  "Enables or disables indirect lighting")
             .def("set_indirect_light", &Scene::SetIndirectLight,
@@ -197,6 +219,10 @@ void pybind_rendering_classes(py::module &m) {
                  "function. The callback is necessary because rendering is "
                  "done on a different thread. The image remains valid "
                  "after the callback, assuming it was assigned somewhere.");
+    scene.attr("UPDATE_POINTS_FLAG") = py::int_(Scene::kUpdatePointsFlag);
+    scene.attr("UPDATE_NORMALS_FLAG") = py::int_(Scene::kUpdateNormalsFlag);
+    scene.attr("UPDATE_COLORS_FLAG") = py::int_(Scene::kUpdateColorsFlag);
+    scene.attr("UPDATE_UV0_FLAG") = py::int_(Scene::kUpdateUv0Flag);
 
     // ---- Open3DScene ----
     py::class_<Open3DScene, std::shared_ptr<Open3DScene>> o3dscene(
@@ -217,8 +243,10 @@ void pybind_rendering_classes(py::module &m) {
             .def("add_geometry",
                  py::overload_cast<const std::string &,
                                    const tgeometry::PointCloud *,
-                                   const Material &>(&Open3DScene::AddGeometry),
-                 "name"_a, "geometry"_a, "material"_a)
+                                   const Material &, bool>(
+                         &Open3DScene::AddGeometry),
+                 "name"_a, "geometry"_a, "material"_a,
+                 "add_downsampled_copy_for_fast_rendering"_a = true)
             .def("remove_geometry", &Open3DScene::RemoveGeometry,
                  "Removes the geometry with the given name")
             .def("show_geometry", &Open3DScene::ShowGeometry,
@@ -231,7 +259,13 @@ void pybind_rendering_classes(py::module &m) {
                                    "The camera object")
             .def_property_readonly("bounding_box", &Open3DScene::GetBoundingBox,
                                    "The bounding box of all the items in the "
-                                   "scene, visible and invisible");
+                                   "scene, visible and invisible")
+            .def_property("downsample_threshold",
+                          &Open3DScene::GetDownsampleThreshold,
+                          &Open3DScene::SetDownsampleThreshold,
+                          "Minimum number of points before downsampled point "
+                          "clouds are created and used when rendering speed "
+                          "is important");
 }
 
 void pybind_rendering(py::module &m) {

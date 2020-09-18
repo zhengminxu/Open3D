@@ -57,6 +57,11 @@ struct Light;
 // Can have multiple views
 class Scene {
 public:
+    static const uint32_t kUpdatePointsFlag = (1 << 0);
+    static const uint32_t kUpdateNormalsFlag = (1 << 1);
+    static const uint32_t kUpdateColorsFlag = (1 << 2);
+    static const uint32_t kUpdateUv0Flag = (1 << 3);
+
     using Transform = Eigen::Transform<float, 3, Eigen::Affine>;
 
     Scene(Renderer& renderer) : renderer_(renderer) {}
@@ -81,12 +86,20 @@ public:
     // Scene geometry
     virtual bool AddGeometry(const std::string& object_name,
                              const geometry::Geometry3D& geometry,
-                             const Material& material) = 0;
+                             const Material& material,
+                             const std::string& downsampled_name = "",
+                             size_t downsample_threshold = SIZE_MAX) = 0;
     virtual bool AddGeometry(const std::string& object_name,
                              const tgeometry::PointCloud& point_cloud,
-                             const Material& material) = 0;
+                             const Material& material,
+                             const std::string& downsampled_name = "",
+                             size_t downsample_threshold = SIZE_MAX) = 0;
     virtual bool AddGeometry(const std::string& object_name,
                              const TriangleMeshModel& model) = 0;
+    virtual bool HasGeometry(const std::string& object_name) const = 0;
+    virtual void UpdateGeometry(const std::string& object_name,
+                                const tgeometry::PointCloud& point_cloud,
+                                uint32_t update_flags) = 0;
     virtual void RemoveGeometry(const std::string& object_name) = 0;
     virtual void ShowGeometry(const std::string& object_name, bool show) = 0;
     virtual bool GeometryIsVisible(const std::string& object_name) = 0;
