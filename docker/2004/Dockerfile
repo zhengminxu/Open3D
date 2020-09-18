@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y \
     libsdl2-dev \
     libc++-7-dev \
     libc++abi-7-dev \
-    clang++ \
     clang \
     ninja-build \
     libxi-dev \
