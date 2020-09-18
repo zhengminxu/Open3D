@@ -1,10 +1,12 @@
 FROM ubuntu:20.04
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Build system deps
 RUN apt-get update && apt-get install -y \
     cmake \
-    git \
-    g++
+    g++ \
+    git
 
 # Open3D default deps
 # Equivalent to ./util/install_deps_ubuntu.sh
@@ -42,4 +44,4 @@ RUN cmake \
     -DCMAKE_CXX_COMPILER=g++ \
     -DBUILD_UNIT_TESTS=ON \
     -DCMAKE_INSTALL_PREFIX=~/open3d_install ..
-RUN make -j$(nproc) INSTALL
+RUN make -j$(nproc) install
