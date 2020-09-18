@@ -17,14 +17,10 @@ RUN apt-get update && apt-get install -y \
     libsdl2-dev \
     libc++-7-dev \
     libc++abi-7-dev \
-    clang++ \
-    clang \
     ninja-build \
     libxi-dev \
     libtbb-dev \
     libosmesa6-dev
-RUN clang++ --version
-RUN g++ --version
 
 # Clone Open3D
 RUN git clone --recursive https://github.com/intel-isl/Open3D.git
@@ -37,7 +33,7 @@ RUN mkdir build
 WORKDIR build
 RUN cmake \
     -DBUILD_BENCHMARKS=OFF \
-    -DBUILD_FILAMENT_FROM_SOURCE=ON \
+    -DBUILD_FILAMENT_FROM_SOURCE=OFF \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_GUI=ON \
