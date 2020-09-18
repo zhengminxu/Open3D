@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
     g++
 
 # Open3D default deps
-# ./util/install_deps_ubuntu.sh
+# Equivalent to ./util/install_deps_ubuntu.sh
 RUN apt-get update && apt-get install -y \
     xorg-dev \
     libglu1-mesa-dev \
@@ -32,13 +32,15 @@ RUN apt-get update && apt-get install -y \
     libtbb-dev \
     libosmesa6-dev
 
-# uild Open3D
+# Clone Open3D
 RUN git clone --recursive https://github.com/intel-isl/Open3D.git
 WORKDIR Open3D
 RUN ls -alh
 RUN git --no-pager log --name-status HEAD^..HEAD
 
-# Open3D standard deps
+# Build Open3D
+RUN mkdir build
+WORKDIR build
 RUN cmake \
     -DBUILD_BENCHMARKS=ON \
     -DBUILD_FILAMENT_FROM_SOURCE=ON \
@@ -52,3 +54,4 @@ RUN cmake \
     -DCMAKE_CXX_COMPILER=g++ \
     -DBUILD_UNIT_TESTS=ON \
     -DCMAKE_INSTALL_PREFIX=~/open3d_install ..
+RUN make -j$(nproc) INSTALL
