@@ -132,6 +132,7 @@ public:
                           int dsize_key,
                           int dsize_value,
                           const Device &device) {
+        // REVIEW: use initializer list?
         device_ = device;
         max_capacity_ = max_capacity;
         dsize_key_ = dsize_key;
