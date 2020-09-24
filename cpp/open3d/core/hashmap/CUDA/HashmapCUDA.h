@@ -111,6 +111,8 @@ protected:
 
     void Allocate(size_t bucket_count, size_t capacity);
 
+    // REVIEW: can we merge the `InsertImpl` to `Insert` directly. Same for the
+    // others.
     void InsertImpl(const void* input_keys,
                     const void* input_values,
                     iterator_t* output_iterators,
@@ -142,6 +144,8 @@ CUDAHashmap<Hash, KeyEq>::CUDAHashmap(size_t init_buckets,
     Allocate(init_buckets, init_capacity);
 }
 
+// REVIEW: order these functions to be the same as the order declared in the
+// class.
 template <typename Hash, typename KeyEq>
 void CUDAHashmap<Hash, KeyEq>::Allocate(size_t bucket_count, size_t capacity) {
     this->bucket_count_ = bucket_count;
@@ -183,6 +187,9 @@ void CUDAHashmap<Hash, KeyEq>::Insert(const void* input_keys,
                                       iterator_t* output_iterators,
                                       bool* output_masks,
                                       size_t count) {
+    // REVIEW: Do we ever check if the other pointers are nullptr or not?
+    //         Similarly, shall we check if the ptrs are device pointers? e.g.
+    //         some user could pass host ptrs and expect it work.
     bool extern_masks = (output_masks != nullptr);
     if (!extern_masks) {
         output_masks = static_cast<bool*>(
@@ -511,6 +518,7 @@ float CUDAHashmap<Hash, KeyEq>::LoadFactor() const {
     int total_elems_stored = std::accumulate(elems_per_bucket.begin(),
                                              elems_per_bucket.end(), 0);
 
+    // REVIEW: comment out this line as well?
     node_mgr_->gpu_context_ = gpu_context_.node_mgr_ctx_;
 
     /// Unrelated factor for now
