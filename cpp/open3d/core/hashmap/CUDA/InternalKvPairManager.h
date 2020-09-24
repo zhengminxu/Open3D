@@ -54,6 +54,7 @@ public:
     int max_capacity_;
 
 public:
+    // REVIEW: rename @value -> values_; @heap -> heap_
     // The @value array's size is FIXED.
     // The @heap array stores the addresses of the values.
     // Only the unallocated part is maintained.
