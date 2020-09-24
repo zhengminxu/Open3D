@@ -60,10 +60,18 @@ CUDAHashmapImplContext<Hash, KeyEq>::ComputeBucket(const void* key) const {
 template <typename Hash, typename KeyEq>
 __device__ void CUDAHashmapImplContext<Hash, KeyEq>::WarpSyncKey(
         const void* key_ptr, uint32_t lane_id, void* ret_key_ptr) {
+    // REVIEW: can we directly use hash_fn_.key_size_in_int_? If yes, we can
+    // apply this change to the rest of this file. Same with
+    // cmp_fn_.key_size_in_int_.
+    //
+    // REVIEW: we should probably be more consistent with int v.s. int32_t v.s.
+    // size_t. Here __shfl_sync works with 32-bit, so probably we should
+    // use int32_t when we want to indicate this.
     const int chunks = dsize_key_ / sizeof(int);
 
     auto src_key_ptr = static_cast<const int*>(key_ptr);
     auto dst_key_ptr = static_cast<int*>(ret_key_ptr);
+    // REVIEW: int instead of size_t?
     for (size_t i = 0; i < chunks; ++i) {
         dst_key_ptr[i] = __shfl_sync(ACTIVE_LANES_MASK, src_key_ptr[i], lane_id,
                                      WARP_WIDTH);
