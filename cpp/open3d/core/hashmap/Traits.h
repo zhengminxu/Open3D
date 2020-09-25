@@ -47,7 +47,10 @@ namespace open3d {
 namespace core {
 
 // REVIEW: I keep thinking ptr_t is a pointer. It is could also be confusing to
-// see `ptr_t*`. Would it make sense to rename this to `addr_t` or `index_t`?
+// see `ptr_t*`.
+// We also use ptr_t to refer to index, e.g. `prt_t iterator_ptr`, which in this
+// case it is actually the integer index but not `iterator_t*`. storage. Would
+// it make sense to rename this to `addr_t` or `index_t`?
 typedef uint32_t ptr_t;
 
 struct iterator_t {

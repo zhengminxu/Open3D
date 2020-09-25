@@ -460,8 +460,10 @@ __global__ void InsertKernelPass1(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
                                   bool* masks,
                                   size_t input_count) {
     uint32_t tid = threadIdx.x + blockIdx.x * blockDim.x;
+    // REVIEW: use one of the macros.h value instead of 32?
     uint32_t lane_id = tid % 32;
 
+    // REVIEW: tid - lane_id >= input_count is sufficient.
     if ((tid - lane_id) >= input_count) {
         return;
     }
