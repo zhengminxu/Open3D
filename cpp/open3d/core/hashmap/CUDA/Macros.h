@@ -74,7 +74,7 @@ static constexpr uint32_t LOG_NUM_MEM_BLOCKS_ = 2;
 static constexpr uint32_t NUM_MEM_BLOCKS_PER_SUPER_BLOCK_ = 4;
 static constexpr uint32_t NUM_MEM_UNITS_PER_BLOCK_ = 1024;
 
-// REVIEW: not used
+// REVIEW: NUM_BITMAP_PER_MEM_BLOCK_ not used
 static constexpr uint32_t NUM_BITMAP_PER_MEM_BLOCK_ = 32;
 static constexpr uint32_t BITMAP_SIZE_ = 32;
 static constexpr uint32_t WARP_SIZE = 32;
@@ -83,6 +83,9 @@ static constexpr uint32_t SUPER_BLOCK_BIT_OFFSET_ALLOC_ = 27;
 static constexpr uint32_t MEM_BLOCK_BIT_OFFSET_ALLOC_ = 10;
 static constexpr uint32_t MEM_UNIT_BIT_OFFSET_ALLOC_ = 5;
 
+// REVIEW: do we have a mechanism to protect against indexing out-of-range? E.g.
+// what is the maximum number of keys can hashmap support (e.g. can it be bigger
+// than 4GB)? What is the maximum total memory used by the hashmap?
 static constexpr uint32_t MEM_BLOCK_SIZE_ =
         NUM_MEM_UNITS_PER_BLOCK_ * MEM_UNIT_SIZE_;
 static constexpr uint32_t SUPER_BLOCK_SIZE_ =
