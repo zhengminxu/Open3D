@@ -158,6 +158,11 @@ void CUDAHashmap<Hash, KeyEq>::Allocate(size_t bucket_count, size_t capacity) {
             this->device_);
 
     // Memory for hash table linked list nodes
+    // REVIEW: InternalNodeManager seems to determine the maximum number of
+    // entries that we can have. Do we have a mechanism to protect against
+    // indexing out-of-range? E.g. what is the maximum number of keys can
+    // hashmap support (e.g. can it be bigger than 4GB)? What is the maximum
+    // total memory used by the hashmap?
     node_mgr_ = std::make_shared<InternalNodeManager>(this->device_);
     gpu_context_.Setup(this->bucket_count_, this->capacity_, this->dsize_key_,
                        this->dsize_value_, node_mgr_->gpu_context_,

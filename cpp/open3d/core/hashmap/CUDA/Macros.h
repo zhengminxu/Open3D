@@ -58,6 +58,15 @@ static constexpr uint32_t HEAD_SLAB_PTR = 0xFFFFFFFE;
 static constexpr uint32_t SEARCH_NOT_FOUND = 0xFFFFFFFF;
 
 /// Warp operations
+// REVIEW: We could add more comments or rename the variables that has value 32.
+//         Currently they could be a bit confusing.
+//         - BASE_UNIT_SIZE:
+//         - WARP_WIDTH    : remove? since it is the same as WARP_SIZE
+//         - NUM_BITMAP_PER_MEM_BLOCK_: variable not used, remove.
+//         - BITMAP_SIZE_  : remove?
+//         - WARP_SIZE     : determined by GPU hardware
+//         - MEM_UNIT_SIZE_: remove?
+//
 static constexpr uint32_t WARP_WIDTH = 32;
 static constexpr uint32_t BLOCKSIZE_ = 128;
 
@@ -83,9 +92,6 @@ static constexpr uint32_t SUPER_BLOCK_BIT_OFFSET_ALLOC_ = 27;
 static constexpr uint32_t MEM_BLOCK_BIT_OFFSET_ALLOC_ = 10;
 static constexpr uint32_t MEM_UNIT_BIT_OFFSET_ALLOC_ = 5;
 
-// REVIEW: do we have a mechanism to protect against indexing out-of-range? E.g.
-// what is the maximum number of keys can hashmap support (e.g. can it be bigger
-// than 4GB)? What is the maximum total memory used by the hashmap?
 static constexpr uint32_t MEM_BLOCK_SIZE_ =
         NUM_MEM_UNITS_PER_BLOCK_ * MEM_UNIT_SIZE_;
 static constexpr uint32_t SUPER_BLOCK_SIZE_ =
