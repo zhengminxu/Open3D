@@ -185,6 +185,7 @@ __device__ Pair<ptr_t, bool> CUDAHashmapImplContext<Hash, KeyEq>::Find(
     return make_pair(iterator, mask);
 }
 
+// REVIEW: update comments: replacePair?
 /*
  * Insert: ABORT if found
  * replacePair: REPLACE if found
@@ -438,6 +439,8 @@ __global__ void InsertKernelPass0(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
         auto dst_key_ptr = static_cast<int*>(iterator.first);
         auto src_key_ptr = static_cast<const int*>(keys) +
                            tid * hash_ctx.dsize_key_ / sizeof(int);
+        // REVIEW: This happens many times, woult it help to do a macro? e.g.
+        // #define MEMCPY_AS_INTS(dst, src, num_bytes)
         for (int i = 0; i < hash_ctx.dsize_key_ / sizeof(int); ++i) {
             dst_key_ptr[i] = src_key_ptr[i];
         }
@@ -463,7 +466,7 @@ __global__ void InsertKernelPass1(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     // REVIEW: use one of the macros.h value instead of 32?
     uint32_t lane_id = tid % 32;
 
-    // REVIEW: tid - lane_id >= input_count is sufficient.
+    // REVIEW: tid - lane_id >= input_count.
     if ((tid - lane_id) >= input_count) {
         return;
     }
