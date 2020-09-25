@@ -81,6 +81,7 @@ public:
           memory_block_index_(0),
           super_block_index_(0) {}
 
+    // REVIEW: this is not used, consider removing?
     InternalNodeManagerContext& operator=(
             const InternalNodeManagerContext& rhs) {
         super_blocks_ = rhs.super_blocks_;
