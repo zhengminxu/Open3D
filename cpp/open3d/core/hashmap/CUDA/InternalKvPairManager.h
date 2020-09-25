@@ -75,6 +75,7 @@ public:
         return heap_[index];
     }
 
+    // REVIEW: function not used, remove?
     __device__ ptr_t SafeAllocate() {
         int index = atomicAdd(heap_counter_, 1);
         assert(index < max_capacity_);
@@ -86,6 +87,7 @@ public:
         heap_[index - 1] = ptr;
     }
 
+    // REVIEW: function not used, remove?
     __device__ void SafeFree(ptr_t ptr) {
         int index = atomicSub(heap_counter_, 1);
         assert(index >= 1);
@@ -135,6 +137,9 @@ public:
                           const Device &device) {
         // REVIEW: use initializer list?
         device_ = device;
+        // REVIEW: why are we keeping two copies of these varaibles? One in
+        // InternalKvPairManager and one in InternalKvPairManager::gpu_context_.
+        // Can we just retrive it from the gpu_context_?
         max_capacity_ = max_capacity;
         dsize_key_ = dsize_key;
         dsize_value_ = dsize_value;

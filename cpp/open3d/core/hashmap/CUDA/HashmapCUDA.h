@@ -106,6 +106,7 @@ protected:
     /// struct directly passed to kernels, cannot be a pointer
     CUDAHashmapImplContext<Hash, KeyEq> gpu_context_;
 
+    // REVIEW: i would call this kv_mgr_ to be consistent.
     std::shared_ptr<InternalKvPairManager> mem_mgr_;
     std::shared_ptr<InternalNodeManager> node_mgr_;
 
