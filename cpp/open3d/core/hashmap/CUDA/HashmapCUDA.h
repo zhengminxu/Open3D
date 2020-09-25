@@ -487,6 +487,8 @@ void CUDAHashmap<Hash, KeyEq>::UnpackIterators(
     OPEN3D_CUDA_CHECK(cudaGetLastError());
 }
 
+// REVIEW: what is the use case of AssignIterators? looks like it is not used by
+// insert/erase/find/activate. Can we remove this? Same for CPU.
 template <typename Hash, typename KeyEq>
 void CUDAHashmap<Hash, KeyEq>::AssignIterators(iterator_t* input_iterators,
                                                const bool* input_masks,

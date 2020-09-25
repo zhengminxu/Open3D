@@ -137,6 +137,7 @@ __device__ Pair<ptr_t, bool> CUDAHashmapImplContext<Hash, KeyEq>::Find(
         uint8_t src_key[MAX_KEY_BYTESIZE];
         WarpSyncKey(query_key, src_lane, src_key);
 
+        // REVIEW: uint or unit?
         /* Each lane in the warp reads a uint in the slab in parallel */
         const uint32_t unit_data =
                 (curr_slab_ptr == HEAD_SLAB_PTR)
@@ -217,6 +218,7 @@ __device__ bool CUDAHashmapImplContext<Hash, KeyEq>::Insert(
 
         WarpSyncKey(key, src_lane, src_key);
 
+        // REVIEW: uint or unit?
         /* Each lane in the warp reads a uint in the slab */
         uint32_t unit_data =
                 (curr_slab_ptr == HEAD_SLAB_PTR)
@@ -652,6 +654,7 @@ __global__ void GetIteratorsKernel(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     uint32_t lane_id = threadIdx.x & 0x1F;
 
     // assigning a warp per bucket
+    // REVIEW: bucket_id seems more clear.
     uint32_t wid = tid >> 5;
     if (wid >= hash_ctx.bucket_count_) {
         return;
@@ -701,6 +704,7 @@ __global__ void CountElemsPerBucketKernel(
     uint32_t lane_id = threadIdx.x & 0x1F;
 
     // assigning a warp per bucket
+    // REVIEW: bucket_id seems more clear.
     uint32_t wid = tid >> 5;
     if (wid >= hash_ctx.bucket_count_) {
         return;
