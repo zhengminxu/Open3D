@@ -99,12 +99,15 @@ public:
         return iterator_t(keys_ + ptr * dsize_key_,
                           values_ + ptr * dsize_value_);
     }
+
+    // REVIEW: the const version is not used, remove?
     __device__ const iterator_t extract_iterator(ptr_t ptr) const {
         return iterator_t(keys_ + ptr * dsize_key_,
                           values_ + ptr * dsize_value_);
     }
 
     // REVIEW: function not used, remove?
+    // Or, in the caller, like InsertKernelPass0, actually call this function.
     __device__ iterator_t extract_iterator_from_heap_index(int index) {
         ptr_t ptr = heap_[index];
         return extract_iterator(ptr);

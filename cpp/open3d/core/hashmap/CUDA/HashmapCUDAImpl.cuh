@@ -429,6 +429,7 @@ __global__ void InsertKernelPass0(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     if (tid < input_count) {
         /** First write ALL keys to avoid potential thread conflicts **/
         // ptr_t iterator_ptr = hash_ctx.mem_mgr_ctx_.Allocate();
+        // REVIEW: this is equivalent to extract_iterator_from_heap_index?
         ptr_t iterator_ptr =
                 hash_ctx.mem_mgr_ctx_.heap_[heap_counter_prev + tid];
         iterator_t iterator =
