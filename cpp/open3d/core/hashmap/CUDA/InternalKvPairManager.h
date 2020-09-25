@@ -152,6 +152,7 @@ public:
         gpu_context_.values_ = static_cast<uint8_t *>(
                 MemoryManager::Malloc(max_capacity_ * dsize_value_, device_));
 
+        // REVIEW: use the global BLOCKSIZE_ for now?
         // TODO: auto tune
         const int blocks = (max_capacity_ + 128 - 1) / 128;
         const int threads = 128;

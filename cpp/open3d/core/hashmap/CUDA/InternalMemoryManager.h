@@ -1,3 +1,6 @@
+// REVIEW: can this file be deleted? Looks like it is not used. Most
+// functionalities are implemented in InternalKvPairManager.h.
+
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
