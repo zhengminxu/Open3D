@@ -573,7 +573,9 @@ std::vector<size_t> CUDAHashmap<Hash, KeyEq>::BucketSizes() const {
             (gpu_context_.capacity_ + blocksize - 1) / blocksize;
     CountElemsPerBucketKernel<<<num_blocks, blocksize>>>(
             gpu_context_, thrust::raw_pointer_cast(elems_per_bucket.data()));
-
+    // REVIEW: do we need these after kernel call?
+    // OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
+    // OPEN3D_CUDA_CHECK(cudaGetLastError());
     std::vector<size_t> result(gpu_context_.bucket_count_);
     thrust::copy(elems_per_bucket.begin(), elems_per_bucket.end(),
                  result.begin());
