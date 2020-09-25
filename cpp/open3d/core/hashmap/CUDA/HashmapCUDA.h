@@ -153,6 +153,8 @@ void CUDAHashmap<Hash, KeyEq>::Allocate(size_t bucket_count, size_t capacity) {
     this->bucket_count_ = bucket_count;
     this->capacity_ = capacity;
 
+    // REVIEW: mention that we're allocating for the actual storage taht stores
+    // the key-value pair.
     mem_mgr_ = std::make_shared<InternalKvPairManager>(
             this->capacity_, this->dsize_key_, this->dsize_value_,
             this->device_);
@@ -164,6 +166,10 @@ void CUDAHashmap<Hash, KeyEq>::Allocate(size_t bucket_count, size_t capacity) {
     // hashmap support (e.g. can it be bigger than 4GB)? What is the maximum
     // total memory used by the hashmap?
     node_mgr_ = std::make_shared<InternalNodeManager>(this->device_);
+
+    // REVIEW: move this after all teh allocations. e.g. after allocating
+    // gpu_context_.bucket_list_head_. In this way keep the 3 allocations
+    // together.
     gpu_context_.Setup(this->bucket_count_, this->capacity_, this->dsize_key_,
                        this->dsize_value_, node_mgr_->gpu_context_,
                        mem_mgr_->gpu_context_);
@@ -255,9 +261,12 @@ void CUDAHashmap<Hash, KeyEq>::InsertImpl(const void* input_keys,
             MemoryManager::Malloc(sizeof(ptr_t) * count, this->device_));
     const size_t num_blocks = (count + BLOCKSIZE_ - 1) / BLOCKSIZE_;
 
-    // REVIEW: isn't this same as Size()?
+    // REVIEW: I would call this heap_counter_prev to be consistent with the
+    // name inside the kernel.
     int heap_counter =
             *thrust::device_ptr<int>(gpu_context_.mem_mgr_ctx_.heap_counter_);
+    // REVIEW: why do we increase the heap counter before the insertion? Is it
+    // valid to do this after the insertion?
     *thrust::device_ptr<int>(gpu_context_.mem_mgr_ctx_.heap_counter_) =
             heap_counter + count;
     InsertKernelPass0<<<num_blocks, BLOCKSIZE_>>>(

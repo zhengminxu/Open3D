@@ -39,6 +39,7 @@ namespace open3d {
 namespace core {
 /// Dynamic memory allocation and free are expensive on kernels.
 /// We pre-allocate a chunk of memory and manually manage them on kernels.
+// REVIEW: type T?
 /// For simplicity, we maintain a chunk per array (type T) instead of managing a
 /// universal one. This causes more redundancy but is easier to maintain.
 class InternalKvPairManagerContext {
@@ -103,10 +104,13 @@ public:
                           values_ + ptr * dsize_value_);
     }
 
+    // REVIEW: function not used, remove?
     __device__ iterator_t extract_iterator_from_heap_index(int index) {
         ptr_t ptr = heap_[index];
         return extract_iterator(ptr);
     }
+
+    // REVIEW: function not used, remove?
     __device__ const iterator_t
     extract_iterator_from_heap_index(int index) const {
         ptr_t ptr = heap_[index];
@@ -131,6 +135,7 @@ public:
     Device device_;
 
 public:
+    // REVIEW: max_capacity -> capacity
     InternalKvPairManager(int max_capacity,
                           int dsize_key,
                           int dsize_value,
