@@ -184,6 +184,7 @@ public:
         OPEN3D_CUDA_CHECK(cudaGetLastError());
 
         int heap_counter = 0;
+        // REVIEW: OPEN3D_CUDA_CHECK
         cudaMemset(gpu_context_.values_, 0, max_capacity_ * dsize_value_);
         MemoryManager::Memcpy(gpu_context_.heap_counter_, device_,
                               &heap_counter, Device("CPU:0"), sizeof(int));
