@@ -606,6 +606,7 @@ __global__ void EraseKernelPass0(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     uint32_t tid = threadIdx.x + blockIdx.x * blockDim.x;
     uint32_t lane_id = threadIdx.x & 0x1F;
 
+    // REVIEW: if (tid - lane_id >= input_count)
     if ((tid - lane_id) >= input_count) {
         return;
     }
