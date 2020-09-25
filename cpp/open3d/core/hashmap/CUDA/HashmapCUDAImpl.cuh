@@ -456,6 +456,8 @@ __global__ void InsertKernelPass0(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     }
 }
 
+// REVIEW: rename parameters. To be consistent with the caller, masks ->
+// output_masks.
 template <typename Hash, typename KeyEq>
 __global__ void InsertKernelPass1(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
                                   const void* keys,
@@ -463,10 +465,10 @@ __global__ void InsertKernelPass1(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
                                   bool* masks,
                                   size_t input_count) {
     uint32_t tid = threadIdx.x + blockIdx.x * blockDim.x;
-    // REVIEW: use one of the macros.h value instead of 32?
+    // REVIEW: use WARP_SIZE instead of 32, or use & 0x1F to be consistent?
     uint32_t lane_id = tid % 32;
 
-    // REVIEW: tid - lane_id >= input_count.
+    // REVIEW: tid - lane_id >= input_coun.
     if ((tid - lane_id) >= input_count) {
         return;
     }
@@ -488,6 +490,8 @@ __global__ void InsertKernelPass1(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
         bucket_id = hash_ctx.ComputeBucket(key);
     }
 
+    // REVIEW: maybe mention in comments the reason why `hash_ctx.Insert` has to
+    // be outside of `if (tid < input_count). Is it for warp functions to work?
     bool mask =
             hash_ctx.Insert(lane_active, lane_id, bucket_id, key, iterator_ptr);
 
@@ -505,6 +509,8 @@ __global__ void InsertKernelPass1(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     }
 }
 
+// REVIEW: rename parameters to be consistent with the caller, iterators ->
+// output_iterators; masks -> output_masks.
 template <typename Hash, typename KeyEq>
 __global__ void InsertKernelPass2(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
                                   const void* values,
@@ -541,6 +547,8 @@ __global__ void InsertKernelPass2(CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,
     }
 }
 
+// REVIEW: rename parameters to be consistent with the caller, iterators ->
+// output_iterators; masks -> output_masks.
 template <typename Hash, typename KeyEq>
 __global__ void ActivateKernelPass2(
         CUDAHashmapImplContext<Hash, KeyEq> hash_ctx,

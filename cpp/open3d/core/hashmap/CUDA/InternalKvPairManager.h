@@ -71,6 +71,8 @@ public:
     //  2                   2                    2 <-                 2    |
     //  1                   1 <-                 1                    0 <- |
     //  0 <- heap_counter   0                    0                    0
+
+    // REVIEW: Not used, remove?
     __device__ ptr_t Allocate() {
         int index = atomicAdd(heap_counter_, 1);
         return heap_[index];
@@ -84,7 +86,14 @@ public:
     }
 
     __device__ void Free(ptr_t ptr) {
+        // REVIEW: equivalent to
+        // ```
+        // atomicSub(heap_counter_, 1);
+        // heap_[heap_counter_] = ptr;
+        // ```
+        // ?
         int index = atomicSub(heap_counter_, 1);
+        // REVIEW: add comment on why we need to assign ptr to the heap entry.
         heap_[index - 1] = ptr;
     }
 

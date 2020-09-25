@@ -208,6 +208,9 @@ void CUDAHashmap<Hash, KeyEq>::Insert(const void* input_keys,
     // REVIEW: Do we have protection against `output_iterators == nullptr` or
     //         invalid address (e.g. allocated size is smaller than the size
     //         needed). Shall we consider directly return these iterators?
+    //         (update: Looks like we have this in InsertKernelPass2, it protect
+    //         against nullptr but not smaller allocation. Shall we do something
+    //         more systematic?)
     if (!extern_masks) {
         output_masks = static_cast<bool*>(
                 MemoryManager::Malloc(count * sizeof(bool), this->device_));
@@ -265,8 +268,8 @@ void CUDAHashmap<Hash, KeyEq>::InsertImpl(const void* input_keys,
     // name inside the kernel.
     int heap_counter =
             *thrust::device_ptr<int>(gpu_context_.mem_mgr_ctx_.heap_counter_);
-    // REVIEW: why do we increase the heap counter before the insertion? Is it
-    // valid to do this after the insertion?
+    // REVIEW: Could you add comments on why do we increase the heap counter
+    // before but not after the insertion?
     *thrust::device_ptr<int>(gpu_context_.mem_mgr_ctx_.heap_counter_) =
             heap_counter + count;
     InsertKernelPass0<<<num_blocks, BLOCKSIZE_>>>(
