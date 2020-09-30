@@ -390,7 +390,7 @@ class JupyterDocsBuilder:
         nb_direct_copy = ['tensor.ipynb']
         example_dirs = [
             "geometry",
-            "core",
+            "tensor",
             "pipelines",
             "visualization",
         ]

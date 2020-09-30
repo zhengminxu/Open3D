@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # Note: must be consistent with make_docs.py
     example_dirs = [
         "geometry",
-        "core",
+        "tensor",
         "pipelines",
         "visualization",
     ]
