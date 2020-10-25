@@ -381,7 +381,7 @@ public:
     /// \param dim The dimension to slice.
     /// \param start The start index (inclusive).
     /// \param stop The end index (exclusive).
-    /// \param step Pick one eleemnt for every \p step elements.
+    /// \param step Pick one element for every \p step elements.
     Tensor Slice(int64_t dim,
                  int64_t start,
                  int64_t stop,
@@ -399,13 +399,13 @@ public:
 
     /// \brief Advanced indexing getter
     ///
-    /// We use the Numpy advanced indexing symnatics, see:
+    /// We use the Numpy advanced indexing semantics, see:
     /// https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
     Tensor IndexGet(const std::vector<Tensor>& index_tensors) const;
 
     /// \brief Advanced indexing getter.
     ///
-    /// We use the Numpy advanced indexing symnatics, see:
+    /// We use the Numpy advanced indexing semantics, see:
     /// https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
     ///
     /// Note: Only support 1D index tensors.
