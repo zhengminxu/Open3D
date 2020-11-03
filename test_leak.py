@@ -7,9 +7,9 @@ import open3d
 
 def align(pcloud1, pcloud2):
     pc1 = open3d.geometry.PointCloud()
-    pc1.points = open3d.utility.Vector3dVector(np.load("pc1.npy"))
+    pc1.points = open3d.utility.Vector3dVector(pcloud1)
     pc2 = open3d.geometry.PointCloud()
-    pc2.points = open3d.utility.Vector3dVector(np.load("pc2.npy"))
+    pc2.points = open3d.utility.Vector3dVector(pcloud2)
 
     voxel_size = 0.2
     normal_radius = 4 * voxel_size
