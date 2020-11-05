@@ -419,37 +419,6 @@ __global__ void nms_normal_kernel(const int boxes_num,
     }
 }
 
-void boxesoverlapLauncher(const int num_a,
-                          const float *boxes_a,
-                          const int num_b,
-                          const float *boxes_b,
-                          float *ans_overlap) {
-    dim3 blocks(DIVUP(num_b, THREADS_PER_BLOCK),
-                DIVUP(num_a,
-                      THREADS_PER_BLOCK));  // blockIdx.x(col), blockIdx.y(row)
-    dim3 threads(THREADS_PER_BLOCK, THREADS_PER_BLOCK);
-
-    boxes_overlap_kernel<<<blocks, threads>>>(num_a, boxes_a, num_b, boxes_b,
-                                              ans_overlap);
-#ifdef DEBUG
-    cudaDeviceSynchronize();  // for using printf in kernel function
-#endif
-}
-
-void boxesioubevLauncher(const int num_a,
-                         const float *boxes_a,
-                         const int num_b,
-                         const float *boxes_b,
-                         float *ans_iou) {
-    dim3 blocks(DIVUP(num_b, THREADS_PER_BLOCK),
-                DIVUP(num_a,
-                      THREADS_PER_BLOCK));  // blockIdx.x(col), blockIdx.y(row)
-    dim3 threads(THREADS_PER_BLOCK, THREADS_PER_BLOCK);
-
-    boxes_iou_bev_kernel<<<blocks, threads>>>(num_a, boxes_a, num_b, boxes_b,
-                                              ans_iou);
-}
-
 void nmsLauncher(const float *boxes,
                  unsigned long long *mask,
                  int boxes_num,
@@ -458,15 +427,4 @@ void nmsLauncher(const float *boxes,
                 DIVUP(boxes_num, THREADS_PER_BLOCK_NMS));
     dim3 threads(THREADS_PER_BLOCK_NMS);
     nms_kernel<<<blocks, threads>>>(boxes_num, nms_overlap_thresh, boxes, mask);
-}
-
-void nmsNormalLauncher(const float *boxes,
-                       unsigned long long *mask,
-                       int boxes_num,
-                       float nms_overlap_thresh) {
-    dim3 blocks(DIVUP(boxes_num, THREADS_PER_BLOCK_NMS),
-                DIVUP(boxes_num, THREADS_PER_BLOCK_NMS));
-    dim3 threads(THREADS_PER_BLOCK_NMS);
-    nms_normal_kernel<<<blocks, threads>>>(boxes_num, nms_overlap_thresh, boxes,
-                                           mask);
 }

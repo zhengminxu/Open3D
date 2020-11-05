@@ -30,24 +30,10 @@ inline void gpuAssert(cudaError_t code,
 
 const int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
 
-void boxesoverlapLauncher(const int num_a,
-                          const float *boxes_a,
-                          const int num_b,
-                          const float *boxes_b,
-                          float *ans_overlap);
-void boxesioubevLauncher(const int num_a,
-                         const float *boxes_a,
-                         const int num_b,
-                         const float *boxes_b,
-                         float *ans_iou);
 void nmsLauncher(const float *boxes,
                  unsigned long long *mask,
                  int boxes_num,
                  float nms_overlap_thresh);
-void nmsNormalLauncher(const float *boxes,
-                       unsigned long long *mask,
-                       int boxes_num,
-                       float nms_overlap_thresh);
 
 int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
     // params boxes: (N, 5) [x1, y1, x2, y2, ry]
