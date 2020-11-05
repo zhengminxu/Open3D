@@ -42,8 +42,8 @@ int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
     CHECK_CONTIGUOUS(keep);
 
     int boxes_num = boxes.size(0);
-    const float *boxes_data = boxes.data<float>();
-    long *keep_data = keep.data<long>();
+    const float *boxes_data = boxes.data_ptr<float>();
+    long *keep_data = keep.data_ptr<long>();
 
     const int col_blocks = DIVUP(boxes_num, THREADS_PER_BLOCK_NMS);
 
