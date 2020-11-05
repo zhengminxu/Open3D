@@ -11,6 +11,7 @@ All Rights Reserved 2018.
 //#define DEBUG
 const int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
 const float EPS = 1e-8;
+
 struct Point {
     float x, y;
     __device__ Point() {}
@@ -256,41 +257,6 @@ __device__ inline float iou_bev(const float *box_a, const float *box_b) {
     float sb = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1]);
     float s_overlap = box_overlap(box_a, box_b);
     return s_overlap / fmaxf(sa + sb - s_overlap, EPS);
-}
-
-__global__ void boxes_overlap_kernel(const int num_a,
-                                     const float *boxes_a,
-                                     const int num_b,
-                                     const float *boxes_b,
-                                     float *ans_overlap) {
-    const int a_idx = blockIdx.y * THREADS_PER_BLOCK + threadIdx.y;
-    const int b_idx = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
-
-    if (a_idx >= num_a || b_idx >= num_b) {
-        return;
-    }
-    const float *cur_box_a = boxes_a + a_idx * 5;
-    const float *cur_box_b = boxes_b + b_idx * 5;
-    float s_overlap = box_overlap(cur_box_a, cur_box_b);
-    ans_overlap[a_idx * num_b + b_idx] = s_overlap;
-}
-
-__global__ void boxes_iou_bev_kernel(const int num_a,
-                                     const float *boxes_a,
-                                     const int num_b,
-                                     const float *boxes_b,
-                                     float *ans_iou) {
-    const int a_idx = blockIdx.y * THREADS_PER_BLOCK + threadIdx.y;
-    const int b_idx = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
-
-    if (a_idx >= num_a || b_idx >= num_b) {
-        return;
-    }
-
-    const float *cur_box_a = boxes_a + a_idx * 5;
-    const float *cur_box_b = boxes_b + b_idx * 5;
-    float cur_iou_bev = iou_bev(cur_box_a, cur_box_b);
-    ans_iou[a_idx * num_b + b_idx] = cur_iou_bev;
 }
 
 __global__ void nms_kernel(const int boxes_num,
