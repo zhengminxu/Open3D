@@ -49,53 +49,6 @@ void nmsNormalLauncher(const float *boxes,
                        int boxes_num,
                        float nms_overlap_thresh);
 
-int boxes_overlap_bev_gpu(at::Tensor boxes_a,
-                          at::Tensor boxes_b,
-                          at::Tensor ans_overlap) {
-    // params boxes_a: (N, 5) [x1, y1, x2, y2, ry]
-    // params boxes_b: (M, 5)
-    // params ans_overlap: (N, M)
-
-    CHECK_INPUT(boxes_a);
-    CHECK_INPUT(boxes_b);
-    CHECK_INPUT(ans_overlap);
-
-    int num_a = boxes_a.size(0);
-    int num_b = boxes_b.size(0);
-
-    const float *boxes_a_data = boxes_a.data<float>();
-    const float *boxes_b_data = boxes_b.data<float>();
-    float *ans_overlap_data = ans_overlap.data<float>();
-
-    boxesoverlapLauncher(num_a, boxes_a_data, num_b, boxes_b_data,
-                         ans_overlap_data);
-
-    return 1;
-}
-
-int boxes_iou_bev_gpu(at::Tensor boxes_a,
-                      at::Tensor boxes_b,
-                      at::Tensor ans_iou) {
-    // params boxes_a: (N, 5) [x1, y1, x2, y2, ry]
-    // params boxes_b: (M, 5)
-    // params ans_overlap: (N, M)
-
-    CHECK_INPUT(boxes_a);
-    CHECK_INPUT(boxes_b);
-    CHECK_INPUT(ans_iou);
-
-    int num_a = boxes_a.size(0);
-    int num_b = boxes_b.size(0);
-
-    const float *boxes_a_data = boxes_a.data<float>();
-    const float *boxes_b_data = boxes_b.data<float>();
-    float *ans_iou_data = ans_iou.data<float>();
-
-    boxesioubevLauncher(num_a, boxes_a_data, num_b, boxes_b_data, ans_iou_data);
-
-    return 1;
-}
-
 int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
     // params boxes: (N, 5) [x1, y1, x2, y2, ry]
     // params keep: (N)
@@ -149,65 +102,6 @@ int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
     return num_to_keep;
 }
 
-int nms_normal_gpu(at::Tensor boxes,
-                   at::Tensor keep,
-                   float nms_overlap_thresh) {
-    // params boxes: (N, 5) [x1, y1, x2, y2, ry]
-    // params keep: (N)
-
-    CHECK_INPUT(boxes);
-    CHECK_CONTIGUOUS(keep);
-
-    int boxes_num = boxes.size(0);
-    const float *boxes_data = boxes.data<float>();
-    long *keep_data = keep.data<long>();
-
-    const int col_blocks = DIVUP(boxes_num, THREADS_PER_BLOCK_NMS);
-
-    unsigned long long *mask_data = NULL;
-    CHECK_ERROR(
-            cudaMalloc((void **)&mask_data,
-                       boxes_num * col_blocks * sizeof(unsigned long long)));
-    nmsNormalLauncher(boxes_data, mask_data, boxes_num, nms_overlap_thresh);
-
-    // unsigned long long mask_cpu[boxes_num * col_blocks];
-    // unsigned long long *mask_cpu = new unsigned long long [boxes_num *
-    // col_blocks];
-    std::vector<unsigned long long> mask_cpu(boxes_num * col_blocks);
-
-    //    printf("boxes_num=%d, col_blocks=%d\n", boxes_num, col_blocks);
-    CHECK_ERROR(cudaMemcpy(&mask_cpu[0], mask_data,
-                           boxes_num * col_blocks * sizeof(unsigned long long),
-                           cudaMemcpyDeviceToHost));
-
-    cudaFree(mask_data);
-
-    unsigned long long remv_cpu[col_blocks];
-    memset(remv_cpu, 0, col_blocks * sizeof(unsigned long long));
-
-    int num_to_keep = 0;
-
-    for (int i = 0; i < boxes_num; i++) {
-        int nblock = i / THREADS_PER_BLOCK_NMS;
-        int inblock = i % THREADS_PER_BLOCK_NMS;
-
-        if (!(remv_cpu[nblock] & (1ULL << inblock))) {
-            keep_data[num_to_keep++] = i;
-            unsigned long long *p = &mask_cpu[0] + i * col_blocks;
-            for (int j = nblock; j < col_blocks; j++) {
-                remv_cpu[j] |= p[j];
-            }
-        }
-    }
-    if (cudaSuccess != cudaGetLastError()) printf("Error!\n");
-
-    return num_to_keep;
-}
-
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("boxes_overlap_bev_gpu", &boxes_overlap_bev_gpu,
-          "oriented boxes overlap");
-    m.def("boxes_iou_bev_gpu", &boxes_iou_bev_gpu, "oriented boxes iou");
     m.def("nms_gpu", &nms_gpu, "oriented nms gpu");
-    m.def("nms_normal_gpu", &nms_normal_gpu, "nms gpu");
 }
