@@ -14,8 +14,8 @@ namespace open3d {
 namespace ml {
 namespace impl {
 
-const int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
-const float EPS = 1e-8;
+constexpr int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
+constexpr float EPS = 1e-8;
 
 struct Point {
     float x, y;
