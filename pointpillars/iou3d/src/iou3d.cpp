@@ -34,7 +34,7 @@ void nmsLauncher(const float *boxes,
                  int boxes_num,
                  float nms_overlap_thresh);
 
-int nms_gpu(at::Tensor boxes, at::Tensor keep, float nms_overlap_thresh) {
+int nms_gpu(torch::Tensor boxes, torch::Tensor keep, float nms_overlap_thresh) {
     // params boxes: (N, 5) [x1, y1, x2, y2, ry]
     // params keep: (N)
 
