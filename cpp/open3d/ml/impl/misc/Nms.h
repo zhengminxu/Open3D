@@ -30,10 +30,10 @@ namespace open3d {
 namespace ml {
 namespace impl {
 
-void NonMaximumSuppression(const float *boxes,
-                           unsigned long long *mask,
-                           int boxes_num,
-                           float nms_overlap_thresh);
+void Nms(const float *boxes,
+         unsigned long long *mask,
+         int boxes_num,
+         float nms_overlap_thresh);
 
 }  // namespace impl
 }  // namespace ml
