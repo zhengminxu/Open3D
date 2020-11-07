@@ -53,6 +53,6 @@ int64_t Nms(torch::Tensor boxes,
 }
 
 static auto registry = torch::RegisterOperators(
-        "open3d::nms(Tensor boxes, Tensor keep, double nms_overlap_thresh) -> "
-        "int64_t keep_idx",
+        "open3d::nms(Tensor boxes, Tensor keep, float nms_overlap_thresh) -> "
+        "int keep_idx",
         &Nms);
