@@ -26,7 +26,9 @@
 
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 
-int NmsCPU(torch::Tensor boxes, torch::Tensor keep, float nms_overlap_thresh) {
+int64_t NmsCPU(torch::Tensor boxes,
+               torch::Tensor keep,
+               double nms_overlap_thresh) {
     TORCH_CHECK(false, "NmsCPU not implemented yet.")
     return 0;
 }

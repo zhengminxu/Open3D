@@ -128,7 +128,10 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    print("here!!!!!!!!!!!!!!!!!!!!!!!!!!! 0")
+
     torch.ops.load_library(args.lib)
+    print("here!!!!!!!!!!!!!!!!!!!!!!!!!!! 1")
 
     generated_function_strs = ''
     generated_namedtuple_strs = ''

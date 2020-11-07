@@ -28,8 +28,12 @@
 
 #include "torch/script.h"
 
-int NmsCPU(torch::Tensor boxes, torch::Tensor keep, float nms_overlap_thresh);
+int64_t NmsCPU(torch::Tensor boxes,
+               torch::Tensor keep,
+               double nms_overlap_thresh);
 
 #ifdef BUILD_CUDA_MODULE
-int NmsCUDA(torch::Tensor boxes, torch::Tensor keep, float nms_overlap_thresh);
+int64_t NmsCUDA(torch::Tensor boxes,
+                torch::Tensor keep,
+                double nms_overlap_thresh);
 #endif
