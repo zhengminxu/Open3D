@@ -30,10 +30,12 @@ namespace open3d {
 namespace ml {
 namespace impl {
 
-void Nms(const float *boxes,
-         unsigned long long *mask,
-         int boxes_num,
-         float nms_overlap_thresh);
+#ifdef BUILD_CUDA_MODULE
+void NmsCUDAKernel(const float *boxes,
+                   unsigned long long *mask,
+                   int boxes_num,
+                   float nms_overlap_thresh);
+#endif
 
 }  // namespace impl
 }  // namespace ml
