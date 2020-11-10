@@ -23,7 +23,6 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------q
-#include "open3d/ml/pytorch/misc/NmsOps.h"
 
 #include <vector>
 
@@ -35,9 +34,8 @@ int64_t Nms(torch::Tensor boxes,
             torch::Tensor keep,
             double nms_overlap_thresh) {
     boxes = boxes.contiguous();
-    keep = keep.contiguous();
     CHECK_TYPE(boxes, kFloat);
-    CHECK_TYPE(keep, kInt64);  // No kUInt64.
+    CHECK_TYPE(keep, kInt64);
 
     CHECK_SAME_DEVICE_TYPE(boxes, keep);
 
