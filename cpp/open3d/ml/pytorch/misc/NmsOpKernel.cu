@@ -103,8 +103,11 @@ int64_t NmsCUDA(torch::Tensor boxes,
         std::cout << "inblock: " << inblock << std::endl;
 
         if (!(remv_cpu[nblock] & (1ULL << inblock))) {
+            std::cout << "inside: 01" << std::endl;
             keep_data[num_to_keep++] = i;
+            std::cout << "inside: 02" << std::endl;
             unsigned long long *p = &mask_cpu[0] + i * col_blocks;
+            std::cout << "inside: 03" << std::endl;
             for (int j = nblock; j < col_blocks; j++) {
                 remv_cpu[j] |= p[j];
             }

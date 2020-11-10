@@ -37,8 +37,6 @@ int64_t Nms(torch::Tensor boxes,
     CHECK_TYPE(boxes, kFloat);
     CHECK_TYPE(keep, kInt64);
 
-    CHECK_SAME_DEVICE_TYPE(boxes, keep);
-
     if (boxes.is_cuda()) {
 #ifdef BUILD_CUDA_MODULE
         return NmsCUDA(boxes, keep, nms_overlap_thresh);

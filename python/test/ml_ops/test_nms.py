@@ -45,7 +45,7 @@ def nms_gpu(boxes, scores, thresh):
     import open3d.ml.torch
     order = scores.sort(0, descending=True)[1]
     boxes = boxes[order].contiguous()
-    keep = torch.LongTensor(boxes.size(0)).cuda()
+    keep = torch.LongTensor(boxes.size(0))
     # import ipdb
     # ipdb.set_trace()
     num_out = open3d.ml.torch.ops.nms(boxes, keep, thresh)
