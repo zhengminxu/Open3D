@@ -13,8 +13,6 @@ def nms_gpu(boxes, scores, thresh):
     order = scores.sort(0, descending=True)[1]
     boxes = boxes[order].contiguous()
     keep = torch.LongTensor(boxes.size(0))
-    import ipdb
-    ipdb.set_trace()
     num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh)
     return order[keep[:num_out].cuda()].contiguous()
 
