@@ -37,10 +37,16 @@ pytestmark = mltest.default_marks
 
 def nms_gpu(boxes, scores, thresh):
     """
-    :param boxes: (N, 5) [x1, y1, x2, y2, ry]
-    :param scores: (N)
-    :param thresh:
-    :return:
+    Args:
+        boxes: (N, 5) float32 torch Tensor.
+            Each row represents [x1, y1, x2, y2, ry].
+        scores: (N,) float32 torch Tensor.
+        thresh: Float representing nms_overlap_thresh. Given a selected
+            "maximum" box, any remaining boxes with IoU is larger than
+            nms_overlap_thresh will be disgraded.
+
+    Returns:
+        The selected boxes, (M, 5) float32 torch Tensor.
     """
     # Sort descending according to score.
     order = scores.sort(0, descending=True)[1]
