@@ -43,7 +43,8 @@ def nms_gpu(boxes, scores, thresh):
         scores: (N,) float32 torch Tensor.
         thresh: Float representing nms_overlap_thresh. Given a selected
             "maximum" box, any remaining boxes with IoU is larger than
-            nms_overlap_thresh will be disgraded.
+            thresh will be disgraded. A larger thresh means less boxes will
+            be discarded.
 
     Returns:
         The selected boxes, (M, 5) float32 torch Tensor.
