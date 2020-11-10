@@ -42,12 +42,15 @@ def nms_gpu(boxes, scores, thresh):
     :param thresh:
     :return:
     """
-    import open3d.ml.torch
+    # Sort descending according to score.
     order = scores.sort(0, descending=True)[1]
+    # Order boxes by their score from high to low.
     boxes = boxes[order].contiguous()
+    # Temp variable, # of boxes.
     keep = torch.LongTensor(boxes.size(0))
+    # Returns: num_out of selected outputs.
+    # Populates: keep where the first num_out elements are the selected index
     num_out = open3d.ml.torch.ops.nms(boxes, keep, thresh)
-    print("num_out: {}".format(num_out))
     return order[keep[:num_out].cuda()].contiguous()
 
 
