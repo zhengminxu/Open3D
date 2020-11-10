@@ -14,7 +14,7 @@ namespace open3d {
 namespace ml {
 namespace impl {
 
-constexpr int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
+constexpr int THREADS_PER_BLOCK_NMS = sizeof(uint64_t) * 8;
 constexpr float EPS = 1e-8;
 
 struct Point {
@@ -267,7 +267,7 @@ __device__ inline float iou_bev(const float *box_a, const float *box_b) {
 __global__ void nms_kernel(const int boxes_num,
                            const float nms_overlap_thresh,
                            const float *boxes,
-                           unsigned long long *mask) {
+                           uint64_t *mask) {
     // params: boxes (N, 5) [x1, y1, x2, y2, ry]
     // params: mask (N, N/THREADS_PER_BLOCK_NMS)
 
@@ -307,7 +307,7 @@ __global__ void nms_kernel(const int boxes_num,
         const float *cur_box = boxes + cur_box_idx * 5;
 
         int i = 0;
-        unsigned long long t = 0;
+        uint64_t t = 0;
         int start = 0;
         if (row_start == col_start) {
             start = threadIdx.x + 1;
@@ -323,7 +323,7 @@ __global__ void nms_kernel(const int boxes_num,
 }
 
 void NmsCUDAKernel(const float *boxes,
-                   unsigned long long *mask,
+                   uint64_t *mask,
                    int boxes_num,
                    float nms_overlap_thresh) {
     dim3 blocks(DIVUP(boxes_num, THREADS_PER_BLOCK_NMS),

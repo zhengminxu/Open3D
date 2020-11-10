@@ -35,7 +35,7 @@
     CHECK_CUDA(x);     \
     CHECK_CONTIGUOUS(x)
 
-const int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
+const int THREADS_PER_BLOCK_NMS = sizeof(uint64_t) * 8;
 
 #define CHECK_ERROR(ans) \
     { gpuAssert((ans), __FILE__, __LINE__); }
@@ -67,23 +67,22 @@ int64_t NmsCUDA(torch::Tensor boxes,
 
     const int col_blocks = DIVUP(boxes_num, THREADS_PER_BLOCK_NMS);
 
-    unsigned long long *mask_data = NULL;
-    CHECK_ERROR(
-            cudaMalloc((void **)&mask_data,
-                       boxes_num * col_blocks * sizeof(unsigned long long)));
+    uint64_t *mask_data = NULL;
+    CHECK_ERROR(cudaMalloc((void **)&mask_data,
+                           boxes_num * col_blocks * sizeof(uint64_t)));
     open3d::ml::impl::NmsCUDAKernel(boxes_data, mask_data, boxes_num,
                                     nms_overlap_thresh);
 
-    std::vector<unsigned long long> mask_cpu(boxes_num * col_blocks);
+    std::vector<uint64_t> mask_cpu(boxes_num * col_blocks);
 
     CHECK_ERROR(cudaMemcpy(&mask_cpu[0], mask_data,
-                           boxes_num * col_blocks * sizeof(unsigned long long),
+                           boxes_num * col_blocks * sizeof(uint64_t),
                            cudaMemcpyDeviceToHost));
 
     cudaFree(mask_data);
 
-    unsigned long long remv_cpu[col_blocks];
-    memset(remv_cpu, 0, col_blocks * sizeof(unsigned long long));
+    uint64_t remv_cpu[col_blocks];
+    memset(remv_cpu, 0, col_blocks * sizeof(uint64_t));
 
     int num_to_keep = 0;
 
@@ -93,7 +92,7 @@ int64_t NmsCUDA(torch::Tensor boxes,
 
         if (!(remv_cpu[nblock] & (1ULL << inblock))) {
             keep_data[num_to_keep++] = i;
-            unsigned long long *p = &mask_cpu[0] + i * col_blocks;
+            uint64_t *p = &mask_cpu[0] + i * col_blocks;
             for (int j = nblock; j < col_blocks; j++) {
                 remv_cpu[j] |= p[j];
             }

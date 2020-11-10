@@ -32,7 +32,7 @@ namespace impl {
 
 #ifdef BUILD_CUDA_MODULE
 void NmsCUDAKernel(const float *boxes,
-                   unsigned long long *mask,
+                   uint64_t *mask,
                    int boxes_num,
                    float nms_overlap_thresh);
 #endif
