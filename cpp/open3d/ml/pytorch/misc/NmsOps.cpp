@@ -37,7 +37,7 @@ int64_t Nms(torch::Tensor boxes,
     boxes = boxes.contiguous();
     keep = keep.contiguous();
     CHECK_TYPE(boxes, kFloat);
-    CHECK_TYPE(boxes, kInt64);  // No kUInt64.
+    CHECK_TYPE(keep, kInt64);  // No kUInt64.
 
     CHECK_SAME_DEVICE_TYPE(boxes, keep);
 
