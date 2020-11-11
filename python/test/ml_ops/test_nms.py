@@ -74,6 +74,6 @@ def test_nms():
     scores = torch.tensor([5, 4, 3, 2, 1],
                           dtype=torch.float32,
                           device=torch.device('cuda:0'))
-    thresh = 0.01
+    thresh = 0.7
     out = nms_gpu(boxes, scores, thresh)
     print(out.cpu().numpy())
