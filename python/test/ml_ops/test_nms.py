@@ -47,7 +47,7 @@ def nms_gpu(boxes, scores, thresh):
             be discarded.
 
     Returns:
-        The selected boxes, (M, 5) float32 torch Tensor.
+        (M,) int64 torch Tensor: the selected box indices.
     """
     # Sort descending according to score.
     order = scores.sort(0, descending=True)[1]
@@ -71,7 +71,7 @@ def test_nms():
                           [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
                          dtype=torch.float32,
                          device=torch.device('cuda:0'))
-    scores = torch.tensor([0.1616, 0.1556, 0.1520, 0.1501, 0.1336, 0.1298],
+    scores = torch.tensor([5, 4, 3, 2, 1],
                           dtype=torch.float32,
                           device=torch.device('cuda:0'))
     thresh = 0.01

@@ -25,15 +25,9 @@
 // ----------------------------------------------------------------------------
 
 #include "open3d/ml/impl/misc/Nms.h"
+#include "open3d/ml/pytorch/TorchHelper.h"
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 #include "torch/script.h"
-
-#define CHECK_CUDA(x) TORCH_CHECK(x.is_cuda(), #x, " must be a CUDAtensor ")
-#define CHECK_CONTIGUOUS(x) \
-    TORCH_CHECK(x.is_contiguous(), #x, " must be contiguous ")
-#define CHECK_INPUT(x) \
-    CHECK_CUDA(x);     \
-    CHECK_CONTIGUOUS(x)
 
 const int THREADS_PER_BLOCK_NMS = sizeof(uint64_t) * 8;
 
@@ -55,10 +49,8 @@ inline void gpuAssert(cudaError_t code,
 int64_t NmsCUDA(torch::Tensor boxes,
                 torch::Tensor keep,
                 double nms_overlap_thresh) {
-    // params boxes: (N, 5) [x1, y1, x2, y2, ry]
-    // params keep: (N)
-
-    CHECK_INPUT(boxes);
+    CHECK_CUDA(boxes);
+    CHECK_CONTIGUOUS(boxes);
     CHECK_CONTIGUOUS(keep);
 
     int boxes_num = boxes.size(0);
