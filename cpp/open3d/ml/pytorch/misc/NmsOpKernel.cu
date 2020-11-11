@@ -53,37 +53,33 @@ int64_t NmsCUDA(torch::Tensor boxes,
     CHECK_CONTIGUOUS(boxes);
     CHECK_CONTIGUOUS(keep);
 
-    int boxes_num = boxes.size(0);
-    const float *boxes_data = boxes.data_ptr<float>();
-    int64_t *keep_data = keep.data_ptr<int64_t>();
+    const int num_boxes = boxes.size(0);
+    const int col_blocks = DIVUP(num_boxes, THREADS_PER_BLOCK_NMS);
+    uint64_t *mask_ptr = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
+                           num_boxes * col_blocks * sizeof(uint64_t)));
 
-    const int col_blocks = DIVUP(boxes_num, THREADS_PER_BLOCK_NMS);
-
-    uint64_t *mask_data = NULL;
-    CHECK_ERROR(cudaMalloc((void **)&mask_data,
-                           boxes_num * col_blocks * sizeof(uint64_t)));
-    open3d::ml::impl::NmsCUDAKernel(boxes_data, mask_data, boxes_num,
+    const float *boxes_ptr = boxes.data_ptr<float>();
+    open3d::ml::impl::NmsCUDAKernel(boxes_ptr, mask_ptr, num_boxes,
                                     nms_overlap_thresh);
 
-    std::vector<uint64_t> mask_cpu(boxes_num * col_blocks);
-
-    CHECK_ERROR(cudaMemcpy(&mask_cpu[0], mask_data,
-                           boxes_num * col_blocks * sizeof(uint64_t),
+    std::vector<uint64_t> mask_cpu(num_boxes * col_blocks);
+    CHECK_ERROR(cudaMemcpy(mask_cpu.data(), mask_ptr,
+                           num_boxes * col_blocks * sizeof(uint64_t),
                            cudaMemcpyDeviceToHost));
-
-    cudaFree(mask_data);
+    cudaFree(mask_ptr);
 
     uint64_t remv_cpu[col_blocks];
     memset(remv_cpu, 0, col_blocks * sizeof(uint64_t));
 
+    int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
-
-    for (int i = 0; i < boxes_num; i++) {
+    for (int i = 0; i < num_boxes; i++) {
         int nblock = i / THREADS_PER_BLOCK_NMS;
         int inblock = i % THREADS_PER_BLOCK_NMS;
 
         if (!(remv_cpu[nblock] & (1ULL << inblock))) {
-            keep_data[num_to_keep++] = i;
+            keep_ptr[num_to_keep++] = i;
             uint64_t *p = &mask_cpu[0] + i * col_blocks;
             for (int j = nblock; j < col_blocks; j++) {
                 remv_cpu[j] |= p[j];

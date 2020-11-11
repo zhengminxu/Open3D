@@ -264,7 +264,7 @@ __device__ inline float iou_bev(const float *box_a, const float *box_b) {
     return s_overlap / fmaxf(sa + sb - s_overlap, EPS);
 }
 
-__global__ void nms_kernel(const int boxes_num,
+__global__ void nms_kernel(const int num_boxes,
                            const float nms_overlap_thresh,
                            const float *boxes,
                            uint64_t *mask) {
@@ -276,9 +276,9 @@ __global__ void nms_kernel(const int boxes_num,
 
     // if (row_start > col_start) return;
 
-    const int row_size = fminf(boxes_num - row_start * THREADS_PER_BLOCK_NMS,
+    const int row_size = fminf(num_boxes - row_start * THREADS_PER_BLOCK_NMS,
                                THREADS_PER_BLOCK_NMS);
-    const int col_size = fminf(boxes_num - col_start * THREADS_PER_BLOCK_NMS,
+    const int col_size = fminf(num_boxes - col_start * THREADS_PER_BLOCK_NMS,
                                THREADS_PER_BLOCK_NMS);
 
     __shared__ float block_boxes[THREADS_PER_BLOCK_NMS * 5];
@@ -317,19 +317,19 @@ __global__ void nms_kernel(const int boxes_num,
                 t |= 1ULL << i;
             }
         }
-        const int col_blocks = DIVUP(boxes_num, THREADS_PER_BLOCK_NMS);
+        const int col_blocks = DIVUP(num_boxes, THREADS_PER_BLOCK_NMS);
         mask[cur_box_idx * col_blocks + col_start] = t;
     }
 }
 
 void NmsCUDAKernel(const float *boxes,
                    uint64_t *mask,
-                   int boxes_num,
+                   int num_boxes,
                    float nms_overlap_thresh) {
-    dim3 blocks(DIVUP(boxes_num, THREADS_PER_BLOCK_NMS),
-                DIVUP(boxes_num, THREADS_PER_BLOCK_NMS));
+    dim3 blocks(DIVUP(num_boxes, THREADS_PER_BLOCK_NMS),
+                DIVUP(num_boxes, THREADS_PER_BLOCK_NMS));
     dim3 threads(THREADS_PER_BLOCK_NMS);
-    nms_kernel<<<blocks, threads>>>(boxes_num, nms_overlap_thresh, boxes, mask);
+    nms_kernel<<<blocks, threads>>>(num_boxes, nms_overlap_thresh, boxes, mask);
 }
 
 }  // namespace impl
