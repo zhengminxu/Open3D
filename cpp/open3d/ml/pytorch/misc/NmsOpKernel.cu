@@ -69,9 +69,7 @@ int64_t NmsCUDA(torch::Tensor boxes,
                            cudaMemcpyDeviceToHost));
     cudaFree(mask_ptr);
 
-    uint64_t remv_cpu[col_blocks];
-    memset(remv_cpu, 0, col_blocks * sizeof(uint64_t));
-
+    std::vector<uint64_t> remv_cpu(col_blocks, 0);
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
     for (int i = 0; i < num_boxes; i++) {
