@@ -49,6 +49,9 @@ void NmsCPUKernel(const float *boxes,
                 for (int dst_idx = NMS_BLOCK_SIZE * block_col_idx;
                      dst_idx < NMS_BLOCK_SIZE * block_col_idx + col_size;
                      dst_idx++) {
+                    // Unlike the CUDA impl, both src_idx and dst_idx here are
+                    // indexes to the global memory. Thus we need to compute the
+                    // local index for dst_idx.
                     if (iou_bev(boxes + src_idx * 5, boxes + dst_idx * 5) >
                         nms_overlap_thresh) {
                         t |= 1ULL << (dst_idx - NMS_BLOCK_SIZE * block_col_idx);
