@@ -43,8 +43,6 @@ torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
     int num_to_keep = NmsCPU(boxes, keep, nms_overlap_thresh);
     torch::Tensor selected_keep = torch::slice(keep, 0, 0, num_to_keep);
     return torch::index_select(order, 0, selected_keep);
-    printf("Inside NmsWithScoreCPU! %d\n", num_to_keep);
-    exit(1);
 }
 
 int64_t NmsCPU(torch::Tensor boxes,
