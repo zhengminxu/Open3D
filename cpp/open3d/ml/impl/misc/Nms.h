@@ -47,11 +47,11 @@ constexpr float EPS = 1e-8;
 struct Point {
     float x, y;
     OPEN3D_HOST_DEVICE Point() {}
-    OPEN3D_HOST_DEVICE Point(double _x, double _y) { x = _x, y = _y; }
+    OPEN3D_HOST_DEVICE Point(double x, double y) : x(x), y(y) {}
 
-    OPEN3D_HOST_DEVICE void set(float _x, float _y) {
-        x = _x;
-        y = _y;
+    OPEN3D_HOST_DEVICE void set(float x, float y) {
+        this->x = x;
+        this->y = y;
     }
 
     OPEN3D_HOST_DEVICE Point operator+(const Point &b) const {
