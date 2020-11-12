@@ -21,37 +21,37 @@ constexpr float EPS = 1e-8;
 
 struct Point {
     float x, y;
-    __device__ Point() {}
-    __device__ Point(double _x, double _y) { x = _x, y = _y; }
+    OPEN3D_HOST_DEVICE Point() {}
+    OPEN3D_HOST_DEVICE Point(double _x, double _y) { x = _x, y = _y; }
 
-    __device__ void set(float _x, float _y) {
+    OPEN3D_HOST_DEVICE void set(float _x, float _y) {
         x = _x;
         y = _y;
     }
 
-    __device__ Point operator+(const Point &b) const {
+    OPEN3D_HOST_DEVICE Point operator+(const Point &b) const {
         return Point(x + b.x, y + b.y);
     }
 
-    __device__ Point operator-(const Point &b) const {
+    OPEN3D_HOST_DEVICE Point operator-(const Point &b) const {
         return Point(x - b.x, y - b.y);
     }
 };
 
-__device__ inline float cross(const Point &a, const Point &b) {
+OPEN3D_HOST_DEVICE inline float cross(const Point &a, const Point &b) {
     return a.x * b.y - a.y * b.x;
 }
 
-__device__ inline float cross(const Point &p1,
-                              const Point &p2,
-                              const Point &p0) {
+OPEN3D_HOST_DEVICE inline float cross(const Point &p1,
+                                      const Point &p2,
+                                      const Point &p0) {
     return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y);
 }
 
-__device__ int check_rect_cross(const Point &p1,
-                                const Point &p2,
-                                const Point &q1,
-                                const Point &q2) {
+OPEN3D_HOST_DEVICE int check_rect_cross(const Point &p1,
+                                        const Point &p2,
+                                        const Point &q1,
+                                        const Point &q2) {
     int ret = min(p1.x, p2.x) <= max(q1.x, q2.x) &&
               min(q1.x, q2.x) <= max(p1.x, p2.x) &&
               min(p1.y, p2.y) <= max(q1.y, q2.y) &&
@@ -59,7 +59,7 @@ __device__ int check_rect_cross(const Point &p1,
     return ret;
 }
 
-__device__ inline int check_in_box2d(const float *box, const Point &p) {
+OPEN3D_HOST_DEVICE inline int check_in_box2d(const float *box, const Point &p) {
     // box (5): [x1, y1, x2, y2, angle]
     const float MARGIN = 1e-5;
 
@@ -76,11 +76,11 @@ __device__ inline int check_in_box2d(const float *box, const Point &p) {
             rot_y > box[1] - MARGIN && rot_y < box[3] + MARGIN);
 }
 
-__device__ inline int intersection(const Point &p1,
-                                   const Point &p0,
-                                   const Point &q1,
-                                   const Point &q0,
-                                   Point &ans) {
+OPEN3D_HOST_DEVICE inline int intersection(const Point &p1,
+                                           const Point &p0,
+                                           const Point &q1,
+                                           const Point &q0,
+                                           Point &ans) {
     // Fast exclusion.
     if (check_rect_cross(p0, p1, q0, q1) == 0) return 0;
 
@@ -112,10 +112,10 @@ __device__ inline int intersection(const Point &p1,
     return 1;
 }
 
-__device__ inline void rotate_around_center(const Point &center,
-                                            const float angle_cos,
-                                            const float angle_sin,
-                                            Point &p) {
+OPEN3D_HOST_DEVICE inline void rotate_around_center(const Point &center,
+                                                    const float angle_cos,
+                                                    const float angle_sin,
+                                                    Point &p) {
     float new_x = (p.x - center.x) * angle_cos + (p.y - center.y) * angle_sin +
                   center.x;
     float new_y = -(p.x - center.x) * angle_sin + (p.y - center.y) * angle_cos +
@@ -123,14 +123,15 @@ __device__ inline void rotate_around_center(const Point &center,
     p.set(new_x, new_y);
 }
 
-__device__ inline int point_cmp(const Point &a,
-                                const Point &b,
-                                const Point &center) {
+OPEN3D_HOST_DEVICE inline int point_cmp(const Point &a,
+                                        const Point &b,
+                                        const Point &center) {
     return atan2(a.y - center.y, a.x - center.x) >
            atan2(b.y - center.y, b.x - center.x);
 }
 
-__device__ inline float box_overlap(const float *box_a, const float *box_b) {
+OPEN3D_HOST_DEVICE inline float box_overlap(const float *box_a,
+                                            const float *box_b) {
     // box_a (5) [x1, y1, x2, y2, angle]
     // box_b (5) [x1, y1, x2, y2, angle]
 
@@ -225,7 +226,8 @@ __device__ inline float box_overlap(const float *box_a, const float *box_b) {
     return fabs(area) / 2.0;
 }
 
-__device__ inline float iou_bev(const float *box_a, const float *box_b) {
+OPEN3D_HOST_DEVICE inline float iou_bev(const float *box_a,
+                                        const float *box_b) {
     // params: box_a (5) [x1, y1, x2, y2, angle]
     // params: box_b (5) [x1, y1, x2, y2, angle]
     float sa = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1]);
