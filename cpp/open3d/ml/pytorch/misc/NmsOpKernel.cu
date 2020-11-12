@@ -87,8 +87,10 @@ int64_t NmsCUDA(torch::Tensor boxes,
         // - remv_cpu[block_col_idx]: the block bitmap containing the query
         // - 1ULL << inner_block_col_idx: the one-hot bitmap to extract i
         if (!(remv_cpu[block_col_idx] & (1ULL << inner_block_col_idx))) {
+            // Keep the i-th box.
             keep_ptr[num_to_keep++] = i;
-            // Locating to the i-th row in mask_cpu.
+
+            // Any box that overlaps with the i-th box will be removed.
             uint64_t *p = mask_cpu.data() + i * num_block_cols;
             for (int j = block_col_idx; j < num_block_cols; j++) {
                 remv_cpu[j] |= p[j];
