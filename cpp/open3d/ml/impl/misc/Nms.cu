@@ -58,7 +58,7 @@ __device__ int check_rect_cross(const Point &p1,
 }
 
 __device__ inline int check_in_box2d(const float *box, const Point &p) {
-    // params: box (5) [x1, y1, x2, y2, angle]
+    // box (5): [x1, y1, x2, y2, angle]
     const float MARGIN = 1e-5;
 
     float center_x = (box[0] + box[2]) / 2;
@@ -70,13 +70,6 @@ __device__ inline int check_in_box2d(const float *box, const Point &p) {
                   center_x;
     float rot_y = -(p.x - center_x) * angle_sin + (p.y - center_y) * angle_cos +
                   center_y;
-#ifdef DEBUG
-    printf("box: (%.3f, %.3f, %.3f, %.3f, %.3f)\n", box[0], box[1], box[2],
-           box[3], box[4]);
-    printf("center: (%.3f, %.3f), cossin(%.3f, %.3f), src(%.3f, %.3f), "
-           "rot(%.3f, %.3f)\n",
-           center_x, center_y, angle_cos, angle_sin, p.x, p.y, rot_x, rot_y);
-#endif
     return (rot_x > box[0] - MARGIN && rot_x < box[2] + MARGIN &&
             rot_y > box[1] - MARGIN && rot_y < box[3] + MARGIN);
 }
@@ -86,10 +79,10 @@ __device__ inline int intersection(const Point &p1,
                                    const Point &q1,
                                    const Point &q0,
                                    Point &ans) {
-    // fast exclusion
+    // Fast exclusion.
     if (check_rect_cross(p0, p1, q0, q1) == 0) return 0;
 
-    // check cross standing
+    // Check cross standing
     float s1 = cross(q0, p1, p0);
     float s2 = cross(p1, q1, p0);
     float s3 = cross(p0, q1, q0);
@@ -97,7 +90,7 @@ __device__ inline int intersection(const Point &p1,
 
     if (!(s1 * s2 > 0 && s3 * s4 > 0)) return 0;
 
-    // calculate intersection of two lines
+    // Calculate intersection of two lines.
     float s5 = cross(q1, p1, p0);
     if (fabs(s5 - s1) > EPS) {
         ans.x = (s5 * q0.x - s1 * q1.x) / (s5 - s1);
@@ -136,8 +129,8 @@ __device__ inline int point_cmp(const Point &a,
 }
 
 __device__ inline float box_overlap(const float *box_a, const float *box_b) {
-    // params: box_a (5) [x1, y1, x2, y2, angle]
-    // params: box_b (5) [x1, y1, x2, y2, angle]
+    // box_a (5) [x1, y1, x2, y2, angle]
+    // box_b (5) [x1, y1, x2, y2, angle]
 
     float a_x1 = box_a[0], a_y1 = box_a[1], a_x2 = box_a[2], a_y2 = box_a[3],
           a_angle = box_a[4];
@@ -146,13 +139,6 @@ __device__ inline float box_overlap(const float *box_a, const float *box_b) {
 
     Point center_a((a_x1 + a_x2) / 2, (a_y1 + a_y2) / 2);
     Point center_b((b_x1 + b_x2) / 2, (b_y1 + b_y2) / 2);
-#ifdef DEBUG
-    printf("a: (%.3f, %.3f, %.3f, %.3f, %.3f), b: (%.3f, %.3f, %.3f, %.3f, "
-           "%.3f)\n",
-           a_x1, a_y1, a_x2, a_y2, a_angle, b_x1, b_y1, b_x2, b_y2, b_angle);
-    printf("center a: (%.3f, %.3f), b: (%.3f, %.3f)\n", center_a.x, center_a.y,
-           center_b.x, center_b.y);
-#endif
 
     Point box_a_corners[5];
     box_a_corners[0].set(a_x1, a_y1);
@@ -166,31 +152,21 @@ __device__ inline float box_overlap(const float *box_a, const float *box_b) {
     box_b_corners[2].set(b_x2, b_y2);
     box_b_corners[3].set(b_x1, b_y2);
 
-    // get oriented corners
+    // Get oriented corners.
     float a_angle_cos = cos(a_angle), a_angle_sin = sin(a_angle);
     float b_angle_cos = cos(b_angle), b_angle_sin = sin(b_angle);
 
     for (int k = 0; k < 4; k++) {
-#ifdef DEBUG
-        printf("before corner %d: a(%.3f, %.3f), b(%.3f, %.3f) \n", k,
-               box_a_corners[k].x, box_a_corners[k].y, box_b_corners[k].x,
-               box_b_corners[k].y);
-#endif
         rotate_around_center(center_a, a_angle_cos, a_angle_sin,
                              box_a_corners[k]);
         rotate_around_center(center_b, b_angle_cos, b_angle_sin,
                              box_b_corners[k]);
-#ifdef DEBUG
-        printf("corner %d: a(%.3f, %.3f), b(%.3f, %.3f) \n", k,
-               box_a_corners[k].x, box_a_corners[k].y, box_b_corners[k].x,
-               box_b_corners[k].y);
-#endif
     }
 
     box_a_corners[4] = box_a_corners[0];
     box_b_corners[4] = box_b_corners[0];
 
-    // get intersection of lines
+    // Get intersection of lines.
     Point cross_points[16];
     Point poly_center;
     int cnt = 0, flag = 0;
@@ -208,7 +184,7 @@ __device__ inline float box_overlap(const float *box_a, const float *box_b) {
         }
     }
 
-    // check corners
+    // Check corners.
     for (int k = 0; k < 4; k++) {
         if (check_in_box2d(box_a, box_b_corners[k])) {
             poly_center = poly_center + box_b_corners[k];
@@ -225,7 +201,7 @@ __device__ inline float box_overlap(const float *box_a, const float *box_b) {
     poly_center.x /= cnt;
     poly_center.y /= cnt;
 
-    // sort the points of polygon
+    // Sort the points of polygon.
     Point temp;
     for (int j = 0; j < cnt - 1; j++) {
         for (int i = 0; i < cnt - j - 1; i++) {
@@ -237,15 +213,7 @@ __device__ inline float box_overlap(const float *box_a, const float *box_b) {
         }
     }
 
-#ifdef DEBUG
-    printf("cnt=%d\n", cnt);
-    for (int i = 0; i < cnt; i++) {
-        printf("All cross point %d: (%.3f, %.3f)\n", i, cross_points[i].x,
-               cross_points[i].y);
-    }
-#endif
-
-    // get the overlap areas
+    // Get the overlap areas.
     float area = 0;
     for (int k = 0; k < cnt - 1; k++) {
         area += cross(cross_points[k] - cross_points[0],
