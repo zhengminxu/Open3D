@@ -8,7 +8,6 @@ All Rights Reserved 2018.
 
 #include "open3d/ml/impl/misc/Nms.h"
 
-#define THREADS_PER_BLOCK 16
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
 namespace open3d {
