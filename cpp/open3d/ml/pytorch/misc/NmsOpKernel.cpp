@@ -35,7 +35,13 @@
 torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                               torch::Tensor scores,
                               double nms_overlap_thresh) {
-    printf("Inside NmsWithScoreCPU!\n");
+    torch::Tensor order =
+            std::get<1>(torch::sort(scores, 0, /*descending=*/true));
+    torch::Tensor boxes_sorted = torch::index_select(boxes, 0, order);
+    torch::Tensor keep = torch::zeros(
+            {boxes.size(0)}, torch::TensorOptions().dtype(torch::kLong));
+    int num_to_keep = NmsCPU(boxes, keep, nms_overlap_thresh);
+    printf("Inside NmsWithScoreCPU! %d\n", num_to_keep);
     exit(1);
 }
 
@@ -85,5 +91,4 @@ int64_t NmsCPU(torch::Tensor boxes,
     }
 
     return num_to_keep;
-    return 0;
 }
