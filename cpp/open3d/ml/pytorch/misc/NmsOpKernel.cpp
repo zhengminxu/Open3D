@@ -35,16 +35,15 @@
 torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                               torch::Tensor scores,
                               double nms_overlap_thresh) {
-    std::cout << "boxes:" << std::endl;
-    std::cout << boxes << std::endl;
     torch::Tensor order =
             std::get<1>(torch::sort(scores, 0, /*descending=*/true));
-    std::cout << "order:" << std::endl;
-    std::cout << order << std::endl;
-    torch::Tensor boxes_sorted = torch::index_select(boxes, 0, order);
+    torch::Tensor boxes_sorted =
+            torch::index_select(boxes, 0, order).contiguous();
     torch::Tensor keep = torch::zeros(
             {boxes.size(0)}, torch::TensorOptions().dtype(torch::kLong));
-    int num_to_keep = NmsCPU(boxes, keep, nms_overlap_thresh);
+    int num_to_keep = NmsCPU(boxes_sorted, keep, nms_overlap_thresh);
+    std::cout << "keep:" << std::endl;
+    std::cout << keep << std::endl;
     torch::Tensor selected_keep = torch::slice(keep, 0, 0, num_to_keep);
     return torch::index_select(order, 0, selected_keep);
 }
