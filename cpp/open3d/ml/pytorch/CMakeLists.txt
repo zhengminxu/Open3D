@@ -61,6 +61,7 @@ endif()
 add_library(open3d_torch_ops SHARED ${open3d_torch_ops_SOURCES})
 open3d_set_global_properties(open3d_torch_ops)
 open3d_show_and_abort_on_warning(open3d_torch_ops)
+target_link_libraries(open3d_torch_ops PRIVATE ${CMAKE_PROJECT_NAME})
 
 # Set output directory according to architecture (cpu/cuda)
 get_target_property(TORCH_OPS_DIR open3d_torch_ops LIBRARY_OUTPUT_DIRECTORY)
