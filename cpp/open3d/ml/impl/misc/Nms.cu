@@ -268,13 +268,14 @@ __global__ void nms_kernel(const int num_boxes,
                            const float nms_overlap_thresh,
                            const float *boxes,
                            uint64_t *mask) {
-    // params: boxes (N, 5) [x1, y1, x2, y2, ry]
-    // params: mask (N, N/THREADS_PER_BLOCK_NMS)
-
+    // boxes: (N, 5)
+    // mask:  (N, N/TPB)
+    //
+    // Kernel launch:
+    // blocks: (N/TPB, N/TPB)
+    // threas: TPB
     const int row_start = blockIdx.y;
     const int col_start = blockIdx.x;
-
-    // if (row_start > col_start) return;
 
     const int row_size = fminf(num_boxes - row_start * THREADS_PER_BLOCK_NMS,
                                THREADS_PER_BLOCK_NMS);

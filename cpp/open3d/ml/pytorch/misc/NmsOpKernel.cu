@@ -55,20 +55,25 @@ int64_t NmsCUDA(torch::Tensor boxes,
 
     const int num_boxes = boxes.size(0);
     const int col_blocks = DIVUP(num_boxes, THREADS_PER_BLOCK_NMS);
+
+    // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
                            num_boxes * col_blocks * sizeof(uint64_t)));
 
+    // Call kernel. Results will be saved in masks.
     const float *boxes_ptr = boxes.data_ptr<float>();
     open3d::ml::impl::NmsCUDAKernel(boxes_ptr, mask_ptr, num_boxes,
                                     nms_overlap_thresh);
 
+    // Copy cuda masks to cpu.
     std::vector<uint64_t> mask_cpu(num_boxes * col_blocks);
     CHECK_ERROR(cudaMemcpy(mask_cpu.data(), mask_ptr,
                            num_boxes * col_blocks * sizeof(uint64_t),
                            cudaMemcpyDeviceToHost));
     cudaFree(mask_ptr);
 
+    // Write to keep.
     std::vector<uint64_t> remv_cpu(col_blocks, 0);
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
@@ -78,7 +83,7 @@ int64_t NmsCUDA(torch::Tensor boxes,
 
         if (!(remv_cpu[nblock] & (1ULL << inblock))) {
             keep_ptr[num_to_keep++] = i;
-            uint64_t *p = &mask_cpu[0] + i * col_blocks;
+            uint64_t *p = mask_cpu.data() + i * col_blocks;
             for (int j = nblock; j < col_blocks; j++) {
                 remv_cpu[j] |= p[j];
             }
