@@ -35,6 +35,7 @@ set(TORCH_OPS_SOURCES
     "misc/FixedRadiusSearchOpKernel.cpp"
     "misc/NmsOpKernel.cpp"
     "misc/NmsOps.cpp"
+    "../impl/misc/Nms.cpp"
 )
 
 set(TORCH_OPS_CUDA_SOURCES

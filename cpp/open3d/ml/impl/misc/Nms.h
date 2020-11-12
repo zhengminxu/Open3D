@@ -41,12 +41,17 @@ void NmsCUDAKernel(const float *boxes,
                    float nms_overlap_thresh);
 #endif
 
+void NmsCPUKernel(const float *boxes,
+                  uint64_t *mask,
+                  int boxes_num,
+                  float nms_overlap_thresh);
+
 constexpr int NMS_BLOCK_SIZE = sizeof(uint64_t) * 8;
 constexpr float EPS = 1e-8;
 
 struct Point {
-    float x, y;
     OPEN3D_HOST_DEVICE Point() {}
+
     OPEN3D_HOST_DEVICE Point(double x, double y) : x(x), y(y) {}
 
     OPEN3D_HOST_DEVICE void set(float x, float y) {
@@ -61,6 +66,8 @@ struct Point {
     OPEN3D_HOST_DEVICE Point operator-(const Point &b) const {
         return Point(x - b.x, y - b.y);
     }
+
+    float x, y;
 };
 
 OPEN3D_HOST_DEVICE inline float cross(const Point &a, const Point &b) {
