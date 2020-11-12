@@ -26,6 +26,10 @@
 
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 
+#include "open3d/ml/impl/misc/Nms.h"
+#include "open3d/ml/pytorch/TorchHelper.h"
+#include "torch/script.h"
+
 int64_t NmsCPU(torch::Tensor boxes,
                torch::Tensor keep,
                double nms_overlap_thresh) {

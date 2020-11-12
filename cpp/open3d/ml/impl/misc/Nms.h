@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <math.h>
+
 #include "open3d/core/CUDAUtils.h"
 
 namespace open3d {
@@ -75,10 +77,10 @@ OPEN3D_HOST_DEVICE inline int check_rect_cross(const Point &p1,
                                                const Point &p2,
                                                const Point &q1,
                                                const Point &q2) {
-    int ret = min(p1.x, p2.x) <= max(q1.x, q2.x) &&
-              min(q1.x, q2.x) <= max(p1.x, p2.x) &&
-              min(p1.y, p2.y) <= max(q1.y, q2.y) &&
-              min(q1.y, q2.y) <= max(p1.y, p2.y);
+    int ret = fmin(p1.x, p2.x) <= fmax(q1.x, q2.x) &&
+              fmin(q1.x, q2.x) <= fmax(p1.x, p2.x) &&
+              fmin(p1.y, p2.y) <= fmax(q1.y, q2.y) &&
+              fmin(q1.y, q2.y) <= fmax(p1.y, p2.y);
     return ret;
 }
 
