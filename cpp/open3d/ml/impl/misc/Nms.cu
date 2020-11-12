@@ -269,11 +269,11 @@ __global__ void nms_kernel(const int num_boxes,
                            const float *boxes,
                            uint64_t *mask) {
     // boxes: (N, 5)
-    // mask:  (N, N/TPB)
+    // mask:  (N, N/BS)
     //
-    // Kernel launch:
-    // blocks: (N/TPB, N/TPB)
-    // threas: TPB
+    // Kernel launch
+    // blocks : (N/BS, N/BS)
+    // threads: BS
 
     // Row-wise block index.
     const int block_row_idx = blockIdx.y;
