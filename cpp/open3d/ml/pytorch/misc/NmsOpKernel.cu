@@ -29,8 +29,6 @@
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 #include "torch/script.h"
 
-const int NMS_BLOCK_SIZE = sizeof(uint64_t) * 8;
-
 #define CHECK_ERROR(ans) \
     { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code,
@@ -54,7 +52,8 @@ int64_t NmsCUDA(torch::Tensor boxes,
     CHECK_CONTIGUOUS(keep);
 
     const int num_boxes = boxes.size(0);
-    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
+    const int num_block_cols =
+            DIVUP(num_boxes, open3d::ml::impl::NMS_BLOCK_SIZE);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
@@ -80,8 +79,9 @@ int64_t NmsCUDA(torch::Tensor boxes,
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
     for (int i = 0; i < num_boxes; i++) {
-        int block_col_idx = i / NMS_BLOCK_SIZE;
-        int inner_block_col_idx = i % NMS_BLOCK_SIZE;  // threadIdx.x
+        int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
+        int inner_block_col_idx =
+                i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
 
         // Querying the i-th bit in remv_cpu, counted from the right.
         // - remv_cpu[block_col_idx]: the block bitmap containing the query
