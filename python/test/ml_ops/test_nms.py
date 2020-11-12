@@ -53,6 +53,7 @@ def test_nms_gpu():
         """
         # Sort descending according to score.
         order = scores.sort(0, descending=True)[1]
+        print(order)
         # Order boxes by their score from high to low.
         boxes = boxes[order].contiguous()
         # Temp variable, # of boxes.
@@ -97,4 +98,19 @@ def test_nms_cpu():
     scores = torch.tensor([5, 4, 3, 2, 1], dtype=torch.float32)
     thresh = 0.7
     out = nms_cpu(boxes, scores, thresh)
+    print(out.cpu().numpy())
+
+
+def test_nms_with_score_cpu():
+
+    boxes = torch.tensor([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
+                          [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
+                          [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
+                          [15.2050, -7.8447, 15.8311, -6.7437, 1.0506],
+                          [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
+                          [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
+                         dtype=torch.float32)
+    scores = torch.tensor([5, 4, 3, 2, 1], dtype=torch.float32)
+    thresh = 0.7
+    out = open3d.ml.torch.ops.nms_with_score(boxes, scores, thresh)
     print(out.cpu().numpy())

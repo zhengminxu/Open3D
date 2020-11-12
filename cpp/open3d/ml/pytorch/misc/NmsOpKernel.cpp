@@ -32,6 +32,13 @@
 
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
+torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
+                              torch::Tensor scores,
+                              double nms_overlap_thresh) {
+    printf("Inside NmsWithScoreCPU!\n");
+    exit(1);
+}
+
 int64_t NmsCPU(torch::Tensor boxes,
                torch::Tensor keep,
                double nms_overlap_thresh) {
