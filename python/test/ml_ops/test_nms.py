@@ -71,7 +71,7 @@ def test_nms_gpu():
                           [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
                          dtype=torch.float32,
                          device=torch.device('cuda:0'))
-    scores = torch.tensor([5, 4, 3, 2, 1],
+    scores = torch.tensor([3, 1.1, 5, 2, 1],
                           dtype=torch.float32,
                           device=torch.device('cuda:0'))
     thresh = 0.7
@@ -83,6 +83,7 @@ def test_nms_cpu():
 
     def nms_cpu(boxes, scores, thresh):
         order = scores.sort(0, descending=True)[1]
+        print(order)
         boxes = boxes[order].contiguous()
         keep = torch.LongTensor(boxes.size(0))
         num_out = open3d.ml.torch.ops.nms(boxes, keep, thresh)
@@ -95,7 +96,7 @@ def test_nms_cpu():
                           [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
                           [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
                          dtype=torch.float32)
-    scores = torch.tensor([5, 4, 3, 2, 1], dtype=torch.float32)
+    scores = torch.tensor([3, 1.1, 5, 2, 1], dtype=torch.float32)
     thresh = 0.7
     out = nms_cpu(boxes, scores, thresh)
     print(out.cpu().numpy())
@@ -110,7 +111,7 @@ def test_nms_with_score_cpu():
                           [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
                           [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
                          dtype=torch.float32)
-    scores = torch.tensor([5, 4, 3, 2, 1], dtype=torch.float32)
+    scores = torch.tensor([3, 1.1, 5, 2, 1], dtype=torch.float32)
     thresh = 0.7
     out = open3d.ml.torch.ops.nms_with_score(boxes, scores, thresh)
     print(out.cpu().numpy())
