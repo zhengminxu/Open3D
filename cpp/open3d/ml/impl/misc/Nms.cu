@@ -306,21 +306,20 @@ __global__ void nms_kernel(const int num_boxes,
     __syncthreads();
 
     if (threadIdx.x < row_size) {
-        const int cur_box_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
-        const float *cur_box = boxes + cur_box_idx * 5;
+        // src_idx indices the global memory.
+        const int src_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
+        // dst_idx indices the shared memory.
+        int dst_idx = block_row_idx == block_col_idx ? threadIdx.x + 1 : 0;
 
-        int i = 0;
         uint64_t t = 0;
-        int start = 0;
-        if (block_row_idx == block_col_idx) {
-            start = threadIdx.x + 1;
-        }
-        for (i = start; i < col_size; i++) {
-            if (iou_bev(cur_box, block_boxes + i * 5) > nms_overlap_thresh) {
-                t |= 1ULL << i;
+        while (dst_idx < col_size) {
+            if (iou_bev(boxes + src_idx * 5, block_boxes + dst_idx * 5) >
+                nms_overlap_thresh) {
+                t |= 1ULL << dst_idx;
             }
+            dst_idx++;
         }
-        mask[cur_box_idx * num_block_cols + block_col_idx] = t;
+        mask[src_idx * num_block_cols + block_col_idx] = t;
     }
 }
 
