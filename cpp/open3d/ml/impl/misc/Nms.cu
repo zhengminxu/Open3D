@@ -274,36 +274,36 @@ __global__ void nms_kernel(const int num_boxes,
     // Kernel launch:
     // blocks: (N/TPB, N/TPB)
     // threas: TPB
-    const int row_start = blockIdx.y;
-    const int col_start = blockIdx.x;
+    const int block_row_idx = blockIdx.y;
+    const int block_col_idx = blockIdx.x;
 
     const int row_size =
-            fminf(num_boxes - row_start * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            fminf(num_boxes - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
     const int col_size =
-            fminf(num_boxes - col_start * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            fminf(num_boxes - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
 
     __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
 
     if (threadIdx.x < col_size) {
         float *dst = block_boxes + threadIdx.x * 5;
         const float *src =
-                boxes + (NMS_BLOCK_SIZE * col_start + threadIdx.x) * 5;
-        dst_ptr[0] = src_ptr[0];
-        dst_ptr[1] = src_ptr[1];
-        dst_ptr[2] = src_ptr[2];
-        dst_ptr[3] = src_ptr[3];
-        dst_ptr[4] = src_ptr[4];
+                boxes + (NMS_BLOCK_SIZE * block_col_idx + threadIdx.x) * 5;
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst[3] = src[3];
+        dst[4] = src[4];
     }
     __syncthreads();
 
     if (threadIdx.x < row_size) {
-        const int cur_box_idx = NMS_BLOCK_SIZE * row_start + threadIdx.x;
+        const int cur_box_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
         const float *cur_box = boxes + cur_box_idx * 5;
 
         int i = 0;
         uint64_t t = 0;
         int start = 0;
-        if (row_start == col_start) {
+        if (block_row_idx == block_col_idx) {
             start = threadIdx.x + 1;
         }
         for (i = start; i < col_size; i++) {
@@ -312,7 +312,7 @@ __global__ void nms_kernel(const int num_boxes,
             }
         }
         const int col_blocks = DIVUP(num_boxes, NMS_BLOCK_SIZE);
-        mask[cur_box_idx * col_blocks + col_start] = t;
+        mask[cur_box_idx * col_blocks + block_col_idx] = t;
     }
 }
 
