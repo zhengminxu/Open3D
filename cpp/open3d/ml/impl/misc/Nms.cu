@@ -14,7 +14,7 @@ namespace open3d {
 namespace ml {
 namespace impl {
 
-constexpr int THREADS_PER_BLOCK_NMS = sizeof(uint64_t) * 8;
+constexpr int NMS_BLOCK_SIZE = sizeof(uint64_t) * 8;
 constexpr float EPS = 1e-8;
 
 struct Point {
@@ -277,34 +277,27 @@ __global__ void nms_kernel(const int num_boxes,
     const int row_start = blockIdx.y;
     const int col_start = blockIdx.x;
 
-    const int row_size = fminf(num_boxes - row_start * THREADS_PER_BLOCK_NMS,
-                               THREADS_PER_BLOCK_NMS);
-    const int col_size = fminf(num_boxes - col_start * THREADS_PER_BLOCK_NMS,
-                               THREADS_PER_BLOCK_NMS);
+    const int row_size =
+            fminf(num_boxes - row_start * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+    const int col_size =
+            fminf(num_boxes - col_start * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
 
-    __shared__ float block_boxes[THREADS_PER_BLOCK_NMS * 5];
+    __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
 
     if (threadIdx.x < col_size) {
-        block_boxes[threadIdx.x * 5 + 0] =
-                boxes[(THREADS_PER_BLOCK_NMS * col_start + threadIdx.x) * 5 +
-                      0];
-        block_boxes[threadIdx.x * 5 + 1] =
-                boxes[(THREADS_PER_BLOCK_NMS * col_start + threadIdx.x) * 5 +
-                      1];
-        block_boxes[threadIdx.x * 5 + 2] =
-                boxes[(THREADS_PER_BLOCK_NMS * col_start + threadIdx.x) * 5 +
-                      2];
-        block_boxes[threadIdx.x * 5 + 3] =
-                boxes[(THREADS_PER_BLOCK_NMS * col_start + threadIdx.x) * 5 +
-                      3];
-        block_boxes[threadIdx.x * 5 + 4] =
-                boxes[(THREADS_PER_BLOCK_NMS * col_start + threadIdx.x) * 5 +
-                      4];
+        float *dst = block_boxes + threadIdx.x * 5;
+        const float *src =
+                boxes + (NMS_BLOCK_SIZE * col_start + threadIdx.x) * 5;
+        dst_ptr[0] = src_ptr[0];
+        dst_ptr[1] = src_ptr[1];
+        dst_ptr[2] = src_ptr[2];
+        dst_ptr[3] = src_ptr[3];
+        dst_ptr[4] = src_ptr[4];
     }
     __syncthreads();
 
     if (threadIdx.x < row_size) {
-        const int cur_box_idx = THREADS_PER_BLOCK_NMS * row_start + threadIdx.x;
+        const int cur_box_idx = NMS_BLOCK_SIZE * row_start + threadIdx.x;
         const float *cur_box = boxes + cur_box_idx * 5;
 
         int i = 0;
@@ -318,7 +311,7 @@ __global__ void nms_kernel(const int num_boxes,
                 t |= 1ULL << i;
             }
         }
-        const int col_blocks = DIVUP(num_boxes, THREADS_PER_BLOCK_NMS);
+        const int col_blocks = DIVUP(num_boxes, NMS_BLOCK_SIZE);
         mask[cur_box_idx * col_blocks + col_start] = t;
     }
 }
@@ -327,9 +320,9 @@ void NmsCUDAKernel(const float *boxes,
                    uint64_t *mask,
                    int num_boxes,
                    float nms_overlap_thresh) {
-    dim3 blocks(DIVUP(num_boxes, THREADS_PER_BLOCK_NMS),
-                DIVUP(num_boxes, THREADS_PER_BLOCK_NMS));
-    dim3 threads(THREADS_PER_BLOCK_NMS);
+    dim3 blocks(DIVUP(num_boxes, NMS_BLOCK_SIZE),
+                DIVUP(num_boxes, NMS_BLOCK_SIZE));
+    dim3 threads(NMS_BLOCK_SIZE);
     nms_kernel<<<blocks, threads>>>(num_boxes, nms_overlap_thresh, boxes, mask);
 }
 

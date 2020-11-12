@@ -29,7 +29,7 @@
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 #include "torch/script.h"
 
-const int THREADS_PER_BLOCK_NMS = sizeof(uint64_t) * 8;
+const int NMS_BLOCK_SIZE = sizeof(uint64_t) * 8;
 
 #define CHECK_ERROR(ans) \
     { gpuAssert((ans), __FILE__, __LINE__); }
@@ -54,7 +54,7 @@ int64_t NmsCUDA(torch::Tensor boxes,
     CHECK_CONTIGUOUS(keep);
 
     const int num_boxes = boxes.size(0);
-    const int col_blocks = DIVUP(num_boxes, THREADS_PER_BLOCK_NMS);
+    const int col_blocks = DIVUP(num_boxes, NMS_BLOCK_SIZE);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
@@ -78,8 +78,8 @@ int64_t NmsCUDA(torch::Tensor boxes,
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
     for (int i = 0; i < num_boxes; i++) {
-        int nblock = i / THREADS_PER_BLOCK_NMS;
-        int inblock = i % THREADS_PER_BLOCK_NMS;
+        int nblock = i / NMS_BLOCK_SIZE;
+        int inblock = i % NMS_BLOCK_SIZE;
 
         if (!(remv_cpu[nblock] & (1ULL << inblock))) {
             keep_ptr[num_to_keep++] = i;
