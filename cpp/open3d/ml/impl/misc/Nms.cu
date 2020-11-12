@@ -305,6 +305,16 @@ __global__ void nms_kernel(const int num_boxes,
     }
     __syncthreads();
 
+    // Comparing src and dst. In one block, the following src and dst indices
+    // are compared:
+    // - src: BS * block_row_idx : BS * block_row_idx + row_size
+    // - dst: BS * block_col_idx : BS * block_col_idx + col_size
+    //
+    // With all blocks, all src and dst indices are compared.
+    //
+    // Result:
+    // mask[i, j] is a 64-bit integer where mask[i, j][k] (k counted from right)
+    // is 1 iff box[i] overlaps with box[BS*j+k].
     if (threadIdx.x < row_size) {
         // src_idx indices the global memory.
         const int src_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
