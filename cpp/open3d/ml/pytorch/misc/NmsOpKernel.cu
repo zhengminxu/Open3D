@@ -54,12 +54,12 @@ int64_t NmsCUDA(torch::Tensor boxes,
     CHECK_CONTIGUOUS(keep);
 
     const int num_boxes = boxes.size(0);
-    const int col_blocks = DIVUP(num_boxes, NMS_BLOCK_SIZE);
+    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
-                           num_boxes * col_blocks * sizeof(uint64_t)));
+                           num_boxes * num_block_cols * sizeof(uint64_t)));
 
     // Call kernel. Results will be saved in masks.
     const float *boxes_ptr = boxes.data_ptr<float>();
@@ -67,14 +67,14 @@ int64_t NmsCUDA(torch::Tensor boxes,
                                     nms_overlap_thresh);
 
     // Copy cuda masks to cpu.
-    std::vector<uint64_t> mask_cpu(num_boxes * col_blocks);
+    std::vector<uint64_t> mask_cpu(num_boxes * num_block_cols);
     CHECK_ERROR(cudaMemcpy(mask_cpu.data(), mask_ptr,
-                           num_boxes * col_blocks * sizeof(uint64_t),
+                           num_boxes * num_block_cols * sizeof(uint64_t),
                            cudaMemcpyDeviceToHost));
     cudaFree(mask_ptr);
 
     // Write to keep.
-    std::vector<uint64_t> remv_cpu(col_blocks, 0);
+    std::vector<uint64_t> remv_cpu(num_block_cols, 0);
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
     for (int i = 0; i < num_boxes; i++) {
@@ -83,8 +83,8 @@ int64_t NmsCUDA(torch::Tensor boxes,
 
         if (!(remv_cpu[nblock] & (1ULL << inblock))) {
             keep_ptr[num_to_keep++] = i;
-            uint64_t *p = mask_cpu.data() + i * col_blocks;
-            for (int j = nblock; j < col_blocks; j++) {
+            uint64_t *p = mask_cpu.data() + i * num_block_cols;
+            for (int j = nblock; j < num_block_cols; j++) {
                 remv_cpu[j] |= p[j];
             }
         }

@@ -274,16 +274,25 @@ __global__ void nms_kernel(const int num_boxes,
     // Kernel launch:
     // blocks: (N/TPB, N/TPB)
     // threas: TPB
+
+    // Row-wise block index.
     const int block_row_idx = blockIdx.y;
+    // Column-wise block index.
     const int block_col_idx = blockIdx.x;
 
+    // Local block row size.
     const int row_size =
             fminf(num_boxes - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+    // Local block col size.
     const int col_size =
             fminf(num_boxes - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
 
-    __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
+    // Cololum-wise number of blocks.
+    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
 
+    // Fill local block_boxes by fetching the global box memory.
+    // block_boxes = boxes[NBS*block_col_idx : NBS*block_col_idx+col_size, :].
+    __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
     if (threadIdx.x < col_size) {
         float *dst = block_boxes + threadIdx.x * 5;
         const float *src =
@@ -311,8 +320,7 @@ __global__ void nms_kernel(const int num_boxes,
                 t |= 1ULL << i;
             }
         }
-        const int col_blocks = DIVUP(num_boxes, NMS_BLOCK_SIZE);
-        mask[cur_box_idx * col_blocks + block_col_idx] = t;
+        mask[cur_box_idx * num_block_cols + block_col_idx] = t;
     }
 }
 
