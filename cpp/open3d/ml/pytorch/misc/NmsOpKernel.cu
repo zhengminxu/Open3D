@@ -61,7 +61,6 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                              {static_cast<int64_t>(keep_indices.size())},
                              torch::TensorOptions().dtype(torch::kLong))
                     .to(boxes.device());
-    (void)keep_tensor;
     return keep_tensor;
 }
 
