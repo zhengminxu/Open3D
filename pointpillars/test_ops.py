@@ -55,7 +55,7 @@ def test_nms_v2():
     s = time.time()
     from iou3d.iou3d_utils import nms_gpu
 
-    ref_out_selected = np.array([2, 5, 3])
+    ref_out_selected = np.array([2, 3, 5])
 
     in_boxes = torch.tensor([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
                              [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
