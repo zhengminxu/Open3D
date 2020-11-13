@@ -144,25 +144,17 @@ __global__ void nms_kernel(const float *boxes,
     }
 }
 
-// [inputs]
-// boxes             : (N, 5) float32
-// scores            : (N,) float32
-// nms_overlap_thresh: double
-//
-// [return]
-// keep_indices      : (M,) int64, the selected box indices
-torch::Tensor NmsCUDA(torch::Tensor boxes,
-                      torch::Tensor scores,
-                      double nms_overlap_thresh) {
-    const int N = boxes.size(0);
+static std::vector<int64_t> NmsCUDAKernel(const float *boxes,
+                                          float *scores,
+                                          int N,
+                                          float nms_overlap_thresh) {
     const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Compute sort indices.
     int64_t *sort_indices = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
-    torch::Tensor scores_copy = scores.clone();
-    SortIndices(scores.clone().data_ptr<float>(), sort_indices, N, true);
+    SortIndices(scores, sort_indices, N, true);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
@@ -172,8 +164,8 @@ torch::Tensor NmsCUDA(torch::Tensor boxes,
     // Launch kernel.
     dim3 blocks(DIVUP(N, NMS_BLOCK_SIZE), DIVUP(N, NMS_BLOCK_SIZE));
     dim3 threads(NMS_BLOCK_SIZE);
-    nms_kernel<<<blocks, threads>>>(boxes.data_ptr<float>(), sort_indices,
-                                    mask_ptr, N, nms_overlap_thresh);
+    nms_kernel<<<blocks, threads>>>(boxes, sort_indices, mask_ptr, N,
+                                    nms_overlap_thresh);
 
     // Copy cuda masks to cpu.
     std::vector<uint64_t> mask_vec(N * num_block_cols);
@@ -191,6 +183,8 @@ torch::Tensor NmsCUDA(torch::Tensor boxes,
     // Write to keep_indices in CPU.
     // remv_cpu has N bits in total. If the bit is 1, the corresponding
     // box will be removed.
+    // TODO: This part can be implemented in CUDA. We use the original author's
+    // implementation here.
     std::vector<uint64_t> remv_cpu(num_block_cols, 0);
     std::vector<int64_t> keep_indices;
     for (int i = 0; i < N; i++) {
@@ -212,7 +206,23 @@ torch::Tensor NmsCUDA(torch::Tensor boxes,
         }
     }
     CHECK_ERROR(cudaFree(sort_indices));
+    return keep_indices;
+}
 
+// [inputs]
+// boxes             : (N, 5) float32
+// scores            : (N,) float32
+// nms_overlap_thresh: double
+//
+// [return]
+// keep_indices      : (M,) int64, the selected box indices
+torch::Tensor NmsCUDA(torch::Tensor boxes,
+                      torch::Tensor scores,
+                      double nms_overlap_thresh) {
+    torch::Tensor scores_copy = scores.clone();
+    std::vector<int64_t> keep_indices = NmsCUDAKernel(
+            boxes.data_ptr<float>(), scores_copy.data_ptr<float>(),
+            boxes.size(0), nms_overlap_thresh);
     torch::Tensor keep_tensor =
             torch::from_blob(keep_indices.data(),
                              {static_cast<int64_t>(keep_indices.size())},
