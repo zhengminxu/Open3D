@@ -37,6 +37,7 @@ set(TF_OPS_SOURCES
     "misc/FixedRadiusSearchOpKernel.cpp"
     "misc/KnnSearchOps.cpp"
     "misc/VoxelPoolingOpKernel.cpp"
+    "misc/NmsOps.cpp"
     "tf_neighbors/tf_batch_neighbors.cpp"
     "tf_neighbors/tf_neighbors.cpp"
     "tf_subsampling/tf_batch_subsampling.cpp"
