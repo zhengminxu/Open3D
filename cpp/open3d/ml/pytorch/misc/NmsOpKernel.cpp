@@ -50,28 +50,15 @@ static std::vector<int64_t> SortIndexes(const T *v,
     return indices;
 }
 
-// [inputs]
-// boxes             : (N, 5) float32
-// scores            : (N,) float32
-// nms_overlap_thresh: double
-//
-// [return]
-// keep_indices      : (M,) int64, the selected box indices
-static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
-                                                  const float *scores,
-                                                  int N,
-                                                  float nms_overlap_thresh) {
-    std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);
-
+static void AllPairsIoU(const float *boxes,
+                        const float *scores,
+                        const int64_t *sort_indices,
+                        uint64_t *mask,
+                        int N,
+                        float nms_overlap_thresh) {
     const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
     const int num_block_rows = DIVUP(N, NMS_BLOCK_SIZE);
-
-    // Call kernel. Results will be saved in masks.
-    // boxes: (N, 5)
-    // mask:  (N, N/BS)
-    std::vector<uint64_t> mask_vec(N * num_block_cols);
-    uint64_t *mask = mask_vec.data();
 
     // We need the concept of "block" since the mask is a uint64_t binary bit
     // map, and the block size is exactly 64x64. This is also consistent with
@@ -118,6 +105,31 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
             }
         }
     }
+}
+
+// [inputs]
+// boxes             : (N, 5) float32
+// scores            : (N,) float32
+// nms_overlap_thresh: double
+//
+// [return]
+// keep_indices      : (M,) int64, the selected box indices
+static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
+                                                  const float *scores,
+                                                  int N,
+                                                  float nms_overlap_thresh) {
+    std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);
+
+    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
+
+    // Call kernel. Results will be saved in masks.
+    // boxes: (N, 5)
+    // mask:  (N, N/BS)
+    std::vector<uint64_t> mask_vec(N * num_block_cols);
+    uint64_t *mask = mask_vec.data();
+    AllPairsIoU(boxes, scores, sort_indices.data(), mask, N,
+                nms_overlap_thresh);
 
     // Write to keep.
     // remv_cpu has N bits in total. If the bit is 1, the corresponding
@@ -125,9 +137,8 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
     std::vector<uint64_t> remv_cpu(num_block_cols, 0);
     std::vector<int64_t> keep_indices;
     for (int i = 0; i < N; i++) {
-        int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
-        int inner_block_col_idx =
-                i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
+        int block_col_idx = i / NMS_BLOCK_SIZE;
+        int inner_block_col_idx = i % NMS_BLOCK_SIZE;  // threadIdx.x
 
         // Querying the i-th bit in remv_cpu, counted from the right.
         // - remv_cpu[block_col_idx]: the block bitmap containing the query
