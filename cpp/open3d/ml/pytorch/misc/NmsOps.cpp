@@ -57,9 +57,10 @@ torch::Tensor NmsWithScore(torch::Tensor boxes,
 
     if (boxes.is_cuda()) {
 #ifdef BUILD_CUDA_MODULE
-        // return NmsCUDA(boxes, keep, nms_overlap_thresh);
-        // #else
+        return NmsWithScoreCUDA(boxes, scores, nms_overlap_thresh);
+#else
         TORCH_CHECK(false, "NmsWithScore was not compiled with CUDA support")
+
 #endif
     } else {
         return NmsWithScoreCPU(boxes, scores, nms_overlap_thresh);
@@ -68,11 +69,11 @@ torch::Tensor NmsWithScore(torch::Tensor boxes,
 
 static auto registry = torch::RegisterOperators(
         "open3d::nms(Tensor boxes, Tensor keep, float nms_overlap_thresh) -> "
-        "int keep_idx",
+        "int keep_num",
         &Nms);
 
 static auto registry2 = torch::RegisterOperators(
         "open3d::nms_with_score(Tensor boxes, Tensor scores, float "
         "nms_overlap_thresh) -> "
-        "Tensor selected_indices",
+        "Tensor keep_indices",
         &NmsWithScore);
