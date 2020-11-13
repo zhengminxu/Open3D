@@ -41,6 +41,9 @@ public:
         OutputAllocator output_allocator(context);
         int64_t* keep_indices = nullptr;
         output_allocator.AllocKeepIndices(&keep_indices, 3);
+        keep_indices[0] = 100;
+        keep_indices[1] = 140;
+        keep_indices[2] = 150;
     }
 };
 

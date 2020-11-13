@@ -41,7 +41,7 @@ public:
         *ptr = nullptr;
         Tensor* tensor = 0;
         TensorShape shape({num});
-        OP_REQUIRES_OK(context, context->allocate_output(1, shape, &tensor));
+        OP_REQUIRES_OK(context, context->allocate_output(0, shape, &tensor));
         auto flat_tensor = tensor->flat<int64>();
         *ptr = (int64_t*)flat_tensor.data();
     }

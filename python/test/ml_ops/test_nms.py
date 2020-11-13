@@ -73,3 +73,20 @@ def test_nms_cuda():
     out = open3d.ml.torch.ops.nms(boxes, scores, thresh)
     print("test_nms_cuda takes (s):", time.time() - s)
     print(out.cpu().numpy())
+
+
+def test_nms_tf_cpu():
+    boxes = np.array([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
+                      [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
+                      [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
+                      [15.2050, -7.8447, 15.8311, -6.7437, 1.0506],
+                      [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
+                      [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
+                     dtype=np.float32)
+    scores = np.array([3, 1.1, 5, 2, 1, 0], dtype=np.float32)
+    thresh = 0.7
+
+    s = time.time()
+    out = open3d.ml.tf.ops.nms(boxes, scores, thresh)
+    print("test_nms_tf_cpu takes (s):", time.time() - s)
+    print(out.cpu().numpy())
