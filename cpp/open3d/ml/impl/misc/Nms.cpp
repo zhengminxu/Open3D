@@ -32,7 +32,7 @@ static void AllPairsIoUCPU(const float *boxes,
                            const int64_t *sort_indices,
                            uint64_t *mask,
                            int N,
-                           float nms_overlap_thresh) {
+                           double nms_overlap_thresh) {
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
     const int num_block_rows = DIVUP(N, NMS_BLOCK_SIZE);
 
@@ -92,7 +92,7 @@ static void AllPairsIoUCPU(const float *boxes,
 std::vector<int64_t> NmsCPUKernel(const float *boxes,
                                   const float *scores,
                                   int N,
-                                  float nms_overlap_thresh) {
+                                  double nms_overlap_thresh) {
     std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);
 
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);

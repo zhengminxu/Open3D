@@ -58,7 +58,7 @@ __global__ void nms_kernel(const float *boxes,
                            const int64_t *sort_indices,
                            uint64_t *mask,
                            const int N,
-                           const float nms_overlap_thresh) {
+                           const double nms_overlap_thresh) {
     // boxes: (N, 5)
     // mask:  (N, N/BS)
     //
@@ -130,7 +130,7 @@ __global__ void nms_kernel(const float *boxes,
 std::vector<int64_t> NmsCUDAKernel(const float *boxes,
                                    const float *scores,
                                    int N,
-                                   float nms_overlap_thresh) {
+                                   double nms_overlap_thresh) {
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Compute sort indices.

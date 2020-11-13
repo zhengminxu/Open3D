@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License (MIT)
 //
-// Copyright (c) 2019 www.open3d.org
+// Copyright (c) 2020 www.open3d.org
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,28 +23,3 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
-
-#pragma once
-
-#include <cstdint>
-#include <vector>
-
-namespace open3d {
-namespace ml {
-namespace impl {
-
-#ifdef BUILD_CUDA_MODULE
-std::vector<int64_t> NmsCUDAKernel(const float *boxes,
-                                   const float *scores,
-                                   int N,
-                                   double nms_overlap_thresh);
-#endif
-
-std::vector<int64_t> NmsCPUKernel(const float *boxes,
-                                  const float *scores,
-                                  int N,
-                                  double nms_overlap_thresh);
-
-}  // namespace impl
-}  // namespace ml
-}  // namespace open3d
