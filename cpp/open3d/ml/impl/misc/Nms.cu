@@ -83,6 +83,9 @@ __global__ void nms_kernel(const float *boxes,
 
     // Fill local block_boxes by fetching the global box memory.
     // block_boxes = boxes[NBS*block_col_idx : NBS*block_col_idx+col_size, :].
+    //
+    // TODO: It is also possible to load the comparison target to the shared
+    // memory as well.
     __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
     if (threadIdx.x < col_size) {
         float *dst = block_boxes + threadIdx.x * 5;
