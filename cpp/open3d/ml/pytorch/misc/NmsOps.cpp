@@ -28,7 +28,6 @@
 
 #include "open3d/ml/impl/misc/Nms.h"
 #include "open3d/ml/pytorch/TorchHelper.h"
-#include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 #include "torch/script.h"
 
 torch::Tensor Nms(torch::Tensor boxes,
