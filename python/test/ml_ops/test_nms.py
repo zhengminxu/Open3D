@@ -53,7 +53,6 @@ def test_nms_gpu():
         """
         # Sort descending according to score.
         order = scores.sort(0, descending=True)[1]
-        print(order)
         # Order boxes by their score from high to low.
         boxes = boxes[order].contiguous()
         # Temp variable, # of boxes.

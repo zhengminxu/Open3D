@@ -89,6 +89,13 @@ static void NmsCPUKernel(const float *boxes,
     }
 }
 
+// [inputs]
+// boxes             : (N, 5) float32
+// scores            : (N,) float32
+// nms_overlap_thresh: double
+//
+// [return]
+// selected_indices  : (M,) int64
 torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                               torch::Tensor scores,
                               double nms_overlap_thresh) {
