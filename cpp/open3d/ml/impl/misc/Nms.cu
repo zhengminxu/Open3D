@@ -5,25 +5,67 @@ All Rights Reserved 2018.
 */
 
 #include <stdio.h>
+#include <thrust/device_vector.h>
+#include <thrust/iterator/counting_iterator.h>
+#include <thrust/sequence.h>
+#include <thrust/sort.h>
 
 #include "open3d/ml/impl/misc/Nms.h"
 
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
+#define CHECK_ERROR(ans) \
+    { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code,
+                      const char *file,
+                      int line,
+                      bool abort = true) {
+    if (code != cudaSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
+                line);
+        if (abort) exit(code);
+    }
+}
+
 namespace open3d {
 namespace ml {
 namespace impl {
 
-__global__ void nms_kernel(const int num_boxes,
-                           const float nms_overlap_thresh,
-                           const float *boxes,
-                           uint64_t *mask) {
+static void SortIndices(float *values,
+                        int64_t *sort_indices,
+                        int64_t N,
+                        bool descending = false) {
+    // Cast to thrust device pointer.
+    thrust::device_ptr<float> values_dptr = thrust::device_pointer_cast(values);
+    thrust::device_ptr<int64_t> sort_indices_dptr =
+            thrust::device_pointer_cast(sort_indices);
+
+    // Fill sort_indices with 0, 1, ..., N-1.
+    thrust::sequence(sort_indices_dptr, sort_indices_dptr + N, 0);
+
+    // Sort values and sort_indices together.
+    if (descending) {
+        thrust::stable_sort_by_key(values_dptr, values_dptr + N,
+                                   sort_indices_dptr, thrust::greater<float>());
+    } else {
+        thrust::stable_sort_by_key(values_dptr, values_dptr + N,
+                                   sort_indices_dptr);
+    }
+}
+
+__global__ void nms_kernel(const float *boxes,
+                           const int64_t *sort_indices,
+                           uint64_t *mask,
+                           const int N,
+                           const float nms_overlap_thresh) {
     // boxes: (N, 5)
     // mask:  (N, N/BS)
     //
     // Kernel launch
     // blocks : (N/BS, N/BS)
     // threads: BS
+
+    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
 
     // Row-wise block index.
     const int block_row_idx = blockIdx.y;
@@ -32,21 +74,21 @@ __global__ void nms_kernel(const int num_boxes,
 
     // Local block row size.
     const int row_size =
-            fminf(num_boxes - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            fminf(N - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
     // Local block col size.
     const int col_size =
-            fminf(num_boxes - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            fminf(N - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
 
     // Cololum-wise number of blocks.
-    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Fill local block_boxes by fetching the global box memory.
     // block_boxes = boxes[NBS*block_col_idx : NBS*block_col_idx+col_size, :].
     __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
     if (threadIdx.x < col_size) {
         float *dst = block_boxes + threadIdx.x * 5;
-        const float *src =
-                boxes + (NMS_BLOCK_SIZE * block_col_idx + threadIdx.x) * 5;
+        const int src_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
+        const float *src = boxes + sort_indices[src_idx] * 5;
         dst[0] = src[0];
         dst[1] = src[1];
         dst[2] = src[2];
@@ -73,7 +115,8 @@ __global__ void nms_kernel(const int num_boxes,
 
         uint64_t t = 0;
         while (dst_idx < col_size) {
-            if (iou_bev(boxes + src_idx * 5, block_boxes + dst_idx * 5) >
+            if (open3d::ml::impl::iou_bev(boxes + sort_indices[src_idx] * 5,
+                                          block_boxes + dst_idx * 5) >
                 nms_overlap_thresh) {
                 t |= 1ULL << dst_idx;
             }
@@ -83,14 +126,69 @@ __global__ void nms_kernel(const int num_boxes,
     }
 }
 
-void NmsCUDAKernel(const float *boxes,
-                   uint64_t *mask,
-                   int num_boxes,
-                   float nms_overlap_thresh) {
-    dim3 blocks(DIVUP(num_boxes, NMS_BLOCK_SIZE),
-                DIVUP(num_boxes, NMS_BLOCK_SIZE));
+std::vector<int64_t> NmsCUDAKernel(const float *boxes,
+                                   float *scores,
+                                   int N,
+                                   float nms_overlap_thresh) {
+    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
+
+    // Compute sort indices.
+    int64_t *sort_indices = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
+    SortIndices(scores, sort_indices, N, true);
+
+    // Allocate masks on device.
+    uint64_t *mask_ptr = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
+                           N * num_block_cols * sizeof(uint64_t)));
+
+    // Launch kernel.
+    dim3 blocks(DIVUP(N, NMS_BLOCK_SIZE), DIVUP(N, NMS_BLOCK_SIZE));
     dim3 threads(NMS_BLOCK_SIZE);
-    nms_kernel<<<blocks, threads>>>(num_boxes, nms_overlap_thresh, boxes, mask);
+    nms_kernel<<<blocks, threads>>>(boxes, sort_indices, mask_ptr, N,
+                                    nms_overlap_thresh);
+
+    // Copy cuda masks to cpu.
+    std::vector<uint64_t> mask_vec(N * num_block_cols);
+    uint64_t *mask = mask_vec.data();
+    CHECK_ERROR(cudaMemcpy(mask_vec.data(), mask_ptr,
+                           N * num_block_cols * sizeof(uint64_t),
+                           cudaMemcpyDeviceToHost));
+    CHECK_ERROR(cudaFree(mask_ptr));
+
+    // Copy sort_indices to cpu.
+    std::vector<int64_t> sort_indices_cpu(N);
+    CHECK_ERROR(cudaMemcpy(sort_indices_cpu.data(), sort_indices,
+                           N * sizeof(int64_t), cudaMemcpyDeviceToHost));
+
+    // Write to keep_indices in CPU.
+    // remv_cpu has N bits in total. If the bit is 1, the corresponding
+    // box will be removed.
+    // TODO: This part can be implemented in CUDA. We use the original author's
+    // implementation here.
+    std::vector<uint64_t> remv_cpu(num_block_cols, 0);
+    std::vector<int64_t> keep_indices;
+    for (int i = 0; i < N; i++) {
+        int block_col_idx = i / NMS_BLOCK_SIZE;
+        int inner_block_col_idx = i % NMS_BLOCK_SIZE;  // threadIdx.x
+
+        // Querying the i-th bit in remv_cpu, counted from the right.
+        // - remv_cpu[block_col_idx]: the block bitmap containing the query
+        // - 1ULL << inner_block_col_idx: the one-hot bitmap to extract i
+        if (!(remv_cpu[block_col_idx] & (1ULL << inner_block_col_idx))) {
+            // Keep the i-th box.
+            keep_indices.push_back(sort_indices_cpu[i]);
+
+            // Any box that overlaps with the i-th box will be removed.
+            uint64_t *p = mask + i * num_block_cols;
+            for (int j = block_col_idx; j < num_block_cols; j++) {
+                remv_cpu[j] |= p[j];
+            }
+        }
+    }
+    CHECK_ERROR(cudaFree(sort_indices));
+    return keep_indices;
 }
 
 }  // namespace impl

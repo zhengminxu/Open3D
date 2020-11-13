@@ -35,16 +35,16 @@ namespace ml {
 namespace impl {
 
 #ifdef BUILD_CUDA_MODULE
-void NmsCUDAKernel(const float *boxes,
-                   uint64_t *mask,
-                   int boxes_num,
-                   float nms_overlap_thresh);
+std::vector<int64_t> NmsCUDAKernel(const float *boxes,
+                                   float *scores,
+                                   int N,
+                                   float nms_overlap_thresh);
 #endif
 
-void NmsCPUKernel(const float *boxes,
-                  uint64_t *mask,
-                  int boxes_num,
-                  float nms_overlap_thresh);
+std::vector<int64_t> NmsCPUKernel(const float *boxes,
+                                  float *scores,
+                                  int N,
+                                  float nms_overlap_thresh);
 
 constexpr int NMS_BLOCK_SIZE = sizeof(uint64_t) * 8;
 constexpr float EPS = 1e-8;
