@@ -134,9 +134,13 @@ std::vector<int64_t> NmsCUDAKernel(const float *boxes,
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Compute sort indices.
+    float *scores_copy = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&scores_copy, N * sizeof(float)));
+    CHECK_ERROR(cudaMemcpy(scores_copy, scores, N * sizeof(float),
+                           cudaMemcpyDeviceToDevice));
     int64_t *sort_indices = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
-    SortIndices(scores, sort_indices, N, true);
+    SortIndices(scores_copy, sort_indices, N, true);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
