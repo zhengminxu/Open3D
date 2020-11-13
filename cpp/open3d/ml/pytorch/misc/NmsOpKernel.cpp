@@ -26,6 +26,8 @@
 
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 
+#include <numeric>
+
 #include "open3d/ml/impl/misc/Nms.h"
 #include "open3d/ml/pytorch/TorchHelper.h"
 #include "torch/script.h"
@@ -89,6 +91,22 @@ static void NmsCPUKernel(const float *boxes,
     }
 }
 
+template <typename T>
+std::vector<int64_t> GetSortIndexes(const T *v,
+                                    int64_t num,
+                                    bool descending = false) {
+    std::vector<int64_t> indices(num);
+    std::iota(indices.begin(), indices.end(), 0);
+    if (descending) {
+        std::stable_sort(indices.begin(), indices.end(),
+                         [&v](int64_t i, int64_t j) { return v[i] > v[j]; });
+    } else {
+        std::stable_sort(indices.begin(), indices.end(),
+                         [&v](int64_t i, int64_t j) { return v[i] < v[j]; });
+    }
+    return indices;
+}
+
 // [inputs]
 // boxes             : (N, 5) float32
 // scores            : (N,) float32
@@ -100,6 +118,10 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
                                                   const float *scores,
                                                   int N,
                                                   float nms_overlap_thresh) {
+    std::vector<int64_t> sort_indices = GetSortIndexes(scores, N, true);
+    for (int i = 0; i < N; ++i) {
+        std::cout << "idx " << sort_indices[i] << std::endl;
+    }
     return {};
 }
 
