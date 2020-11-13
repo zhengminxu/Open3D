@@ -96,8 +96,8 @@ __global__ void nms_kernel(const float *boxes,
     __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
     if (threadIdx.x < col_size) {
         float *dst = block_boxes + threadIdx.x * 5;
-        const float *src =
-                boxes + (NMS_BLOCK_SIZE * block_col_idx + threadIdx.x) * 5;
+        const int src_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
+        const float *src = boxes + sort_indices[src_idx] * 5;
         dst[0] = src[0];
         dst[1] = src[1];
         dst[2] = src[2];
@@ -124,7 +124,7 @@ __global__ void nms_kernel(const float *boxes,
 
         uint64_t t = 0;
         while (dst_idx < col_size) {
-            if (open3d::ml::impl::iou_bev(boxes + src_idx * 5,
+            if (open3d::ml::impl::iou_bev(boxes + sort_indices[src_idx] * 5,
                                           block_boxes + dst_idx * 5) >
                 nms_overlap_thresh) {
                 t |= 1ULL << dst_idx;
