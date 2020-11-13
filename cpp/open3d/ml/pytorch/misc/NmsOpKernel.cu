@@ -187,10 +187,6 @@ torch::Tensor NmsCUDA(torch::Tensor boxes,
     std::vector<int64_t> sort_indices_cpu(N);
     CHECK_ERROR(cudaMemcpy(sort_indices_cpu.data(), sort_indices,
                            N * sizeof(int64_t), cudaMemcpyDeviceToHost));
-    for (size_t i = 0; i < N; i++) {
-        std::cout << "sort_indices_cpu " << i << ": " << sort_indices_cpu[i]
-                  << std::endl;
-    }
 
     // Write to keep_indices in CPU.
     // remv_cpu has N bits in total. If the bit is 1, the corresponding
