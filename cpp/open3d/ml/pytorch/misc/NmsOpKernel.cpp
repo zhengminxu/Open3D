@@ -34,14 +34,14 @@
 
 static void NmsCPUKernel(const float *boxes,
                          uint64_t *mask,
-                         int num_boxes,
+                         int N,
                          float nms_overlap_thresh) {
     // boxes: (N, 5)
     // mask:  (N, N/BS)
     int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
 
-    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
-    const int num_block_rows = DIVUP(num_boxes, NMS_BLOCK_SIZE);
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
+    const int num_block_rows = DIVUP(N, NMS_BLOCK_SIZE);
 
     // We need the concept of "block" since the mask is a uint64_t binary bit
     // map, and the block size is exactly 64x64. This is also consistent with
@@ -51,11 +51,11 @@ static void NmsCPUKernel(const float *boxes,
         for (int block_row_idx = 0; block_row_idx < num_block_rows;
              ++block_row_idx) {
             // Local block row size.
-            const int row_size = fminf(
-                    num_boxes - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            const int row_size =
+                    fminf(N - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
             // Local block col size.
-            const int col_size = fminf(
-                    num_boxes - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            const int col_size =
+                    fminf(N - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
 
             // Comparing src and dst. In one block, the following src and dst
             // indices are compared:
@@ -98,7 +98,7 @@ static void NmsCPUKernel(const float *boxes,
 // selected_indices  : (M,) int64, the selected box indices
 static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
                                                   const float *scores,
-                                                  int num_boxes,
+                                                  int N,
                                                   float nms_overlap_thresh) {
     return {};
 }
@@ -113,7 +113,8 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
 torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                               torch::Tensor scores,
                               double nms_overlap_thresh) {
-    (void)NmsWithScoreCPUKernel;
+    NmsWithScoreCPUKernel(boxes.data_ptr<float>(), scores.data_ptr<float>(),
+                          boxes.size(0), nms_overlap_thresh);
 
     torch::Tensor order =
             std::get<1>(torch::sort(scores, 0, /*descending=*/true));
@@ -125,22 +126,21 @@ torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
     CHECK_CONTIGUOUS(boxes_sorted);
     CHECK_CONTIGUOUS(keep);
 
-    const int num_boxes = boxes_sorted.size(0);
-    const int num_block_cols =
-            DIVUP(num_boxes, open3d::ml::impl::NMS_BLOCK_SIZE);
+    const int N = boxes_sorted.size(0);
+    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
 
     // Call kernel. Results will be saved in masks.
-    std::vector<uint64_t> mask(num_boxes * num_block_cols);
-    NmsCPUKernel(boxes_sorted.data_ptr<float>(), mask.data(), num_boxes,
+    std::vector<uint64_t> mask(N * num_block_cols);
+    NmsCPUKernel(boxes_sorted.data_ptr<float>(), mask.data(), N,
                  nms_overlap_thresh);
 
     // Write to keep.
-    // remv_cpu has num_boxes bits in total. If the bit is 1, the corresponding
+    // remv_cpu has N bits in total. If the bit is 1, the corresponding
     // box will be removed.
     std::vector<uint64_t> remv_cpu(num_block_cols, 0);
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
-    for (int i = 0; i < num_boxes; i++) {
+    for (int i = 0; i < N; i++) {
         int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
         int inner_block_col_idx =
                 i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
@@ -170,22 +170,21 @@ int64_t NmsCPU(torch::Tensor boxes,
     CHECK_CONTIGUOUS(boxes);
     CHECK_CONTIGUOUS(keep);
 
-    const int num_boxes = boxes.size(0);
-    const int num_block_cols =
-            DIVUP(num_boxes, open3d::ml::impl::NMS_BLOCK_SIZE);
+    const int N = boxes.size(0);
+    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
 
     // Call kernel. Results will be saved in masks.
-    std::vector<uint64_t> mask(num_boxes * num_block_cols);
-    open3d::ml::impl::NmsCPUKernel(boxes.data_ptr<float>(), mask.data(),
-                                   num_boxes, nms_overlap_thresh);
+    std::vector<uint64_t> mask(N * num_block_cols);
+    open3d::ml::impl::NmsCPUKernel(boxes.data_ptr<float>(), mask.data(), N,
+                                   nms_overlap_thresh);
 
     // Write to keep.
-    // remv_cpu has num_boxes bits in total. If the bit is 1, the corresponding
+    // remv_cpu has N bits in total. If the bit is 1, the corresponding
     // box will be removed.
     std::vector<uint64_t> remv_cpu(num_block_cols, 0);
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
-    for (int i = 0; i < num_boxes; i++) {
+    for (int i = 0; i < N; i++) {
         int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
         int inner_block_col_idx =
                 i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
