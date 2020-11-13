@@ -51,6 +51,33 @@ def test_nms():
     print("test_nms_cuda takes (s):", time.time() - s)
 
 
+def test_nms_v2():
+    s = time.time()
+    from iou3d.iou3d_utils import nms_gpu
+
+    ref_out_selected = np.array([2, 5, 3])
+
+    in_boxes = torch.tensor([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
+                             [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
+                             [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
+                             [15.2050, -7.8447, 15.8311, -6.7437, 1.0506],
+                             [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
+                             [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
+                            dtype=torch.float32,
+                            device=torch.device('cuda:0'))
+    in_scores = torch.tensor([3, 1.1, 5, 2, 1, 0],
+                             dtype=torch.float32,
+                             device=torch.device('cuda:0'))
+    in_thrs = 0.7
+
+    out0 = nms_gpu(in_boxes, in_scores, in_thrs)
+    print(out0)
+    np.testing.assert_allclose(out0.cpu(), ref_out_selected)
+    print("test_nms() passes")
+    print("test_nms_cuda takes (s):", time.time() - s)
+
+
 if __name__ == '__main__':
     # test_voxelize()
     test_nms()
+    test_nms_v2()
