@@ -164,8 +164,9 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
                     // Unlike the CUDA impl, both src_idx and dst_idx here are
                     // indexes to the global memory. Thus we need to compute the
                     // local index for dst_idx.
-                    if (open3d::ml::impl::iou_bev(boxes + src_idx * 5,
-                                                  boxes + dst_idx * 5) >
+                    if (open3d::ml::impl::iou_bev(
+                                boxes + sort_indices[src_idx] * 5,
+                                boxes + sort_indices[dst_idx] * 5) >
                         nms_overlap_thresh) {
                         t |= 1ULL << (dst_idx - NMS_BLOCK_SIZE * block_col_idx);
                     }
