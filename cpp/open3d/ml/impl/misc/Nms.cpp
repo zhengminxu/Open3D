@@ -90,7 +90,7 @@ static void AllPairsIoUCPU(const float *boxes,
 // [return]
 // keep_indices      : (M,) int64, the selected box indices
 std::vector<int64_t> NmsCPUKernel(const float *boxes,
-                                  const float *scores,
+                                  float *scores,
                                   int N,
                                   float nms_overlap_thresh) {
     std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);

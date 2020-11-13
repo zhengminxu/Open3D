@@ -40,11 +40,10 @@
 torch::Tensor NmsCPU(torch::Tensor boxes,
                      torch::Tensor scores,
                      double nms_overlap_thresh) {
-    // std::vector<int64_t> keep_indices = open3d::ml::impl::NmsCPUKernel2(
-    //         boxes.data_ptr<float>(), scores.data_ptr<float>(), boxes.size(0),
-    //         nms_overlap_thresh);
+    std::vector<int64_t> keep_indices = open3d::ml::impl::NmsCPUKernel(
+            boxes.data_ptr<float>(), scores.data_ptr<float>(), boxes.size(0),
+            nms_overlap_thresh);
 
-    std::vector<int64_t> keep_indices{1, 2, 3};
     // torch::from_blob does not copy memory, usually a deleter is required. We
     // copy values here for simplicity.
     torch::Tensor keep_tensor =
