@@ -114,10 +114,10 @@ static void AllPairsIoUCPU(const float *boxes,
 //
 // [return]
 // keep_indices      : (M,) int64, the selected box indices
-static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
-                                                  const float *scores,
-                                                  int N,
-                                                  float nms_overlap_thresh) {
+static std::vector<int64_t> NmsCPUKernel(const float *boxes,
+                                         const float *scores,
+                                         int N,
+                                         float nms_overlap_thresh) {
     std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);
 
     const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
@@ -165,12 +165,12 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
 //
 // [return]
 // keep_indices      : (M,) int64, the selected box indices
-torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
-                              torch::Tensor scores,
-                              double nms_overlap_thresh) {
-    std::vector<int64_t> keep_indices = NmsWithScoreCPUKernel(
-            boxes.data_ptr<float>(), scores.data_ptr<float>(), boxes.size(0),
-            nms_overlap_thresh);
+torch::Tensor NmsCPU(torch::Tensor boxes,
+                     torch::Tensor scores,
+                     double nms_overlap_thresh) {
+    std::vector<int64_t> keep_indices =
+            NmsCPUKernel(boxes.data_ptr<float>(), scores.data_ptr<float>(),
+                         boxes.size(0), nms_overlap_thresh);
 
     // torch::from_blob does not copy memory, usually a deleter is required. We
     // copy values here for simplicity.
@@ -180,47 +180,4 @@ torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                              torch::TensorOptions().dtype(torch::kLong))
                     .clone();
     return keep_tensor;
-}
-
-int64_t NmsCPU(torch::Tensor boxes,
-               torch::Tensor keep,
-               double nms_overlap_thresh) {
-    CHECK_CONTIGUOUS(boxes);
-    CHECK_CONTIGUOUS(keep);
-
-    const int N = boxes.size(0);
-    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
-
-    // Call kernel. Results will be saved in masks.
-    std::vector<uint64_t> mask(N * num_block_cols);
-    open3d::ml::impl::NmsCPUKernel(boxes.data_ptr<float>(), mask.data(), N,
-                                   nms_overlap_thresh);
-
-    // Write to keep.
-    // remv_cpu has N bits in total. If the bit is 1, the corresponding
-    // box will be removed.
-    std::vector<uint64_t> remv_cpu(num_block_cols, 0);
-    int64_t *keep_ptr = keep.data_ptr<int64_t>();
-    int num_to_keep = 0;
-    for (int i = 0; i < N; i++) {
-        int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
-        int inner_block_col_idx =
-                i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
-
-        // Querying the i-th bit in remv_cpu, counted from the right.
-        // - remv_cpu[block_col_idx]: the block bitmap containing the query
-        // - 1ULL << inner_block_col_idx: the one-hot bitmap to extract i
-        if (!(remv_cpu[block_col_idx] & (1ULL << inner_block_col_idx))) {
-            // Keep the i-th box.
-            keep_ptr[num_to_keep++] = i;
-
-            // Any box that overlaps with the i-th box will be removed.
-            uint64_t *p = mask.data() + i * num_block_cols;
-            for (int j = block_col_idx; j < num_block_cols; j++) {
-                remv_cpu[j] |= p[j];
-            }
-        }
-    }
-
-    return num_to_keep;
 }

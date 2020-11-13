@@ -30,40 +30,22 @@
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 #include "torch/script.h"
 
-int64_t Nms(torch::Tensor boxes,
-            torch::Tensor keep,
-            double nms_overlap_thresh) {
-    boxes = boxes.contiguous();
-    CHECK_TYPE(boxes, kFloat);
-    CHECK_TYPE(keep, kInt64);
-
-    if (boxes.is_cuda()) {
-#ifdef BUILD_CUDA_MODULE
-        return NmsCUDA(boxes, keep, nms_overlap_thresh);
-#else
-        TORCH_CHECK(false, "Nms was not compiled with CUDA support")
-#endif
-    } else {
-        return NmsCPU(boxes, keep, nms_overlap_thresh);
-    }
-}
-
-torch::Tensor NmsWithScore(torch::Tensor boxes,
-                           torch::Tensor scores,
-                           double nms_overlap_thresh) {
+torch::Tensor Nms(torch::Tensor boxes,
+                  torch::Tensor scores,
+                  double nms_overlap_thresh) {
     boxes = boxes.contiguous();
     CHECK_TYPE(boxes, kFloat);
     CHECK_TYPE(scores, kFloat);
 
     if (boxes.is_cuda()) {
 #ifdef BUILD_CUDA_MODULE
-        return NmsWithScoreCUDA(boxes, scores, nms_overlap_thresh);
+        return NmsCUDA(boxes, scores, nms_overlap_thresh);
 #else
-        TORCH_CHECK(false, "NmsWithScore was not compiled with CUDA support")
+        TORCH_CHECK(false, "Nms was not compiled with CUDA support")
 
 #endif
     } else {
-        return NmsWithScoreCPU(boxes, scores, nms_overlap_thresh);
+        return NmsCPU(boxes, scores, nms_overlap_thresh);
     }
 }
 
@@ -71,4 +53,4 @@ static auto registry = torch::RegisterOperators(
         "open3d::nms(Tensor boxes, Tensor scores, float "
         "nms_overlap_thresh) -> "
         "Tensor keep_indices",
-        &NmsWithScore);
+        &Nms);

@@ -151,9 +151,9 @@ __global__ void nms_kernel(const float *boxes,
 //
 // [return]
 // keep_indices      : (M,) int64, the selected box indices
-torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
-                               torch::Tensor scores,
-                               double nms_overlap_thresh) {
+torch::Tensor NmsCUDA(torch::Tensor boxes,
+                      torch::Tensor scores,
+                      double nms_overlap_thresh) {
     const int N = boxes.size(0);
     const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
@@ -223,63 +223,4 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                              torch::TensorOptions().dtype(torch::kLong))
                     .to(boxes.device());
     return keep_tensor;
-}
-
-int64_t NmsCUDA(torch::Tensor boxes,
-                torch::Tensor keep,
-                double nms_overlap_thresh) {
-    CHECK_CUDA(boxes);
-    CHECK_CONTIGUOUS(boxes);
-    CHECK_CONTIGUOUS(keep);
-
-    const int N = boxes.size(0);
-    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
-
-    // Allocate masks on device.
-    uint64_t *mask_ptr = nullptr;
-    CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
-                           N * num_block_cols * sizeof(uint64_t)));
-
-    // Call kernel. Results will be saved in masks.
-    open3d::ml::impl::NmsCUDAKernel(boxes.data_ptr<float>(), mask_ptr, N,
-                                    nms_overlap_thresh);
-
-    // Copy cuda masks to cpu.
-    std::vector<uint64_t> mask_cpu(N * num_block_cols);
-    CHECK_ERROR(cudaMemcpy(mask_cpu.data(), mask_ptr,
-                           N * num_block_cols * sizeof(uint64_t),
-                           cudaMemcpyDeviceToHost));
-    cudaFree(mask_ptr);
-
-    // Write to keep.
-    // remv_cpu has N bits in total. If the bit is 1, the corresponding
-    // box will be removed.
-    std::vector<uint64_t> remv_cpu(num_block_cols, 0);
-    int64_t *keep_ptr = keep.data_ptr<int64_t>();
-    int num_to_keep = 0;
-    for (int i = 0; i < N; i++) {
-        int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
-        int inner_block_col_idx =
-                i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
-
-        // Querying the i-th bit in remv_cpu, counted from the right.
-        // - remv_cpu[block_col_idx]: the block bitmap containing the query
-        // - 1ULL << inner_block_col_idx: the one-hot bitmap to extract i
-        if (!(remv_cpu[block_col_idx] & (1ULL << inner_block_col_idx))) {
-            // Keep the i-th box.
-            keep_ptr[num_to_keep++] = i;
-
-            // Any box that overlaps with the i-th box will be removed.
-            uint64_t *p = mask_cpu.data() + i * num_block_cols;
-            for (int j = block_col_idx; j < num_block_cols; j++) {
-                remv_cpu[j] |= p[j];
-            }
-        }
-    }
-
-    if (cudaSuccess != cudaGetLastError()) {
-        printf("Error!\n");
-    }
-
-    return num_to_keep;
 }
