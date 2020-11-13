@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import time
 
 
 def test_voxelize():
@@ -26,6 +27,7 @@ def test_voxelize():
 
 
 def test_nms():
+    s = time.time()
     from iou3d.iou3d_utils import nms_gpu
 
     ref_out_selected = np.array([0])
@@ -46,6 +48,7 @@ def test_nms():
     out0 = nms_gpu(in_boxes, in_scores, in_thrs)
     np.testing.assert_allclose(out0.cpu(), ref_out_selected)
     print("test_nms() passes")
+    print("test_nms_cuda takes (s):", time.time() - s)
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ import numpy as np
 import pytest
 import mltest
 import torch
+import time
 
 # skip all tests if the ml ops were not built
 pytestmark = mltest.default_marks
@@ -45,11 +46,15 @@ def test_nms_cpu():
                          dtype=torch.float32)
     scores = torch.tensor([3, 1.1, 5, 2, 1, 0], dtype=torch.float32)
     thresh = 0.7
+
+    s = time.time()
     out = open3d.ml.torch.ops.nms(boxes, scores, thresh)
+    print("test_nms_cpu takes (s):", time.time() - s)
     print(out.cpu().numpy())
 
 
 def test_nms_cuda():
+    s = time.time()
     boxes = torch.tensor([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
                           [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
                           [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
@@ -62,5 +67,8 @@ def test_nms_cuda():
                           dtype=torch.float32,
                           device=torch.device('cuda:0'))
     thresh = 0.7
+
+    s = time.time()
     out = open3d.ml.torch.ops.nms(boxes, scores, thresh)
+    print("test_nms_cuda takes (s):", time.time() - s)
     print(out.cpu().numpy())
