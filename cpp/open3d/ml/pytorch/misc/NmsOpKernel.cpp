@@ -160,10 +160,7 @@ torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
     std::vector<int64_t> keep_indices = NmsWithScoreCPUKernel(
             boxes.data_ptr<float>(), scores.data_ptr<float>(), boxes.size(0),
             nms_overlap_thresh);
-    for (size_t i = 0; i < keep_indices.size(); i++) {
-        std::cout << "keep_indices " << i << ": " << keep_indices[i]
-                  << std::endl;
-    }
+
     // torch::from_blob does not copy memory, usually a deleter is required. We
     // copy values here for simplicity.
     torch::Tensor keep_tensor =
@@ -171,8 +168,6 @@ torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                              {static_cast<int64_t>(keep_indices.size())},
                              torch::TensorOptions().dtype(torch::kLong))
                     .clone();
-    std::cout << "keep_tensor: " << keep_tensor << std::endl;
-
     return keep_tensor;
 }
 
