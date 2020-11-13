@@ -73,7 +73,8 @@ pytestmark = mltest.default_marks
 #     print(out.cpu().numpy())
 
 
-def test_nms_tf_cpu():
+@mltest.parametrize.ml
+def test_nms(ml):
     boxes = np.array([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
                       [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
                       [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
