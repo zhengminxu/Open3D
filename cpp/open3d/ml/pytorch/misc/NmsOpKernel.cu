@@ -54,19 +54,15 @@ inline void gpuAssert(cudaError_t code,
 torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                                torch::Tensor scores,
                                double nms_overlap_thresh) {
-    // std::vector<int64_t> keep_indices{1, 2, 3};
+    std::vector<int64_t> keep_indices{1, 2, 3};
 
-    // // torch::from_blob does not copy memory, usually a deleter is required.
-    // We
-    // // copy values here for simplicity.
-    // torch::Tensor keep_tensor =
-    //         torch::from_blob(keep_indices.data(),
-    //                          {static_cast<int64_t>(keep_indices.size())},
-    //                          torch::TensorOptions()
-    //                                  .dtype(torch::kLong)
-    //                                  .device(boxes.device()))
-    //                 .clone();
-    return scores;
+    torch::Tensor keep_tensor =
+            torch::from_blob(keep_indices.data(),
+                             {static_cast<int64_t>(keep_indices.size())},
+                             torch::TensorOptions().dtype(torch::kLong))
+                    .to(boxes.device());
+    (void)keep_tensor;
+    return keep_tensor;
 }
 
 int64_t NmsCUDA(torch::Tensor boxes,
