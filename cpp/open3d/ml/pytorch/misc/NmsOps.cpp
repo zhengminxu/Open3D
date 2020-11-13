@@ -26,6 +26,7 @@
 
 #include <vector>
 
+#include "open3d/ml/impl/misc/Nms.h"
 #include "open3d/ml/pytorch/TorchHelper.h"
 #include "open3d/ml/pytorch/misc/NmsOpKernel.h"
 #include "torch/script.h"
@@ -39,13 +40,25 @@ torch::Tensor Nms(torch::Tensor boxes,
 
     if (boxes.is_cuda()) {
 #ifdef BUILD_CUDA_MODULE
-        return NmsCUDA(boxes, scores, nms_overlap_thresh);
+        std::vector<int64_t> keep_indices = open3d::ml::impl::NmsCUDAKernel(
+                boxes.data_ptr<float>(), scores.data_ptr<float>(),
+                boxes.size(0), nms_overlap_thresh);
+        return torch::from_blob(keep_indices.data(),
+                                {static_cast<int64_t>(keep_indices.size())},
+                                torch::TensorOptions().dtype(torch::kLong))
+                .to(boxes.device());
 #else
         TORCH_CHECK(false, "Nms was not compiled with CUDA support")
 
 #endif
     } else {
-        return NmsCPU(boxes, scores, nms_overlap_thresh);
+        std::vector<int64_t> keep_indices = open3d::ml::impl::NmsCPUKernel(
+                boxes.data_ptr<float>(), scores.data_ptr<float>(),
+                boxes.size(0), nms_overlap_thresh);
+        return torch::from_blob(keep_indices.data(),
+                                {static_cast<int64_t>(keep_indices.size())},
+                                torch::TensorOptions().dtype(torch::kLong))
+                .clone();
     }
 }
 
