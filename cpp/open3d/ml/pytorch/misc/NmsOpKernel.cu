@@ -73,12 +73,18 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                                torch::Tensor scores,
                                double nms_overlap_thresh) {
     const int N = boxes.size(0);
+    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
 
+    // Compute sort indices.
     int64_t *sort_indices = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
-
     torch::Tensor scores_copy = scores.clone();
-    SortIndices(scores_copy.data_ptr<float>(), sort_indices, N);
+    SortIndices(scores.clone().data_ptr<float>(), sort_indices, N);
+
+    // Allocate masks on device.
+    uint64_t *mask_ptr = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
+                           N * num_block_cols * sizeof(uint64_t)));
 
     std::vector<int64_t> keep_indices{1, 2, 3};
     torch::Tensor keep_tensor =
@@ -89,6 +95,78 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
 
     CHECK_ERROR(cudaFree(sort_indices));
     return keep_tensor;
+}
+
+__global__ void nms_kernel(const int num_boxes,
+                           const float nms_overlap_thresh,
+                           const float *boxes,
+                           uint64_t *mask) {
+    // boxes: (N, 5)
+    // mask:  (N, N/BS)
+    //
+    // Kernel launch
+    // blocks : (N/BS, N/BS)
+    // threads: BS
+
+    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
+
+    // Row-wise block index.
+    const int block_row_idx = blockIdx.y;
+    // Column-wise block index.
+    const int block_col_idx = blockIdx.x;
+
+    // Local block row size.
+    const int row_size =
+            fminf(num_boxes - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+    // Local block col size.
+    const int col_size =
+            fminf(num_boxes - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+
+    // Cololum-wise number of blocks.
+    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
+
+    // Fill local block_boxes by fetching the global box memory.
+    // block_boxes = boxes[NBS*block_col_idx : NBS*block_col_idx+col_size, :].
+    __shared__ float block_boxes[NMS_BLOCK_SIZE * 5];
+    if (threadIdx.x < col_size) {
+        float *dst = block_boxes + threadIdx.x * 5;
+        const float *src =
+                boxes + (NMS_BLOCK_SIZE * block_col_idx + threadIdx.x) * 5;
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst[3] = src[3];
+        dst[4] = src[4];
+    }
+    __syncthreads();
+
+    // Comparing src and dst. In one block, the following src and dst indices
+    // are compared:
+    // - src: BS * block_row_idx : BS * block_row_idx + row_size
+    // - dst: BS * block_col_idx : BS * block_col_idx + col_size
+    //
+    // With all blocks, all src and dst indices are compared.
+    //
+    // Result:
+    // mask[i, j] is a 64-bit integer where mask[i, j][k] (k counted from right)
+    // is 1 iff box[i] overlaps with box[BS*j+k].
+    if (threadIdx.x < row_size) {
+        // src_idx indices the global memory.
+        const int src_idx = NMS_BLOCK_SIZE * block_row_idx + threadIdx.x;
+        // dst_idx indices the shared memory.
+        int dst_idx = block_row_idx == block_col_idx ? threadIdx.x + 1 : 0;
+
+        uint64_t t = 0;
+        while (dst_idx < col_size) {
+            if (open3d::ml::impl::iou_bev(boxes + src_idx * 5,
+                                          block_boxes + dst_idx * 5) >
+                nms_overlap_thresh) {
+                t |= 1ULL << dst_idx;
+            }
+            dst_idx++;
+        }
+        mask[src_idx * num_block_cols + block_col_idx] = t;
+    }
 }
 
 int64_t NmsCUDA(torch::Tensor boxes,
@@ -107,8 +185,8 @@ int64_t NmsCUDA(torch::Tensor boxes,
                            N * num_block_cols * sizeof(uint64_t)));
 
     // Call kernel. Results will be saved in masks.
-    const float *boxes_ptr = boxes.data_ptr<float>();
-    open3d::ml::impl::NmsCUDAKernel(boxes_ptr, mask_ptr, N, nms_overlap_thresh);
+    open3d::ml::impl::NmsCUDAKernel(boxes.data_ptr<float>(), mask_ptr, N,
+                                    nms_overlap_thresh);
 
     // Copy cuda masks to cpu.
     std::vector<uint64_t> mask_cpu(N * num_block_cols);
