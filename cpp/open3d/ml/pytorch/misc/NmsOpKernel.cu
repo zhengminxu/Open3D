@@ -62,41 +62,6 @@ static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
     thrust::stable_sort_by_key(values_dptr, values_dptr + N, sort_indices_dptr);
 }
 
-// [inputs]
-// boxes             : (N, 5) float32
-// scores            : (N,) float32
-// nms_overlap_thresh: double
-//
-// [return]
-// keep_indices      : (M,) int64, the selected box indices
-torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
-                               torch::Tensor scores,
-                               double nms_overlap_thresh) {
-    const int N = boxes.size(0);
-    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
-
-    // Compute sort indices.
-    int64_t *sort_indices = nullptr;
-    CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
-    torch::Tensor scores_copy = scores.clone();
-    SortIndices(scores.clone().data_ptr<float>(), sort_indices, N);
-
-    // Allocate masks on device.
-    uint64_t *mask_ptr = nullptr;
-    CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
-                           N * num_block_cols * sizeof(uint64_t)));
-
-    std::vector<int64_t> keep_indices{1, 2, 3};
-    torch::Tensor keep_tensor =
-            torch::from_blob(keep_indices.data(),
-                             {static_cast<int64_t>(keep_indices.size())},
-                             torch::TensorOptions().dtype(torch::kLong))
-                    .to(boxes.device());
-
-    CHECK_ERROR(cudaFree(sort_indices));
-    return keep_tensor;
-}
-
 __global__ void nms_kernel(const int num_boxes,
                            const float nms_overlap_thresh,
                            const float *boxes,
@@ -167,6 +132,41 @@ __global__ void nms_kernel(const int num_boxes,
         }
         mask[src_idx * num_block_cols + block_col_idx] = t;
     }
+}
+
+// [inputs]
+// boxes             : (N, 5) float32
+// scores            : (N,) float32
+// nms_overlap_thresh: double
+//
+// [return]
+// keep_indices      : (M,) int64, the selected box indices
+torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
+                               torch::Tensor scores,
+                               double nms_overlap_thresh) {
+    const int N = boxes.size(0);
+    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
+
+    // Compute sort indices.
+    int64_t *sort_indices = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
+    torch::Tensor scores_copy = scores.clone();
+    SortIndices(scores.clone().data_ptr<float>(), sort_indices, N);
+
+    // Allocate masks on device.
+    uint64_t *mask_ptr = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
+                           N * num_block_cols * sizeof(uint64_t)));
+
+    std::vector<int64_t> keep_indices{1, 2, 3};
+    torch::Tensor keep_tensor =
+            torch::from_blob(keep_indices.data(),
+                             {static_cast<int64_t>(keep_indices.size())},
+                             torch::TensorOptions().dtype(torch::kLong))
+                    .to(boxes.device());
+
+    CHECK_ERROR(cudaFree(sort_indices));
+    return keep_tensor;
 }
 
 int64_t NmsCUDA(torch::Tensor boxes,
