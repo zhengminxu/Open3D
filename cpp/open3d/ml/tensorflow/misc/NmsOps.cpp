@@ -23,3 +23,36 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
+
+#include "open3d/ml/tensorflow/TensorFlowHelper.h"
+#include "tensorflow/core/framework/op.h"
+#include "tensorflow/core/framework/op_kernel.h"
+#include "tensorflow/core/framework/shape_inference.h"
+#include "tensorflow/core/lib/core/errors.h"
+
+using namespace tensorflow;
+
+REGISTER_OP("Open3DNms")
+        .Attr("T: {float}")  // type for boxes and scores
+        .Input("boxes: T")
+        .Input("scores: T")
+        .Input("N: int32")
+        .Input("nms_overlap_thresh: double")
+        .Output("keep_indices: int64")
+        .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+            using namespace ::tensorflow::shape_inference;
+            using namespace open3d::ml::op_util;
+            ShapeHandle boxes, scores, keep_indices;
+
+            TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 2, &boxes));
+            TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &scores));
+
+            Dim num_points("num_points");
+            Dim five(5, "five");
+            CHECK_SHAPE_HANDLE(c, boxes, num_points, five);
+            CHECK_SHAPE_HANDLE(c, scores, num_points);
+
+            keep_indices = c->MakeShape({c->UnknownDim()});
+            c->set_output(0, keep_indices);
+            return Status::OK();
+        });
