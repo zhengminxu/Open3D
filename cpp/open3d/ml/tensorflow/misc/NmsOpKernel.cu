@@ -30,6 +30,19 @@
 using namespace nms_opkernel;
 using namespace tensorflow;
 
+#define CHECK_ERROR(ans) \
+    { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code,
+                      const char* file,
+                      int line,
+                      bool abort = true) {
+    if (code != cudaSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
+                line);
+        if (abort) exit(code);
+    }
+}
+
 class NmsOpKernelCUDA : public NmsOpKernel {
 public:
     explicit NmsOpKernelCUDA(OpKernelConstruction* construction)
@@ -46,8 +59,9 @@ public:
         int64_t* ret_keep_indices = nullptr;
         output_allocator.AllocKeepIndices(&ret_keep_indices,
                                           keep_indices.size());
-        // memcpy(ret_keep_indices, keep_indices.data(),
-        //        keep_indices.size() * sizeof(int64_t));
+        CHECK_ERROR(cudaMemcpy(ret_keep_indices, keep_indices.data(),
+                               boxes.dim_size(0) * sizeof(int64_t),
+                               cudaMemcpyHostToDevice));
     }
 };
 
