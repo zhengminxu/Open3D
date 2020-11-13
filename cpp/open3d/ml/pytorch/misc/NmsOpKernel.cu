@@ -50,6 +50,17 @@ inline void gpuAssert(cudaError_t code,
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
 static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
+    // Cast to thrust device pointer.
+    thrust::device_ptr<float> values_dptr = thrust::device_pointer_cast(values);
+    thrust::device_ptr<int64_t> sort_indices_dptr =
+            thrust::device_pointer_cast(sort_indices);
+
+    // Fill sort_indices with 0, 1, ..., N-1.
+    thrust::sequence(sort_indices_dptr, sort_indices_dptr + N, 0);
+
+    // Sort values and sort_indices together.
+    thrust::stable_sort_by_key(values_dptr, values_dptr + N, sort_indices_dptr);
+
     // const int N = 6;
     // const int keys[N] = {1, 4, 2, 8, 5, 7};
     // char vals[N] = {'a', 'b', 'c', 'd', 'e', 'f'};
@@ -78,12 +89,8 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                                double nms_overlap_thresh) {
     const int N = boxes.size(0);
 
-    // Fill sort_indices with 0, 1, ..., N-1.
     int64_t *sort_indices = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
-    thrust::device_ptr<int64_t> sort_indices_device_ptr =
-            thrust::device_pointer_cast(sort_indices);
-    thrust::sequence(sort_indices_device_ptr, sort_indices_device_ptr + N, 0);
 
     torch::Tensor scores_copy = scores.clone();
     SortIndices(scores_copy.data_ptr<float>(), sort_indices, N);
