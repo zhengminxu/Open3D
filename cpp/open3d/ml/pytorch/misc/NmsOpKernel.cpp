@@ -50,12 +50,12 @@ static std::vector<int64_t> SortIndexes(const T *v,
     return indices;
 }
 
-static void AllPairsIoU(const float *boxes,
-                        const float *scores,
-                        const int64_t *sort_indices,
-                        uint64_t *mask,
-                        int N,
-                        float nms_overlap_thresh) {
+static void AllPairsIoUCPU(const float *boxes,
+                           const float *scores,
+                           const int64_t *sort_indices,
+                           uint64_t *mask,
+                           int N,
+                           float nms_overlap_thresh) {
     const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
     const int num_block_rows = DIVUP(N, NMS_BLOCK_SIZE);
@@ -128,8 +128,8 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
     // mask:  (N, N/BS)
     std::vector<uint64_t> mask_vec(N * num_block_cols);
     uint64_t *mask = mask_vec.data();
-    AllPairsIoU(boxes, scores, sort_indices.data(), mask, N,
-                nms_overlap_thresh);
+    AllPairsIoUCPU(boxes, scores, sort_indices.data(), mask, N,
+                   nms_overlap_thresh);
 
     // Write to keep.
     // remv_cpu has N bits in total. If the bit is 1, the corresponding
