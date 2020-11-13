@@ -96,9 +96,25 @@ static void NmsCPUKernel(const float *boxes,
 //
 // [return]
 // selected_indices  : (M,) int64, the selected box indices
+static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
+                                                  const float *scores,
+                                                  int num_boxes,
+                                                  float nms_overlap_thresh) {
+    return {};
+}
+
+// [inputs]
+// boxes             : (N, 5) float32
+// scores            : (N,) float32
+// nms_overlap_thresh: double
+//
+// [return]
+// selected_indices  : (M,) int64, the selected box indices
 torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                               torch::Tensor scores,
                               double nms_overlap_thresh) {
+    (void)NmsWithScoreCPUKernel;
+
     torch::Tensor order =
             std::get<1>(torch::sort(scores, 0, /*descending=*/true));
     torch::Tensor boxes_sorted =
