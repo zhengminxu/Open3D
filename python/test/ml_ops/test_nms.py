@@ -47,7 +47,6 @@ def test_nms_cpu():
     scores = torch.tensor([3, 1.1, 5, 2, 1, 0], dtype=torch.float32)
     thresh = 0.7
 
-    out = open3d.ml.torch.ops.nms(boxes, scores, thresh)
     s = time.time()
     out = open3d.ml.torch.ops.nms(boxes, scores, thresh)
     print("test_nms_cpu takes (s):", time.time() - s)
