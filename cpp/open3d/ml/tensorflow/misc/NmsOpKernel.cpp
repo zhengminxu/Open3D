@@ -26,6 +26,8 @@
 
 #include "open3d/ml/tensorflow/misc/NmsOpKernel.h"
 
+#include "open3d/ml/impl/misc/Nms.h"
+
 using namespace nms_opkernel;
 using namespace tensorflow;
 
@@ -37,13 +39,17 @@ public:
     void Kernel(tensorflow::OpKernelContext* context,
                 const tensorflow::Tensor& boxes,
                 const tensorflow::Tensor& scores) {
+        std::vector<int64_t> keep_indices = open3d::ml::impl::NmsCPUKernel(
+                boxes.flat<float>().data(), scores.flat<float>().data(),
+                boxes.dim_size(0), this->nms_overlap_thresh);
+
         // int N = boxes.dim_size(0);
         OutputAllocator output_allocator(context);
-        int64_t* keep_indices = nullptr;
-        output_allocator.AllocKeepIndices(&keep_indices, 3);
-        keep_indices[0] = 100;
-        keep_indices[1] = 140;
-        keep_indices[2] = 150;
+        int64_t* ret_keep_indices = nullptr;
+        output_allocator.AllocKeepIndices(&ret_keep_indices,
+                                          keep_indices.size());
+        memcpy(ret_keep_indices, keep_indices.data(),
+               keep_indices.size() * sizeof(int64_t));
     }
 };
 
