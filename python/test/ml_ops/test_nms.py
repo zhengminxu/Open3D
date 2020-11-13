@@ -82,6 +82,7 @@ def test_nms_cpu():
 
     def nms_cpu(boxes, scores, thresh):
         order = scores.sort(0, descending=True)[1]
+        print("order:", order)
         boxes = boxes[order].contiguous()
         keep = torch.LongTensor(boxes.size(0))
         num_out = open3d.ml.torch.ops.nms(boxes, keep, thresh)

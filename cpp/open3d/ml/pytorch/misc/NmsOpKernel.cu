@@ -49,7 +49,10 @@ inline void gpuAssert(cudaError_t code,
 
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
-static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
+static void SortIndices(float *values,
+                        int64_t *sort_indices,
+                        int64_t N,
+                        bool descending = false) {
     // Cast to thrust device pointer.
     thrust::device_ptr<float> values_dptr = thrust::device_pointer_cast(values);
     thrust::device_ptr<int64_t> sort_indices_dptr =
@@ -59,7 +62,13 @@ static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
     thrust::sequence(sort_indices_dptr, sort_indices_dptr + N, 0);
 
     // Sort values and sort_indices together.
-    thrust::stable_sort_by_key(values_dptr, values_dptr + N, sort_indices_dptr);
+    if (descending) {
+        thrust::stable_sort_by_key(values_dptr, values_dptr + N,
+                                   sort_indices_dptr, thrust::greater<float>());
+    } else {
+        thrust::stable_sort_by_key(values_dptr, values_dptr + N,
+                                   sort_indices_dptr);
+    }
 }
 
 __global__ void nms_kernel(const float *boxes,
@@ -153,7 +162,7 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
     int64_t *sort_indices = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
     torch::Tensor scores_copy = scores.clone();
-    SortIndices(scores.clone().data_ptr<float>(), sort_indices, N);
+    SortIndices(scores.clone().data_ptr<float>(), sort_indices, N, true);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
@@ -178,6 +187,10 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
     std::vector<int64_t> sort_indices_cpu(N);
     CHECK_ERROR(cudaMemcpy(sort_indices_cpu.data(), sort_indices,
                            N * sizeof(int64_t), cudaMemcpyDeviceToHost));
+    for (size_t i = 0; i < N; i++) {
+        std::cout << "sort_indices_cpu " << i << ": " << sort_indices_cpu[i]
+                  << std::endl;
+    }
 
     // Write to keep_indices in CPU.
     // remv_cpu has N bits in total. If the bit is 1, the corresponding
