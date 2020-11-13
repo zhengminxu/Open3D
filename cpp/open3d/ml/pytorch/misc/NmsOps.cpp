@@ -68,12 +68,7 @@ torch::Tensor NmsWithScore(torch::Tensor boxes,
 }
 
 static auto registry = torch::RegisterOperators(
-        "open3d::nms(Tensor boxes, Tensor keep, float nms_overlap_thresh) -> "
-        "int keep_num",
-        &Nms);
-
-static auto registry2 = torch::RegisterOperators(
-        "open3d::nms_with_score(Tensor boxes, Tensor scores, float "
+        "open3d::nms(Tensor boxes, Tensor scores, float "
         "nms_overlap_thresh) -> "
         "Tensor keep_indices",
         &NmsWithScore);
