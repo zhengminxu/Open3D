@@ -63,6 +63,7 @@ static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
 }
 
 __global__ void nms_kernel(const float *boxes,
+                           const int64_t *sort_indices,
                            uint64_t *mask,
                            const int N,
                            const float nms_overlap_thresh) {
