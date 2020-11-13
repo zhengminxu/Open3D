@@ -24,6 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <thrust/iterator/counting_iterator.h>
 #include <thrust/sort.h>
 
 #include "open3d/ml/impl/misc/Nms.h"
@@ -46,6 +47,22 @@ inline void gpuAssert(cudaError_t code,
 
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
+static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
+    // const int N = 6;
+    // const int keys[N] = {1, 4, 2, 8, 5, 7};
+    // char vals[N] = {'a', 'b', 'c', 'd', 'e', 'f'};
+    // thrust::stable_sort_by_key(thrust::host, keys, keys + N, vals);
+    // thrust::counting_iterator<int64_t> index_start(0);
+    // thrust::counting_iterator<int64_t> index_end = index_start + num;
+    // thrust::stable_sort_by_key(values, values + num, sort_indices);
+    // std::vector<int64_t> sort_indices_cpu(num);
+    // std::itoa(sort_indices_cpu.begin(), sort_indices_cpu.end(), 0);
+    // CHECK_ERROR(cudaMemcpy(sort_indices, sort_indices_cpu.data(),
+    //                        num * sizeof(int64_t), cudaMemcpyHostToDevice));
+
+    thrust::sequence(sort_indices, sort_indices + N, 0);
+}
+
 // [inputs]
 // boxes             : (N, 5) float32
 // scores            : (N,) float32
@@ -56,13 +73,21 @@ inline void gpuAssert(cudaError_t code,
 torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                                torch::Tensor scores,
                                double nms_overlap_thresh) {
-    std::vector<int64_t> keep_indices{1, 2, 3};
+    const int N = boxes.size(0);
 
+    int64_t *sort_indices = nullptr;
+    CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
+    torch::Tensor scores_copy = scores.clone();
+    SortIndices(scores_copy.data_ptr<float>(), sort_indices, N);
+
+    std::vector<int64_t> keep_indices{1, 2, 3};
     torch::Tensor keep_tensor =
             torch::from_blob(keep_indices.data(),
                              {static_cast<int64_t>(keep_indices.size())},
                              torch::TensorOptions().dtype(torch::kLong))
                     .to(boxes.device());
+
+    CHECK_ERROR(cudaFree(sort_indices));
     return keep_tensor;
 }
 
@@ -73,34 +98,32 @@ int64_t NmsCUDA(torch::Tensor boxes,
     CHECK_CONTIGUOUS(boxes);
     CHECK_CONTIGUOUS(keep);
 
-    const int num_boxes = boxes.size(0);
-    const int num_block_cols =
-            DIVUP(num_boxes, open3d::ml::impl::NMS_BLOCK_SIZE);
+    const int N = boxes.size(0);
+    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
 
     // Allocate masks on device.
     uint64_t *mask_ptr = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
-                           num_boxes * num_block_cols * sizeof(uint64_t)));
+                           N * num_block_cols * sizeof(uint64_t)));
 
     // Call kernel. Results will be saved in masks.
     const float *boxes_ptr = boxes.data_ptr<float>();
-    open3d::ml::impl::NmsCUDAKernel(boxes_ptr, mask_ptr, num_boxes,
-                                    nms_overlap_thresh);
+    open3d::ml::impl::NmsCUDAKernel(boxes_ptr, mask_ptr, N, nms_overlap_thresh);
 
     // Copy cuda masks to cpu.
-    std::vector<uint64_t> mask_cpu(num_boxes * num_block_cols);
+    std::vector<uint64_t> mask_cpu(N * num_block_cols);
     CHECK_ERROR(cudaMemcpy(mask_cpu.data(), mask_ptr,
-                           num_boxes * num_block_cols * sizeof(uint64_t),
+                           N * num_block_cols * sizeof(uint64_t),
                            cudaMemcpyDeviceToHost));
     cudaFree(mask_ptr);
 
     // Write to keep.
-    // remv_cpu has num_boxes bits in total. If the bit is 1, the corresponding
+    // remv_cpu has N bits in total. If the bit is 1, the corresponding
     // box will be removed.
     std::vector<uint64_t> remv_cpu(num_block_cols, 0);
     int64_t *keep_ptr = keep.data_ptr<int64_t>();
     int num_to_keep = 0;
-    for (int i = 0; i < num_boxes; i++) {
+    for (int i = 0; i < N; i++) {
         int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
         int inner_block_col_idx =
                 i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
