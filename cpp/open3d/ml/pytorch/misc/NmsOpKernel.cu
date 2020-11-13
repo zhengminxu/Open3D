@@ -62,10 +62,10 @@ static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
     thrust::stable_sort_by_key(values_dptr, values_dptr + N, sort_indices_dptr);
 }
 
-__global__ void nms_kernel(const int num_boxes,
-                           const float nms_overlap_thresh,
-                           const float *boxes,
-                           uint64_t *mask) {
+__global__ void nms_kernel(const float *boxes,
+                           uint64_t *mask,
+                           const int N,
+                           const float nms_overlap_thresh) {
     // boxes: (N, 5)
     // mask:  (N, N/BS)
     //
@@ -82,13 +82,13 @@ __global__ void nms_kernel(const int num_boxes,
 
     // Local block row size.
     const int row_size =
-            fminf(num_boxes - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            fminf(N - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
     // Local block col size.
     const int col_size =
-            fminf(num_boxes - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            fminf(N - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
 
     // Cololum-wise number of blocks.
-    const int num_block_cols = DIVUP(num_boxes, NMS_BLOCK_SIZE);
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Fill local block_boxes by fetching the global box memory.
     // block_boxes = boxes[NBS*block_col_idx : NBS*block_col_idx+col_size, :].
