@@ -113,7 +113,7 @@ static std::vector<int64_t> SortIndexes(const T *v,
 // nms_overlap_thresh: double
 //
 // [return]
-// selected_indices  : (M,) int64, the selected box indices
+// keep_indices      : (M,) int64, the selected box indices
 static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
                                                   const float *scores,
                                                   int N,
@@ -176,7 +176,32 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
         }
     }
 
-    return {};
+    // Write to keep.
+    // remv_cpu has N bits in total. If the bit is 1, the corresponding
+    // box will be removed.
+    std::vector<uint64_t> remv_cpu(num_block_cols, 0);
+    std::vector<int64_t> keep_indices;
+    for (int i = 0; i < N; i++) {
+        int block_col_idx = i / open3d::ml::impl::NMS_BLOCK_SIZE;
+        int inner_block_col_idx =
+                i % open3d::ml::impl::NMS_BLOCK_SIZE;  // threadIdx.x
+
+        // Querying the i-th bit in remv_cpu, counted from the right.
+        // - remv_cpu[block_col_idx]: the block bitmap containing the query
+        // - 1ULL << inner_block_col_idx: the one-hot bitmap to extract i
+        if (!(remv_cpu[block_col_idx] & (1ULL << inner_block_col_idx))) {
+            // Keep the i-th box.
+            keep_indices.push_back(sort_indices[i]);
+
+            // Any box that overlaps with the i-th box will be removed.
+            uint64_t *p = mask + i * num_block_cols;
+            for (int j = block_col_idx; j < num_block_cols; j++) {
+                remv_cpu[j] |= p[j];
+            }
+        }
+    }
+
+    return keep_indices;
 }
 
 // [inputs]
@@ -185,7 +210,7 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
 // nms_overlap_thresh: double
 //
 // [return]
-// selected_indices  : (M,) int64, the selected box indices
+// keep_indices      : (M,) int64, the selected box indices
 torch::Tensor NmsWithScoreCPU(torch::Tensor boxes,
                               torch::Tensor scores,
                               double nms_overlap_thresh) {
