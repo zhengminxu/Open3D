@@ -3,6 +3,8 @@
 #include <iostream>
 #include <numeric>
 
+#include "open3d/ml/impl/misc/NmsImpl.h"
+
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
 namespace open3d {
@@ -31,7 +33,6 @@ static void AllPairsIoUCPU(const float *boxes,
                            uint64_t *mask,
                            int N,
                            float nms_overlap_thresh) {
-    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
     const int num_block_rows = DIVUP(N, NMS_BLOCK_SIZE);
 
@@ -69,8 +70,7 @@ static void AllPairsIoUCPU(const float *boxes,
                     // Unlike the CUDA impl, both src_idx and dst_idx here are
                     // indexes to the global memory. Thus we need to compute the
                     // local index for dst_idx.
-                    if (open3d::ml::impl::iou_bev(
-                                boxes + sort_indices[src_idx] * 5,
+                    if (iou_bev(boxes + sort_indices[src_idx] * 5,
                                 boxes + sort_indices[dst_idx] * 5) >
                         nms_overlap_thresh) {
                         t |= 1ULL << (dst_idx - NMS_BLOCK_SIZE * block_col_idx);
@@ -95,7 +95,6 @@ std::vector<int64_t> NmsCPUKernel(const float *boxes,
                                   float nms_overlap_thresh) {
     std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);
 
-    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Call kernel. Results will be saved in masks.

@@ -11,6 +11,7 @@ All Rights Reserved 2018.
 #include <thrust/sort.h>
 
 #include "open3d/ml/impl/misc/Nms.h"
+#include "open3d/ml/impl/misc/NmsImpl.h"
 
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
@@ -65,8 +66,6 @@ __global__ void nms_kernel(const float *boxes,
     // blocks : (N/BS, N/BS)
     // threads: BS
 
-    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
-
     // Row-wise block index.
     const int block_row_idx = blockIdx.y;
     // Column-wise block index.
@@ -115,9 +114,8 @@ __global__ void nms_kernel(const float *boxes,
 
         uint64_t t = 0;
         while (dst_idx < col_size) {
-            if (open3d::ml::impl::iou_bev(boxes + sort_indices[src_idx] * 5,
-                                          block_boxes + dst_idx * 5) >
-                nms_overlap_thresh) {
+            if (iou_bev(boxes + sort_indices[src_idx] * 5,
+                        block_boxes + dst_idx * 5) > nms_overlap_thresh) {
                 t |= 1ULL << dst_idx;
             }
             dst_idx++;
@@ -130,7 +128,6 @@ std::vector<int64_t> NmsCUDAKernel(const float *boxes,
                                    const float *scores,
                                    int N,
                                    float nms_overlap_thresh) {
-    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
     const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Compute sort indices.
