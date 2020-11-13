@@ -24,37 +24,29 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "open3d/ml/tensorflow/TensorFlowHelper.h"
-#include "tensorflow/core/framework/op.h"
-#include "tensorflow/core/framework/op_kernel.h"
-#include "tensorflow/core/framework/shape_inference.h"
-#include "tensorflow/core/lib/core/errors.h"
+#include "open3d/ml/tensorflow/misc/NmsOpKernel.h"
 
+using namespace nms_opkernel;
 using namespace tensorflow;
 
-REGISTER_OP("Open3DNms")
-        .Attr("T: {float}")  // type for boxes and scores
-        .Attr("nms_overlap_thresh: float")
-        .Input("boxes: T")
-        .Input("scores: T")
-        .Output("keep_indices: int64")
-        .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-            using namespace ::tensorflow::shape_inference;
-            using namespace open3d::ml::op_util;
-            ShapeHandle boxes, scores, keep_indices;
+class NmsOpKernelCPU : public NmsOpKernel {
+public:
+    explicit NmsOpKernelCPU(OpKernelConstruction* construction)
+        : NmsOpKernel(construction) {}
 
-            TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 2, &boxes));
-            TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &scores));
+    void Kernel(tensorflow::OpKernelContext* context,
+                const tensorflow::Tensor& boxes,
+                const tensorflow::Tensor& scores) {
+        // int N = boxes.dim_size(0);
+        OutputAllocator output_allocator(context);
+        int64_t* keep_indices = nullptr;
+        output_allocator.AllocKeepIndices(&keep_indices, 3);
+    }
+};
 
-            Dim num_points("num_points");
-            Dim five(5, "five");
-            CHECK_SHAPE_HANDLE(c, boxes, num_points, five);
-            CHECK_SHAPE_HANDLE(c, scores, num_points);
-
-            keep_indices = c->MakeShape({c->UnknownDim()});
-            c->set_output(0, keep_indices);
-            return Status::OK();
-        })
-        .Doc(R"doc(
-undocumented for now
-)doc");
+#define REG_KB(type)                                                        \
+    REGISTER_KERNEL_BUILDER(                                                \
+            Name("Open3DNms").Device(DEVICE_CPU).TypeConstraint<type>("T"), \
+            NmsOpKernelCPU);
+REG_KB(float)
+#undef REG_KB
