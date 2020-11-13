@@ -92,9 +92,9 @@ static void NmsCPUKernel(const float *boxes,
 }
 
 template <typename T>
-std::vector<int64_t> GetSortIndexes(const T *v,
-                                    int64_t num,
-                                    bool descending = false) {
+static std::vector<int64_t> SortIndexes(const T *v,
+                                        int64_t num,
+                                        bool descending = false) {
     std::vector<int64_t> indices(num);
     std::iota(indices.begin(), indices.end(), 0);
     if (descending) {
@@ -118,10 +118,63 @@ static std::vector<int64_t> NmsWithScoreCPUKernel(const float *boxes,
                                                   const float *scores,
                                                   int N,
                                                   float nms_overlap_thresh) {
-    std::vector<int64_t> sort_indices = GetSortIndexes(scores, N, true);
-    for (int i = 0; i < N; ++i) {
-        std::cout << "idx " << sort_indices[i] << std::endl;
+    std::vector<int64_t> sort_indices = SortIndexes(scores, N, true);
+
+    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
+    const int num_block_rows = DIVUP(N, NMS_BLOCK_SIZE);
+
+    // Call kernel. Results will be saved in masks.
+    // boxes: (N, 5)
+    // mask:  (N, N/BS)
+    std::vector<uint64_t> mask_vec(N * num_block_cols);
+    uint64_t *mask = mask_vec.data();
+
+    // We need the concept of "block" since the mask is a uint64_t binary bit
+    // map, and the block size is exactly 64x64. This is also consistent with
+    // the CUDA implementation.
+    for (int block_col_idx = 0; block_col_idx < num_block_cols;
+         block_col_idx++) {
+        for (int block_row_idx = 0; block_row_idx < num_block_rows;
+             ++block_row_idx) {
+            // Local block row size.
+            const int row_size =
+                    fminf(N - block_row_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+            // Local block col size.
+            const int col_size =
+                    fminf(N - block_col_idx * NMS_BLOCK_SIZE, NMS_BLOCK_SIZE);
+
+            // Comparing src and dst. In one block, the following src and dst
+            // indices are compared:
+            // - src: BS * block_row_idx : BS * block_row_idx + row_size
+            // - dst: BS * block_col_idx : BS * block_col_idx + col_size
+            //
+            // With all blocks, all src and dst indices are compared.
+            //
+            // Result:
+            // mask[i, j] is a 64-bit integer where mask[i, j][k] (k counted
+            // from right) is 1 iff box[i] overlaps with box[BS*j+k].
+            for (int src_idx = NMS_BLOCK_SIZE * block_row_idx;
+                 src_idx < NMS_BLOCK_SIZE * block_row_idx + row_size;
+                 src_idx++) {
+                uint64_t t = 0;
+                for (int dst_idx = NMS_BLOCK_SIZE * block_col_idx;
+                     dst_idx < NMS_BLOCK_SIZE * block_col_idx + col_size;
+                     dst_idx++) {
+                    // Unlike the CUDA impl, both src_idx and dst_idx here are
+                    // indexes to the global memory. Thus we need to compute the
+                    // local index for dst_idx.
+                    if (open3d::ml::impl::iou_bev(boxes + src_idx * 5,
+                                                  boxes + dst_idx * 5) >
+                        nms_overlap_thresh) {
+                        t |= 1ULL << (dst_idx - NMS_BLOCK_SIZE * block_col_idx);
+                    }
+                }
+                mask[src_idx * num_block_cols + block_col_idx] = t;
+            }
+        }
     }
+
     return {};
 }
 
