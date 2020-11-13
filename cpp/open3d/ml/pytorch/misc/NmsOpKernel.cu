@@ -146,7 +146,8 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                                torch::Tensor scores,
                                double nms_overlap_thresh) {
     const int N = boxes.size(0);
-    const int num_block_cols = DIVUP(N, open3d::ml::impl::NMS_BLOCK_SIZE);
+    const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;
+    const int num_block_cols = DIVUP(N, NMS_BLOCK_SIZE);
 
     // Compute sort indices.
     int64_t *sort_indices = nullptr;
@@ -159,14 +160,55 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
     CHECK_ERROR(cudaMalloc((void **)&mask_ptr,
                            N * num_block_cols * sizeof(uint64_t)));
 
-    std::vector<int64_t> keep_indices{1, 2, 3};
+    // Launch kernel.
+    dim3 blocks(DIVUP(N, NMS_BLOCK_SIZE), DIVUP(N, NMS_BLOCK_SIZE));
+    dim3 threads(NMS_BLOCK_SIZE);
+    nms_kernel<<<blocks, threads>>>(boxes.data_ptr<float>(), sort_indices,
+                                    mask_ptr, N, nms_overlap_thresh);
+
+    // Copy cuda masks to cpu.
+    std::vector<uint64_t> mask_vec(N * num_block_cols);
+    uint64_t *mask = mask_vec.data();
+    CHECK_ERROR(cudaMemcpy(mask_vec.data(), mask_ptr,
+                           N * num_block_cols * sizeof(uint64_t),
+                           cudaMemcpyDeviceToHost));
+    CHECK_ERROR(cudaFree(mask_ptr));
+
+    // Copy sort_indices to cpu.
+    std::vector<int64_t> sort_indices_cpu(N);
+    CHECK_ERROR(cudaMemcpy(sort_indices_cpu.data(), sort_indices,
+                           N * sizeof(int64_t), cudaMemcpyDeviceToHost));
+
+    // Write to keep_indices in CPU.
+    // remv_cpu has N bits in total. If the bit is 1, the corresponding
+    // box will be removed.
+    std::vector<uint64_t> remv_cpu(num_block_cols, 0);
+    std::vector<int64_t> keep_indices;
+    for (int i = 0; i < N; i++) {
+        int block_col_idx = i / NMS_BLOCK_SIZE;
+        int inner_block_col_idx = i % NMS_BLOCK_SIZE;  // threadIdx.x
+
+        // Querying the i-th bit in remv_cpu, counted from the right.
+        // - remv_cpu[block_col_idx]: the block bitmap containing the query
+        // - 1ULL << inner_block_col_idx: the one-hot bitmap to extract i
+        if (!(remv_cpu[block_col_idx] & (1ULL << inner_block_col_idx))) {
+            // Keep the i-th box.
+            keep_indices.push_back(sort_indices_cpu[i]);
+
+            // Any box that overlaps with the i-th box will be removed.
+            uint64_t *p = mask + i * num_block_cols;
+            for (int j = block_col_idx; j < num_block_cols; j++) {
+                remv_cpu[j] |= p[j];
+            }
+        }
+    }
+    CHECK_ERROR(cudaFree(sort_indices));
+
     torch::Tensor keep_tensor =
             torch::from_blob(keep_indices.data(),
                              {static_cast<int64_t>(keep_indices.size())},
                              torch::TensorOptions().dtype(torch::kLong))
                     .to(boxes.device());
-
-    CHECK_ERROR(cudaFree(sort_indices));
     return keep_tensor;
 }
 
