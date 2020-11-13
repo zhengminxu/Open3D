@@ -87,9 +87,5 @@ int64_t NmsCPU(torch::Tensor boxes,
         }
     }
 
-    if (cudaSuccess != cudaGetLastError()) {
-        printf("Error!\n");
-    }
-
     return num_to_keep;
 }
