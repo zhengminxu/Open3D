@@ -60,21 +60,6 @@ static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
 
     // Sort values and sort_indices together.
     thrust::stable_sort_by_key(values_dptr, values_dptr + N, sort_indices_dptr);
-
-    // const int N = 6;
-    // const int keys[N] = {1, 4, 2, 8, 5, 7};
-    // char vals[N] = {'a', 'b', 'c', 'd', 'e', 'f'};
-    // thrust::stable_sort_by_key(thrust::host, keys, keys + N, vals);
-    // thrust::counting_iterator<int64_t> index_start(0);
-    // thrust::counting_iterator<int64_t> index_end = index_start + num;
-    // thrust::stable_sort_by_key(values, values + num, sort_indices);
-    // std::vector<int64_t> sort_indices_cpu(num);
-    // std::itoa(sort_indices_cpu.begin(), sort_indices_cpu.end(), 0);
-    // CHECK_ERROR(cudaMemcpy(sort_indices, sort_indices_cpu.data(),
-    //                        num * sizeof(int64_t), cudaMemcpyHostToDevice));
-
-    // thrust::sequence(sort_indices, sort_indices + N, 0);
-    // thrust::stable_sort_by_key(values, values + N, sort_indices);
 }
 
 // [inputs]
