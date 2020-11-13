@@ -127,7 +127,7 @@ __global__ void nms_kernel(const float *boxes,
 }
 
 std::vector<int64_t> NmsCUDAKernel(const float *boxes,
-                                   float *scores,
+                                   const float *scores,
                                    int N,
                                    float nms_overlap_thresh) {
     const int NMS_BLOCK_SIZE = open3d::ml::impl::NMS_BLOCK_SIZE;

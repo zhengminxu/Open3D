@@ -39,10 +39,9 @@
 torch::Tensor NmsCUDA(torch::Tensor boxes,
                       torch::Tensor scores,
                       double nms_overlap_thresh) {
-    torch::Tensor scores_copy = scores.clone();
     std::vector<int64_t> keep_indices = open3d::ml::impl::NmsCUDAKernel(
-            boxes.data_ptr<float>(), scores_copy.data_ptr<float>(),
-            boxes.size(0), nms_overlap_thresh);
+            boxes.data_ptr<float>(), scores.data_ptr<float>(), boxes.size(0),
+            nms_overlap_thresh);
     torch::Tensor keep_tensor =
             torch::from_blob(keep_indices.data(),
                              {static_cast<int64_t>(keep_indices.size())},

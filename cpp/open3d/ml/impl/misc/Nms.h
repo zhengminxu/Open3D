@@ -36,13 +36,13 @@ namespace impl {
 
 #ifdef BUILD_CUDA_MODULE
 std::vector<int64_t> NmsCUDAKernel(const float *boxes,
-                                   float *scores,
+                                   const float *scores,
                                    int N,
                                    float nms_overlap_thresh);
 #endif
 
 std::vector<int64_t> NmsCPUKernel(const float *boxes,
-                                  float *scores,
+                                  const float *scores,
                                   int N,
                                   float nms_overlap_thresh);
 
