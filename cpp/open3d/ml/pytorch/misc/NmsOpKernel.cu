@@ -24,7 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <thrust/device_vector.h>
 #include <thrust/iterator/counting_iterator.h>
+#include <thrust/sequence.h>
 #include <thrust/sort.h>
 
 #include "open3d/ml/impl/misc/Nms.h"
@@ -60,7 +62,8 @@ static void SortIndices(float *values, int64_t *sort_indices, int64_t N) {
     // CHECK_ERROR(cudaMemcpy(sort_indices, sort_indices_cpu.data(),
     //                        num * sizeof(int64_t), cudaMemcpyHostToDevice));
 
-    thrust::sequence(sort_indices, sort_indices + N, 0);
+    // thrust::sequence(sort_indices, sort_indices + N, 0);
+    // thrust::stable_sort_by_key(values, values + N, sort_indices);
 }
 
 // [inputs]
@@ -75,8 +78,13 @@ torch::Tensor NmsWithScoreCUDA(torch::Tensor boxes,
                                double nms_overlap_thresh) {
     const int N = boxes.size(0);
 
+    // Fill sort_indices with 0, 1, ..., N-1.
     int64_t *sort_indices = nullptr;
     CHECK_ERROR(cudaMalloc((void **)&sort_indices, N * sizeof(int64_t)));
+    thrust::device_ptr<int64_t> sort_indices_device_ptr =
+            thrust::device_pointer_cast(sort_indices);
+    thrust::sequence(sort_indices_device_ptr, sort_indices_device_ptr + N, 0);
+
     torch::Tensor scores_copy = scores.clone();
     SortIndices(scores_copy.data_ptr<float>(), sort_indices, N);
 
