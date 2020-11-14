@@ -1,0 +1,109 @@
+# ----------------------------------------------------------------------------
+# -                        Open3D: www.o3d.org                            -
+# ----------------------------------------------------------------------------
+# The MIT License (MIT)
+#
+# Copyright (c) 2020 www.o3d.org
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+# ----------------------------------------------------------------------------
+
+import open3d as o3d
+import numpy as np
+import torch
+import iou3d_cuda
+import time
+import open3d.ml.torch
+
+
+def timeit(func):
+
+    def timed_func(*args, **kwargs):
+        # Warm up.
+        func(*args, **kwargs)
+
+        # Benchmark.
+        repeat = 5
+        s = time.time()
+        for _ in range(repeat):
+            result = func(*args, **kwargs)
+        elapsed_time = time.time() - s
+        avg_time = elapsed_time / repeat
+
+        # Print.
+        func_name = "{: <12}".format(func.__name__)
+        print(f"{func_name} takes {avg_time:.10f} seconds")
+        return result
+
+    return timed_func
+
+
+@timeit
+def nms_cpu(boxes, scores, thresh):
+    return o3d.ml.torch.ops.nms(boxes, scores, thresh)
+
+
+@timeit
+def nms_cuda(boxes, scores, thresh):
+    return o3d.ml.torch.ops.nms(boxes, scores, thresh)
+
+
+@timeit
+def nms_author(boxes, scores, thresh):
+    order = scores.sort(0, descending=True)[1]
+    boxes = boxes[order].contiguous()
+    keep = torch.LongTensor(boxes.size(0))
+    num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh)
+    return order[keep[:num_out].cuda()].contiguous()
+
+
+def run_impls(np_boxes, np_scores, thresh):
+    cpu_boxes = torch.Tensor(np_boxes)
+    cpu_scores = torch.Tensor(np_scores)
+    cuda_boxes = cpu_boxes.cuda()
+    cuda_scores = cpu_scores.cuda()
+
+    print()
+    result_cpu = nms_cpu(cpu_boxes, cpu_scores, thresh).cpu().numpy()
+    result_cuda = nms_cuda(cuda_boxes, cuda_scores, thresh).cpu().numpy()
+    result_author = nms_author(cuda_boxes, cuda_scores, thresh).cpu().numpy()
+
+    np.testing.assert_equal(result_cpu, result_author)
+    np.testing.assert_equal(result_cuda, result_author)
+
+
+def test_nms():
+    np_boxes = np.array([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
+                         [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
+                         [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
+                         [15.2050, -7.8447, 15.8311, -6.7437, 1.0506],
+                         [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
+                         [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
+                        dtype=np.float32)
+    np_scores = np.array([3, 1.1, 5, 2, 1, 0], dtype=np.float32)
+    thresh = 0.7
+    run_impls(np_boxes, np_scores, thresh)
+
+
+def test_rand():
+    num_boxes = 1000
+    np_boxes = np.random.rand(num_boxes, 5)
+    np_scores = np.random.rand(num_boxes,)
+    thresh = np.random.rand()
+    run_impls(np_boxes, np_scores, thresh)
