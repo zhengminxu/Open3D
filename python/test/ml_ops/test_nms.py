@@ -1,9 +1,9 @@
 # ----------------------------------------------------------------------------
-# -                        Open3D: www.open3d.org                            -
+# -                        Open3D: www.o3d.org                            -
 # ----------------------------------------------------------------------------
 # The MIT License (MIT)
 #
-# Copyright (c) 2020 www.open3d.org
+# Copyright (c) 2020 www.o3d.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,32 +26,47 @@
 
 import open3d as o3d
 import numpy as np
-import mltest
+import torch
+import iou3d_cuda
+import time
+import open3d.ml.torch
 
-# Skip all tests if the ml ops were not built.
-pytestmark = mltest.default_marks
+
+def nms_cpu(boxes, scores, thresh):
+    return o3d.ml.torch.ops.nms(boxes, scores, thresh)
 
 
-@mltest.parametrize.ml
-def test_nms(ml):
-    boxes = np.array([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
-                      [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
-                      [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
-                      [15.2050, -7.8447, 15.8311, -6.7437, 1.0506],
-                      [15.1343, -7.8136, 15.7121, -6.8479, 1.0352],
-                      [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
-                     dtype=np.float32)
-    scores = np.array([3, 1.1, 5, 2, 1, 0], dtype=np.float32)
-    nms_overlap_thresh = 0.7
-    keep_indices_ref = np.array([2, 3, 5]).astype(np.int64)
+def nms_cuda(boxes, scores, thresh):
+    return o3d.ml.torch.ops.nms(boxes, scores, thresh)
 
-    keep_indices = mltest.run_op(ml,
-                                 ml.device,
-                                 True,
-                                 ml.ops.nms,
-                                 boxes,
-                                 scores,
-                                 nms_overlap_thresh=nms_overlap_thresh)
 
-    np.testing.assert_equal(keep_indices, keep_indices_ref)
-    assert keep_indices.dtype == keep_indices_ref.dtype
+def nms_author(boxes, scores, thresh):
+    order = scores.sort(0, descending=True)[1]
+    boxes = boxes[order].contiguous()
+    keep = torch.LongTensor(boxes.size(0))
+    num_out = iou3d_cuda.nms_gpu(boxes, keep, thresh)
+    return order[keep[:num_out].cuda()].contiguous()
+
+
+def run_impls(np_boxes, np_scores, thresh):
+    cpu_boxes = torch.Tensor(np_boxes)
+    cpu_scores = torch.Tensor(np_scores)
+    cuda_boxes = cpu_boxes.cuda()
+    cuda_scores = cpu_scores.cuda()
+
+    print()
+    result_cpu = nms_cpu(cpu_boxes, cpu_scores, thresh).cpu().numpy()
+    result_cuda = nms_cuda(cuda_boxes, cuda_scores, thresh).cpu().numpy()
+    result_author = nms_author(cuda_boxes, cuda_scores, thresh).cpu().numpy()
+
+    np.testing.assert_equal(result_cpu, result_author)
+    np.testing.assert_equal(result_cuda, result_author)
+
+
+def test_rand():
+    np.random.seed(0)
+    num_boxes = 65
+    np_boxes = np.random.rand(num_boxes, 5)
+    np_scores = np.random.rand(num_boxes,)
+    thresh = np.random.rand()
+    run_impls(np_boxes, np_scores, thresh)
