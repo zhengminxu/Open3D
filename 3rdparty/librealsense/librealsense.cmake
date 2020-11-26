@@ -16,6 +16,11 @@ ExternalProject_Add(
         -DBUILD_GRAPHICAL_EXAMPLES=OFF
         -DBUILD_PYTHON_BINDINGS=OFF
         -DBUILD_WITH_CUDA=${BUILD_CUDA_MODULE}
+        $<$<PLATFORM_ID:Darwin>:-DUSE_EXTERNAL_USB=ON>
+        $<$<PLATFORM_ID:Darwin>:-DBUILD_WITH_OPENMP=OFF>
+        $<$<PLATFORM_ID:Darwin>:-DHWM_OVER_XU=OFF>
+        $<$<PLATFORM_ID:Windows>:-DUSE_EXTERNAL_USB=ON>
+        $<$<PLATFORM_ID:Windows>:-DBUILD_WITH_STATIC_CRT=${STATIC_WINDOWS_RUNTIME}>
 )
 
 ExternalProject_Get_Property(ext_librealsense INSTALL_DIR)
