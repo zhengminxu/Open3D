@@ -577,6 +577,11 @@ list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${TRITRIINTERSECT_TARGET}")
 
 # librealsense SDK
 if (BUILD_LIBREALSENSE)
+    add_library(usb INTERFACE IMPORTED)
+    set_target_properties(usb PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "/usr/include/libusb-1.0"
+        INTERFACE_LINK_LIBRARIES "/usr/lib/x86_64-linux-gnu/libusb-1.0.so"
+    )
     include(${Open3D_3RDPARTY_DIR}/librealsense/librealsense.cmake)
     import_3rdparty_library(3rdparty_librealsense
         INCLUDE_DIRS ${LIBREALSENSE_INCLUDE_DIR}
@@ -584,6 +589,7 @@ if (BUILD_LIBREALSENSE)
         LIB_DIR      ${LIBREALSENSE_LIB_DIR}
     )
     add_dependencies(3rdparty_librealsense ext_librealsense)
+    target_link_libraries(3rdparty_librealsense INTERFACE usb)
     set(LIBREALSENSE_TARGET "3rdparty_librealsense")
     list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${LIBREALSENSE_TARGET}")
 endif()

@@ -19,6 +19,6 @@ ExternalProject_Add(
 )
 
 ExternalProject_Get_Property(ext_librealsense INSTALL_DIR)
-set(LIBREALSENSE_INCLUDE_DIR ${INSTALL_DIR}/include/) # "/" is critical
+set(LIBREALSENSE_INCLUDE_DIR ${INSTALL_DIR}/include/) # "/" is critical.
 set(LIBREALSENSE_LIB_DIR ${INSTALL_DIR}/lib)
-set(LIBREALSENSE_LIBRARIES fw realsense-file realsense2)
+set(LIBREALSENSE_LIBRARIES realsense2 fw realsense-file) # The order is critical.
