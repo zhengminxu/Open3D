@@ -27,3 +27,11 @@ ExternalProject_Get_Property(ext_librealsense INSTALL_DIR)
 set(LIBREALSENSE_INCLUDE_DIR ${INSTALL_DIR}/include/) # "/" is critical.
 set(LIBREALSENSE_LIB_DIR ${INSTALL_DIR}/lib)
 set(LIBREALSENSE_LIBRARIES realsense2 fw realsense-file) # The order is critical.
+
+if(APPLE)
+    ExternalProject_Add_Step(ext_librealsense copy_libusb_to_lib_folder
+        COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libusb_install/lib/libusb.a ${LIBREALSENSE_LIB_DIR}
+        DEPENDEES install
+    )
+    set(LIBREALSENSE_LIBRARIES ${LIBREALSENSE_LIBRARIES} usb)
+endif()
