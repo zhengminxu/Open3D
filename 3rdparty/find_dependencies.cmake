@@ -577,23 +577,6 @@ list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${TRITRIINTERSECT_TARGET}")
 
 # librealsense SDK
 if (BUILD_LIBREALSENSE)
-    # Ubuntu dependency: libusb-1.0.0-dev
-    find_library(LIBUSB_LIB usb-1.0)
-    find_path(LIBUSB_INC libusb.h HINTS PATH_SUFFIXES libusb-1.0)
-    if (NOT LIBUSB_LIB)
-        message(FATAL_ERROR "libusb-1.0 library not found, please install libusb-1.0.0-dev.")
-    endif()
-    if (NOT LIBUSB_INC)
-        message(FATAL_ERROR "libusb-1.0 header not found, please install libusb-1.0.0-dev.")
-    endif()
-    message(STATUS "LIBUSB_LIB: ${LIBUSB_LIB}")
-    message(STATUS "LIBUSB_INC: ${LIBUSB_INC}")
-
-    add_library(usb INTERFACE IMPORTED)
-    set_target_properties(usb PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${LIBUSB_LIB}
-        INTERFACE_LINK_LIBRARIES ${LIBUSB_LIB}
-    )
     include(${Open3D_3RDPARTY_DIR}/librealsense/librealsense.cmake)
     import_3rdparty_library(3rdparty_librealsense
         INCLUDE_DIRS ${LIBREALSENSE_INCLUDE_DIR}
@@ -601,9 +584,28 @@ if (BUILD_LIBREALSENSE)
         LIB_DIR      ${LIBREALSENSE_LIB_DIR}
     )
     add_dependencies(3rdparty_librealsense ext_librealsense)
-    target_link_libraries(3rdparty_librealsense INTERFACE usb)
     set(LIBREALSENSE_TARGET "3rdparty_librealsense")
     list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${LIBREALSENSE_TARGET}")
+
+    if (UNIX AND NOT APPLE)
+        # Ubuntu dependency: libusb-1.0.0-dev
+        find_library(LIBUSB_LIB usb-1.0)
+        find_path(LIBUSB_INC libusb.h HINTS PATH_SUFFIXES libusb-1.0)
+        if (NOT LIBUSB_LIB)
+            message(FATAL_ERROR "libusb-1.0 library not found, please install libusb-1.0.0-dev.")
+        endif()
+        if (NOT LIBUSB_INC)
+            message(FATAL_ERROR "libusb-1.0 header not found, please install libusb-1.0.0-dev.")
+        endif()
+        message(STATUS "LIBUSB_LIB: ${LIBUSB_LIB}")
+        message(STATUS "LIBUSB_INC: ${LIBUSB_INC}")
+        add_library(usb INTERFACE IMPORTED)
+        set_target_properties(usb PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${LIBUSB_INC}
+            INTERFACE_LINK_LIBRARIES ${LIBUSB_LIB}
+        )
+        target_link_libraries(3rdparty_librealsense INTERFACE usb)
+    endif()
 endif()
 
 # PNG
