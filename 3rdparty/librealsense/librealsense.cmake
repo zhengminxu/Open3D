@@ -34,4 +34,10 @@ if(APPLE)
         DEPENDEES install
     )
     set(LIBREALSENSE_LIBRARIES ${LIBREALSENSE_LIBRARIES} usb)
+elseif(WIN32)
+    ExternalProject_Add_Step(ext_librealsense copy_libusb_to_lib_folder
+        COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libusb_install/lib/usb.lib ${LIBREALSENSE_LIB_DIR}
+        DEPENDEES install
+    )
+    set(LIBREALSENSE_LIBRARIES ${LIBREALSENSE_LIBRARIES} usb)
 endif()
