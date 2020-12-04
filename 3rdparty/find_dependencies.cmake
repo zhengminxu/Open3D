@@ -42,6 +42,8 @@ find_package(PkgConfig QUIET)
 #        itself is linked privately
 #    INCLUDE_ALL
 #        install all files in the include directories. Default is *.h, *.hpp
+#    ABSOLUTE_PATH
+#        use absolute DIRECTORY path instead of paths relative to 3rdparty/
 #    DIRECTORY <dir>
 #        the library sources are in the subdirectory <dir> of 3rdparty/
 #    INCLUDE_DIRS <dir> [<dir> ...]
@@ -59,26 +61,31 @@ find_package(PkgConfig QUIET)
 #        extra link dependencies
 #
 function(build_3rdparty_library name)
-    cmake_parse_arguments(arg "PUBLIC;HEADER;INCLUDE_ALL" "DIRECTORY" "INCLUDE_DIRS;SOURCES;LIBS" ${ARGN})
+    cmake_parse_arguments(arg "PUBLIC;HEADER;INCLUDE_ALL;ABSOLUTE_PATH" "DIRECTORY" "INCLUDE_DIRS;SOURCES;LIBS" ${ARGN})
     if(arg_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "Invalid syntax: build_3rdparty_library(${name} ${ARGN})")
     endif()
     if(NOT arg_DIRECTORY)
         set(arg_DIRECTORY "${name}")
     endif()
+    if (NOT arg_ABSOLUTE_PATH)
+        set(FULL_DIRECTORY "${Open3D_3RDPARTY_DIR}/${arg_DIRECTORY}")
+    else()
+        set(FULL_DIRECTORY "${arg_DIRECTORY}")
+    endif()
     if(arg_INCLUDE_DIRS)
         set(include_dirs)
         foreach(incl IN LISTS arg_INCLUDE_DIRS)
-            list(APPEND include_dirs "${Open3D_3RDPARTY_DIR}/${arg_DIRECTORY}/${incl}")
+            list(APPEND include_dirs "${FULL_DIRECTORY}/${incl}")
         endforeach()
     else()
-        set(include_dirs "${Open3D_3RDPARTY_DIR}/${arg_DIRECTORY}/")
+        set(include_dirs "${FULL_DIRECTORY}/")
     endif()
     message(STATUS "Building library ${name} from source")
     if(arg_SOURCES)
         set(sources)
         foreach(src ${arg_SOURCES})
-            list(APPEND sources "${Open3D_3RDPARTY_DIR}/${arg_DIRECTORY}/${src}")
+            list(APPEND sources "${FULL_DIRECTORY}/${src}")
         endforeach()
         add_library(${name} STATIC ${sources})
         foreach(incl IN LISTS include_dirs)
@@ -826,14 +833,18 @@ if(BUILD_GUI)
         endif()
     endif()
     if(NOT USE_SYSTEM_IMGUI)
-        build_3rdparty_library(3rdparty_imgui DIRECTORY imgui
+        include(${Open3D_3RDPARTY_DIR}/imgui/imgui.cmake)
+        message(STATUS "IMGUI_SRC_DIR: ${IMGUI_SRC_DIR}")
+        build_3rdparty_library(3rdparty_imgui DIRECTORY ${IMGUI_SRC_DIR}
             SOURCES
                 imgui_demo.cpp
                 imgui_draw.cpp
                 imgui_widgets.cpp
                 imgui.cpp
+            ABSOLUTE_PATH
         )
         set(IMGUI_TARGET "3rdparty_imgui")
+        add_dependencies(3rdparty_imgui ext_imgui)
     endif()
     list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${IMGUI_TARGET}")
 endif()
