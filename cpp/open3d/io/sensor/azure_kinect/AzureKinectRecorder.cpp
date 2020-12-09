@@ -57,7 +57,18 @@ AzureKinectRecorder::AzureKinectRecorder(
 AzureKinectRecorder::~AzureKinectRecorder() { CloseRecord(); }
 
 bool AzureKinectRecorder::InitSensor() {
-    return sensor_.Connect(device_index_);
+    bool rc = sensor_.Connect(device_index_);
+    if (!rc) {
+        utility::LogError(
+                "Failed to connect to sensor. Check if the device is "
+                "connected. Please follow the instructions in "
+                "(http://www.open3d.org/docs/release/tutorial/sensor/"
+                "azure_kinect.html). If you are on Linux, check if the `udev` "
+                "rules has been setup correctly "
+                "(https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/"
+                "develop/docs/usage.md#linux-device-setup).");
+    }
+    return rc;
 }
 
 bool AzureKinectRecorder::OpenRecord(const std::string& filename) {
