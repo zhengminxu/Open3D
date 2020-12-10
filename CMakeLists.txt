@@ -50,7 +50,7 @@ option(WITH_FAISS                 "Enable Faiss"                             ON 
 
 # Sensor options
 option(BUILD_LIBREALSENSE         "Build support for Intel RealSense camera" OFF)
-option(BUILD_AZURE_KINECT         "Build support for Azure Kinect sensor"    OFF)
+option(BUILD_AZURE_KINECT         "Build support for Azure Kinect sensor"    ON)
 # ML library options
 option(BUILD_TENSORFLOW_OPS       "Build ops for TensorFlow"                 OFF)
 option(BUILD_PYTORCH_OPS          "Build ops for PyTorch"                    OFF)
@@ -116,8 +116,12 @@ if((UNIX AND NOT APPLE) AND BUILD_LIBREALSENSE)
     set(BUILD_LIBREALSENSE OFF)
 endif()
 if (APPLE AND ENABLE_HEADLESS_RENDERING)
-    message(STATUS "Headless rendering is not supported on Mac OS")
+    message(STATUS "Headless rendering is not supported on macOS")
     set(ENABLE_HEADLESS_RENDERING OFF)
+endif()
+if (APPLE AND BUILD_AZURE_KINECT)
+    message(STATUS "Azure Kinect is not supported on macOS")
+    set(BUILD_AZURE_KINECT OFF)
 endif()
 if(ENABLE_HEADLESS_RENDERING AND BUILD_GUI)
     message(STATUS "Headless rendering disables the Open3D GUI")
