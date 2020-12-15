@@ -27,13 +27,11 @@
 import open3d as o3d
 import numpy as np
 import mltest
+import open3d.ml.tf.ops as ml3d_ops
+import tensorflow as tf
 
-# Skip all tests if the ml ops were not built.
-pytestmark = mltest.default_marks
 
-
-@mltest.parametrize.ml_tf_only
-def test_nms(ml):
+def test_nms_tf():
     boxes = np.array([[15.0811, -7.9803, 15.6721, -6.8714, 0.5152],
                       [15.1166, -7.9261, 15.7060, -6.8137, 0.6501],
                       [15.1304, -7.8129, 15.7069, -6.8903, 0.7296],
@@ -42,16 +40,6 @@ def test_nms(ml):
                       [15.0931, -7.9552, 15.6675, -7.0056, 0.5979]],
                      dtype=np.float32)
     scores = np.array([3, 1.1, 5, 2, 1, 0], dtype=np.float32)
-    nms_overlap_thresh = 0.7
-    keep_indices_ref = np.array([2, 3, 5]).astype(np.int64)
-
-    keep_indices = mltest.run_op(ml,
-                                 ml.device,
-                                 True,
-                                 ml.ops.nms,
-                                 boxes,
-                                 scores,
-                                 nms_overlap_thresh=nms_overlap_thresh)
-
-    np.testing.assert_equal(keep_indices, keep_indices_ref)
-    assert keep_indices.dtype == keep_indices_ref.dtype
+    thresh = 0.01
+    with tf.device("GPU:0"):
+        ml3d_ops.nms(boxes, scores, thresh)
