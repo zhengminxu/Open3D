@@ -12,15 +12,14 @@ def test_nms_tf():
     for gpu_device in gpu_devices:
         tf.config.experimental.set_memory_growth(gpu_device, True)
 
-    boxes0 = np.load(os.path.join(pwd, "nms", "bboxes0.npy"))
-    scores0 = np.load(os.path.join(pwd, "nms", "scores0.npy"))
-    boxes1 = np.load(os.path.join(pwd, "nms", "bboxes0.npy"))
-    scores1 = np.load(os.path.join(pwd, "nms", "scores0.npy"))
-    boxes2 = np.load(os.path.join(pwd, "nms", "bboxes0.npy"))
-    scores2 = np.load(os.path.join(pwd, "nms", "scores0.npy"))
-
     num_iters = 100000
     with tf.device("GPU:0"):
+        boxes0 = tf.constant(np.load(os.path.join(pwd, "nms", "bboxes0.npy")))
+        scores0 = tf.constant(np.load(os.path.join(pwd, "nms", "scores0.npy")))
+        boxes1 = tf.constant(np.load(os.path.join(pwd, "nms", "bboxes0.npy")))
+        scores1 = tf.constant(np.load(os.path.join(pwd, "nms", "scores0.npy")))
+        boxes2 = tf.constant(np.load(os.path.join(pwd, "nms", "bboxes0.npy")))
+        scores2 = tf.constant(np.load(os.path.join(pwd, "nms", "scores0.npy")))
         for i in range(num_iters):
             ml3d_ops.nms(boxes0, scores0, thresh)
             ml3d_ops.nms(boxes1, scores1, thresh)
