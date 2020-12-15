@@ -34,6 +34,7 @@
 #include "open3d/core/Dispatch.h"
 #include "open3d/core/Dtype.h"
 #include "open3d/core/SizeVector.h"
+#include "open3d/core/TensorBench.h"
 #include "open3d/core/TensorKey.h"
 #include "open3d/utility/Optional.h"
 #include "pybind/core/core.h"
@@ -532,6 +533,9 @@ void pybind_core_tensor(py::module& m) {
                     "Tensor.item(): unsupported dtype to convert to python.");
         }
     });
+
+    // Bind TensorBench
+    m.def("run_tensor_bench", &RunTensorBench);
 }
 
 }  // namespace core
