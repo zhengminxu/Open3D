@@ -37,6 +37,8 @@
 #include "open3d/core/kernel/Kernel.h"
 #include "open3d/core/linalg/Matmul.h"
 #include "open3d/t/geometry/TensorMap.h"
+#include "open3d/utility/Console.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -170,6 +172,14 @@ PointCloud PointCloud::CreateFromDepthImage(const Image &depth,
 
     core::kernel::GeneralEW(srcs, dsts,
                             core::kernel::GeneralEWOpCode::Unproject);
+
+    utility::Timer timer;
+    timer.Start();
+    core::kernel::GeneralEW(srcs, dsts,
+                            core::kernel::GeneralEWOpCode::Unproject);
+    timer.Stop();
+    utility::LogInfo("reateFromDepthImage C: {}", timer.GetDuration());
+
     if (dsts.count("points") == 0) {
         utility::LogError(
                 "[PointCloud] unprojection launch failed, vertex map expected "
