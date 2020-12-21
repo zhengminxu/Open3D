@@ -170,9 +170,6 @@ PointCloud PointCloud::CreateFromDepthImage(const Image &depth,
                                     core::Dtype::Int64, device)}};
     std::unordered_map<std::string, core::Tensor> dsts;
 
-    core::kernel::GeneralEW(srcs, dsts,
-                            core::kernel::GeneralEWOpCode::Unproject);
-
     utility::Timer timer;
     timer.Start();
     core::kernel::GeneralEW(srcs, dsts,

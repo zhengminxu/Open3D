@@ -131,9 +131,11 @@ int main(int argc, char** argv) {
 
         utility::Timer timer;
         timer.Start();
-        voxel_grid.Integrate(depth, color, intrinsic_t, extrinsic_t);
+        // voxel_grid.Integrate(depth, color, intrinsic_t, extrinsic_t);
+        t::geometry::PointCloud::CreateFromDepthImage(
+                depth, intrinsic_t, extrinsic_t, 1000.0, 3.0, 4);
         timer.Stop();
-        utility::LogInfo("{}: Integration takes {}", i, timer.GetDuration());
+        utility::LogInfo("CreateFromDepthImage takes {}", timer.GetDuration());
     }
 
     if (utility::ProgramOptionExists(argc, argv, "--mesh")) {

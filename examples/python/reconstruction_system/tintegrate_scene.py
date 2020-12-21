@@ -100,10 +100,12 @@ if __name__ == '__main__':
                                     o3d.core.Dtype.Float32, device)
 
         start = time.time()
-        volume.integrate(depth, rgb, intrinsic, extrinsic, 1000.0, 3.0)
+        o3d.t.geometry.PointCloud.create_from_depth_image(
+            depth, intrinsic, extrinsic, 1000.0, 3.0, 4)
+        # volume.integrate(depth, rgb, intrinsic, extrinsic, 1000.0, 3.0)
         end = time.time()
-        print('Integration {:04d}/{:04d} takes {:.3f} ms'.format(
+        print('create_from_depth_image {:04d}/{:04d} takes {:.3f} ms'.format(
             i, n_files, (end - start) * 1000.0))
 
-    mesh = volume.extract_surface_mesh().to_legacy_triangle_mesh()
-    o3d.io.write_triangle_mesh(args.mesh_name, mesh, False, True)
+    # mesh = volume.extract_surface_mesh().to_legacy_triangle_mesh()
+    # o3d.io.write_triangle_mesh(args.mesh_name, mesh, False, True)
