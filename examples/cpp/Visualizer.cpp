@@ -29,8 +29,9 @@
 #include <thread>
 
 #include "open3d/Open3D.h"
+// #include "open3d/visualization/rendering/filament/FilamentEngine.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     using namespace open3d;
 
     auto cloud_ptr = std::make_shared<geometry::PointCloud>();
@@ -38,6 +39,13 @@ int main(int argc, char *argv[]) {
             "/Users/ylao/repo/Open3D/examples/test_data/fragment.pcd",
             *cloud_ptr);
     cloud_ptr->NormalizeNormals();
+
+    // visualization::Draw({cloud_ptr}, "PointCloud");
+
+    // const filament::Engine& ei =
+    //         visualization::rendering::EngineInstance::GetInstance();
+    // (void)ei;
+
     visualization::DrawGeometries({cloud_ptr}, "PointCloud", 1600, 900);
 
     utility::LogInfo("End of the test.");

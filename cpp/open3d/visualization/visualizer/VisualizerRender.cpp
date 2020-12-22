@@ -34,10 +34,17 @@
 #include "open3d/visualization/visualizer/ViewTrajectory.h"
 #include "open3d/visualization/visualizer/Visualizer.h"
 
+// clang-format off
+#include <bluegl/BlueGL.h>
+// clang-format on
+
 namespace open3d {
 namespace visualization {
 
 bool Visualizer::InitOpenGL() {
+    int result = bluegl::bind();
+    utility::LogWarning("bluegl result: {}.", result);
+
     glewExperimental = true;
     if (glewInit() != GLEW_OK) {
         utility::LogWarning("Failed to initialize GLEW.");
