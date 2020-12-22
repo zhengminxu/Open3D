@@ -123,5 +123,5 @@ macro(APP SRC_DIR APP_NAME TARGET_NAME)
 endmacro(APP)
 
 if (BUILD_GUI)
-    APP(Open3DViewer Open3D Open3DViewer ${CMAKE_PROJECT_NAME})
+    # APP(Open3DViewer Open3D Open3DViewer ${CMAKE_PROJECT_NAME})
 endif()
