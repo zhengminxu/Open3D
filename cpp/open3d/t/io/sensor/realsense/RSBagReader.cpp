@@ -32,6 +32,7 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <regex>
 #include <sstream>
 #include <tuple>
 
@@ -57,6 +58,14 @@ bool RSBagReader::Open(const std::string &filename) {
         Close();
     }
     try {
+        std::string my_regex_str = R"(/device_0/sensor_(\d)+/info)";
+        std::cout << "RSBagReader::Open: trying to construct regex"
+                  << std::endl;
+        std::regex my_regex(my_regex_str);
+        std::cout << "RSBagReader::Open: done: trying to construct regex"
+                  << std::endl;
+        (void)my_regex;
+
         rs2::config cfg;
         cfg.enable_device_from_file(filename, false);  // Do not repeat playback
         pipe_.reset(new rs2::pipeline);
