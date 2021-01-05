@@ -22,6 +22,7 @@ ExternalProject_Add(
         $<$<PLATFORM_ID:Darwin>:-DHWM_OVER_XU=OFF>
         $<$<PLATFORM_ID:Windows>:-DUSE_EXTERNAL_USB=ON>
         $<$<PLATFORM_ID:Windows>:-DBUILD_WITH_STATIC_CRT=${STATIC_WINDOWS_RUNTIME}>
+    BUILD_ALWAYS ON
 )
 
 ExternalProject_Get_Property(ext_librealsense INSTALL_DIR)
