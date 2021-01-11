@@ -1,31 +1,23 @@
 # Build
-set(REGISTRATION_SRC
+set(PIPELINES_SRC
     registration/Registration.cpp
     registration/TransformationEstimation.cpp
-)
-
-set(KERNEL_SRC
     kernel/TransformationConverter.cpp
 )
 
-set(KERNEL_CUDA_SRC
+set(PIPELINES_CUDA_SRC
     kernel/TransformationConverter.cu
 )
 
-set(ALL_PIPELINE_SRC
-    ${REGISTRATION_SRC}
-    ${KERNEL_SRC}
-)
-
 if(BUILD_CUDA_MODULE)
-    set(ALL_PIPELINE_SRC
-        ${ALL_PIPELINE_SRC}
-        ${KERNEL_CUDA_SRC}
+    set(PIPELINES_SRC
+        ${PIPELINES_SRC}
+        ${PIPELINES_CUDA_SRC}
     )
 endif()
 
 # Create object library
-add_library(tpipelines OBJECT ${ALL_PIPELINE_SRC})
+add_library(tpipelines OBJECT ${PIPELINES_SRC})
 open3d_show_and_abort_on_warning(tpipelines)
 open3d_set_global_properties(tpipelines)
 open3d_set_open3d_lib_properties(tpipelines)
