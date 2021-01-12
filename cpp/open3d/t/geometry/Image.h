@@ -47,9 +47,10 @@ public:
     /// \brief Constructor for image.
     ///
     /// Row-major storage is used, similar to OpenCV. Use (row, col, channel)
-    /// indexing order for image creation and accessing. In general, (r, c, ch)
-    /// are the preferred variable names for consistency, and avoid using width,
-    /// height, u, v, x, y for coordinates.
+    /// indexing order for image creation and accessing. (row=0, col=0)
+    /// represents the top-left pixel. In general, (r, c, ch) are the preferred
+    /// variable names for consistency. Avoid using width, height, u, v, x, y
+    /// for coordinates.
     ///
     /// \param rows Number of rows of the image, i.e. image height. \p rows must
     /// be non-negative.
