@@ -1116,3 +1116,14 @@ if (WITH_FAISS)
     target_link_libraries(3rdparty_faiss INTERFACE ${CMAKE_DL_LIBS})
 endif()
 list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${FAISS_TARGET}")
+
+# WebRTC
+include(${Open3D_3RDPARTY_DIR}/webrtc/webrtc.cmake)
+import_3rdparty_library(3rdparty_webrtc
+    INCLUDE_DIRS ${WEBRTC_INCLUDE_DIRS}
+    LIB_DIR      ${WEBRTC_LIB_DIR}
+    LIBRARIES    ${WEBRTC_LIBRARIES}
+)
+set(WEBRTC_TARGET "3rdparty_webrtc")
+add_dependencies(3rdparty_webrtc ext_webrtc_all)
+list(APPEND Open3D_3RDPARTY_PRIVATE_TARGETS "${WEBRTC_TARGET}")
