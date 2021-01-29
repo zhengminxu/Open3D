@@ -28,8 +28,8 @@ public:
     static TriangleMesh CreateBox(...);
 
 protected:
-    std::unordered_map<std::string, Tensor> vertex_attr_;
-    std::unordered_map<std::string, Tensor> triangle_attr_;
+    unordered_map<string, Tensor> vertex_attr_;
+    unordered_map<string, Tensor> triangle_attr_;
 };
 }  // namespace geometry
 
