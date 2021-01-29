@@ -7,6 +7,8 @@
 #include <unordered_set>
 #include <vector>
 
+// clang-format off
+
 namespace open3d {
 
 namespace geometry {
@@ -20,10 +22,8 @@ public:
     std::shared_ptr<TriangleMesh> SimplifyVertexClustering(...) const;
 
     // Conversion.
-    static std::shared_ptr<TriangleMesh> CreateFromPointCloudPoisson(
-            const PointCloud&, ...);
-    static std::shared_ptr<TriangleMesh> CreateFromPointCloudBallPivot(
-            const PointCloud&, ...);
+    static std::shared_ptr<TriangleMesh> CreateFromPointCloudPoisson(const PointCloud&, ...);
+    static std::shared_ptr<TriangleMesh> CreateFromPointCloudBallPivot(const PointCloud&, ...);
 
     // Creation.
     static std::shared_ptr<TriangleMesh> CreateSphere(...);
@@ -36,15 +36,17 @@ public:
     std::vector<Eigen::Vector3i> triangles_;
     std::vector<Eigen::Vector3d> triangle_normals_;
 };
-}  // namespace geometry
+}
 
 namespace io {
 bool ReadTriangleMesh(const std::string&, geometry::TriangleMesh&, ...);
 bool WriteTriangleMesh(const std::string&, const geometry::TriangleMesh&, ...);
-}  // namespace io
+}
 
 namespace visualization {
 void Draw(const std::vector<std::shared_ptr<Geometry>>& geometries, ...);
 }
 
-}  // namespace open3d
+}
+
+// clang-format on
