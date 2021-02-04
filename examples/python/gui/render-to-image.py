@@ -5,7 +5,10 @@ import open3d.visualization.rendering as rendering
 
 
 def main():
-    render = rendering.OffscreenRenderer(640, 480)
+    render = rendering.OffscreenRenderer(640,
+                                         480,
+                                         resource_path="",
+                                         headless=True)
 
     yellow = rendering.Material()
     yellow.base_color = [1.0, 0.75, 0.0, 1.0]
