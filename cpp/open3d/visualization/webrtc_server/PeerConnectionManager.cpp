@@ -375,6 +375,11 @@ const Json::Value PeerConnectionManager::getMediaList() {
         //           << std::endl;
     }
 
+    // Add image capturer
+    Json::Value media;
+    media["video"] = "image://Open3D";
+    value.append(media);
+
     // Local video/audio files.
     for (auto it = m_config.begin(); it != m_config.end(); it++) {
         std::string name = it.key().asString();
