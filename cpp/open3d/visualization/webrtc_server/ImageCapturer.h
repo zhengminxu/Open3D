@@ -16,8 +16,11 @@
 #include <media/base/video_common.h>
 #include <modules/desktop_capture/desktop_capture_options.h>
 #include <modules/desktop_capture/desktop_capturer.h>
+#include <rtc_base/logging.h>
 
 #include <thread>
+
+#include "open3d/utility/Console.h"
 
 namespace open3d {
 namespace visualization {
@@ -66,6 +69,48 @@ protected:
     int m_height;
     bool m_isrunning;
     rtc::VideoBroadcaster broadcaster_;
+};
+
+class ImageWindowCapturer : public ImageCapturer {
+public:
+    ImageWindowCapturer(const std::string& url,
+                        const std::map<std::string, std::string>& opts)
+        : ImageCapturer(opts) {
+        utility::LogInfo("ImageWindowCapturer::url: {}", url);
+        const std::string windowprefix("window://");
+        if (url.find(windowprefix) == 0) {
+            m_capturer = webrtc::DesktopCapturer::CreateWindowCapturer(
+                    webrtc::DesktopCaptureOptions::CreateDefault());
+
+            if (m_capturer) {
+                webrtc::DesktopCapturer::SourceList sourceList;
+                if (m_capturer->GetSourceList(&sourceList)) {
+                    const std::string windowtitle(
+                            url.substr(windowprefix.length()));
+                    for (auto source : sourceList) {
+                        RTC_LOG(LS_ERROR)
+                                << "ImageWindowCapturer source:" << source.id
+                                << " title:" << source.title;
+                        if (windowtitle == source.title) {
+                            m_capturer->SelectSource(source.id);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    static ImageWindowCapturer* Create(
+            const std::string& url,
+            const std::map<std::string, std::string>& opts) {
+        std::unique_ptr<ImageWindowCapturer> capturer(
+                new ImageWindowCapturer(url, opts));
+        if (!capturer->Init()) {
+            RTC_LOG(LS_WARNING) << "Failed to create ImageWindowCapturer";
+            return nullptr;
+        }
+        return capturer.release();
+    }
 };
 
 }  // namespace webrtc_server
