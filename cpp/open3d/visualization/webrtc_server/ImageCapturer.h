@@ -31,11 +31,23 @@ namespace webrtc_server {
 
 class ImageReader {
 public:
+    ImageReader() {
+        t::geometry::Image im;
+        t::io::ReadImage(
+                "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
+                "webrtc_server/html/lena_color_640_480.jpg",
+                im);
+        frame_ = core::Tensor::Zeros({im.GetRows(), im.GetCols(), 4},
+                                     im.GetDtype());
+        frame_.Slice(2, 0, 1) = im.AsTensor().Slice(2, 2, 3);
+        frame_.Slice(2, 1, 2) = im.AsTensor().Slice(2, 1, 2);
+        frame_.Slice(2, 2, 3) = im.AsTensor().Slice(2, 0, 1);
+    }
+    virtual ~ImageReader() {}
+
     class Callback {
     public:
-        // Called after a frame has been captured. |frame| is not nullptr if and
-        // only if |result| is SUCCESS.
-        virtual void OnCaptureResult() = 0;
+        virtual void OnCaptureResult(const core::Tensor&) = 0;
 
     protected:
         virtual ~Callback() {}
@@ -46,9 +58,12 @@ public:
         callback_ = callback;
     }
 
-    void CaptureFrame() { callback_->OnCaptureResult(); }
+    void CaptureFrame() { callback_->OnCaptureResult(frame_); }
 
     Callback* callback_ = nullptr;
+
+private:
+    core::Tensor frame_;
 };
 
 class ImageCapturer : public rtc::VideoSourceInterface<webrtc::VideoFrame>,
@@ -58,30 +73,6 @@ public:
                   const std::map<std::string, std::string>& opts)
         : ImageCapturer(opts) {
         m_capturer = std::unique_ptr<ImageReader>(new ImageReader());
-        // utility::LogInfo("ImageCapturer::url_: {}", url_);
-        // std::string url = "window://Open3D";
-        // const std::string windowprefix("window://");
-        // if (url.find(windowprefix) == 0) {
-        //     m_capturer = webrtc::DesktopCapturer::CreateWindowCapturer(
-        //             webrtc::DesktopCaptureOptions::CreateDefault());
-
-        //     if (m_capturer) {
-        //         webrtc::DesktopCapturer::SourceList sourceList;
-        //         if (m_capturer->GetSourceList(&sourceList)) {
-        //             const std::string windowtitle(
-        //                     url.substr(windowprefix.length()));
-        //             for (auto source : sourceList) {
-        //                 RTC_LOG(LS_ERROR)
-        //                         << "ImageCapturer source:" << source.id
-        //                         << " title:" << source.title;
-        //                 if (windowtitle == source.title) {
-        //                     m_capturer->SelectSource(source.id);
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     static ImageCapturer* Create(
@@ -103,16 +94,16 @@ public:
         if (opts.find("height") != opts.end()) {
             m_height = std::stoi(opts.at("height"));
         }
-        t::geometry::Image im;
-        t::io::ReadImage(
-                "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
-                "webrtc_server/html/lena_color_640_480.jpg",
-                im);
-        im_buffer_ = core::Tensor::Zeros({im.GetRows(), im.GetCols(), 4},
-                                         im.GetDtype());
-        im_buffer_.Slice(2, 0, 1) = im.AsTensor().Slice(2, 2, 3);
-        im_buffer_.Slice(2, 1, 2) = im.AsTensor().Slice(2, 1, 2);
-        im_buffer_.Slice(2, 2, 3) = im.AsTensor().Slice(2, 0, 1);
+        // if (m_height != 480) {
+        //     utility::LogError(
+        //             "TODO: flexible height. Unsupported hight for now: {}",
+        //             m_height);
+        // }
+        // if (m_width != 640) {
+        //     utility::LogError(
+        //             "TODO: flexible width. Unsupported width for now: {}",
+        //             m_width);
+        // }
     }
     bool Init() { return this->Start(); }
     virtual ~ImageCapturer() { this->Stop(); }
@@ -140,22 +131,17 @@ public:
     // overide webrtc::DesktopCapturer::Callback
     // See: WindowCapturerX11::CaptureFrame
     // build/webrtc/src/ext_webrtc/src/modules/desktop_capture/linux/window_capturer_x11.cc
-    virtual void OnCaptureResult() {
+    virtual void OnCaptureResult(const core::Tensor& frame) {
         RTC_LOG(INFO) << "ImageCapturer:OnCaptureResult";
-
-        // int width = frame->stride() /
-        // webrtc::DesktopFrame::kBytesPerPixel; int height =
-        // frame->rect().height();
-
-        int height = (int)im_buffer_.GetShape(0);
-        int width = (int)im_buffer_.GetShape(1);
+        int height = (int)frame.GetShape(0);
+        int width = (int)frame.GetShape(1);
 
         rtc::scoped_refptr<webrtc::I420Buffer> I420buffer =
                 webrtc::I420Buffer::Create(width, height);
 
         // frame->data()
         const int conversionResult = libyuv::ConvertToI420(
-                static_cast<const uint8_t*>(im_buffer_.GetDataPtr()), 0,
+                static_cast<const uint8_t*>(frame.GetDataPtr()), 0,
                 I420buffer->MutableDataY(), I420buffer->StrideY(),
                 I420buffer->MutableDataU(), I420buffer->StrideU(),
                 I420buffer->MutableDataV(), I420buffer->StrideV(), 0, 0, width,
@@ -215,7 +201,6 @@ protected:
     int m_height;
     bool m_isrunning;
     rtc::VideoBroadcaster broadcaster_;
-    core::Tensor im_buffer_;  // Currently BGRA. TODO: make this RGB only.
 };
 
 }  // namespace webrtc_server
