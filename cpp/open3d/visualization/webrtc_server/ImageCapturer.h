@@ -20,6 +20,8 @@
 
 #include <thread>
 
+#include "open3d/core/Tensor.h"
+#include "open3d/t/io/ImageIO.h"
 #include "open3d/utility/Console.h"
 
 namespace open3d {
@@ -67,19 +69,18 @@ public:
         RTC_LOG(INFO) << "ImageCapturer:OnCaptureResult";
 
         if (result == webrtc::DesktopCapturer::Result::SUCCESS) {
-            // t::geometry::Image im;
-            // t::io::ReadImage(
-            //         "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
-            //         "webrtc_server/html/lena_color_640_480.jpg",
-            //         im);
-            // core::Tensor im_tensor = im.AsTensor();
-            // core::Tensor im_tensor_bgra = core::Tensor::Zeros(
-            //         {im.GetRows(), im.GetCols(), 4}, im_tensor.GetDtype());
-            // im_tensor_bgra.Slice(2, 0, 1) = im_tensor.Slice(2, 2, 3);
-            // im_tensor_bgra.Slice(2, 1, 2) = im_tensor.Slice(2, 1, 2);
-            // im_tensor_bgra.Slice(2, 2, 3) = im_tensor.Slice(2, 0, 1);
-            // set data to: static_cast<const
-            // uint8_t*>(im_tensor_bgra.GetDataPtr())
+            t::geometry::Image im;
+            t::io::ReadImage(
+                    "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
+                    "webrtc_server/html/lena_color_640_480.jpg",
+                    im);
+            core::Tensor im_tensor = im.AsTensor();
+            core::Tensor im_tensor_bgra = core::Tensor::Zeros(
+                    {im.GetRows(), im.GetCols(), 4}, im_tensor.GetDtype());
+            im_tensor_bgra.Slice(2, 0, 1) = im_tensor.Slice(2, 2, 3);
+            im_tensor_bgra.Slice(2, 1, 2) = im_tensor.Slice(2, 1, 2);
+            im_tensor_bgra.Slice(2, 2, 3) = im_tensor.Slice(2, 0, 1);
+            // set data to:
 
             // import numpy as np
             // import matplotlib.pyplot as plt
@@ -109,13 +110,14 @@ public:
             rtc::scoped_refptr<webrtc::I420Buffer> I420buffer =
                     webrtc::I420Buffer::Create(width, height);
 
+            // frame->data()
             const int conversionResult = libyuv::ConvertToI420(
-                    frame->data(), 0, I420buffer->MutableDataY(),
-                    I420buffer->StrideY(), I420buffer->MutableDataU(),
-                    I420buffer->StrideU(), I420buffer->MutableDataV(),
-                    I420buffer->StrideV(), 0, 0, width, height,
-                    I420buffer->width(), I420buffer->height(), libyuv::kRotate0,
-                    ::libyuv::FOURCC_ARGB);
+                    static_cast<const uint8_t*>(im_tensor_bgra.GetDataPtr()), 0,
+                    I420buffer->MutableDataY(), I420buffer->StrideY(),
+                    I420buffer->MutableDataU(), I420buffer->StrideU(),
+                    I420buffer->MutableDataV(), I420buffer->StrideV(), 0, 0,
+                    width, height, I420buffer->width(), I420buffer->height(),
+                    libyuv::kRotate0, ::libyuv::FOURCC_ARGB);
 
             if (conversionResult >= 0) {
                 webrtc::VideoFrame videoFrame(
