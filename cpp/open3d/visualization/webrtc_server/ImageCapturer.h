@@ -35,9 +35,7 @@ public:
     public:
         // Called after a frame has been captured. |frame| is not nullptr if and
         // only if |result| is SUCCESS.
-        virtual void OnCaptureResult(
-                webrtc::DesktopCapturer::Result result,
-                std::unique_ptr<webrtc::DesktopFrame> frame) = 0;
+        virtual void OnCaptureResult() = 0;
 
     protected:
         virtual ~Callback() {}
@@ -48,46 +46,42 @@ public:
         callback_ = callback;
     }
 
-    void CaptureFrame() {
-        std::unique_ptr<webrtc::DesktopFrame> frame(
-                new webrtc::BasicDesktopFrame(webrtc::DesktopSize(1, 1)));
-        callback_->OnCaptureResult(webrtc::DesktopCapturer::Result::SUCCESS,
-                                   std::move(frame));
-    }
+    void CaptureFrame() { callback_->OnCaptureResult(); }
 
     Callback* callback_ = nullptr;
 };
 
 class ImageCapturer : public rtc::VideoSourceInterface<webrtc::VideoFrame>,
-                      public webrtc::DesktopCapturer::Callback {
+                      public ImageReader::Callback {
 public:
     ImageCapturer(const std::string& url_,
                   const std::map<std::string, std::string>& opts)
         : ImageCapturer(opts) {
-        utility::LogInfo("ImageCapturer::url_: {}", url_);
-        std::string url = "window://Open3D";
-        const std::string windowprefix("window://");
-        if (url.find(windowprefix) == 0) {
-            m_capturer = webrtc::DesktopCapturer::CreateWindowCapturer(
-                    webrtc::DesktopCaptureOptions::CreateDefault());
+        m_capturer = std::unique_ptr<ImageReader>(new ImageReader());
+        // utility::LogInfo("ImageCapturer::url_: {}", url_);
+        // std::string url = "window://Open3D";
+        // const std::string windowprefix("window://");
+        // if (url.find(windowprefix) == 0) {
+        //     m_capturer = webrtc::DesktopCapturer::CreateWindowCapturer(
+        //             webrtc::DesktopCaptureOptions::CreateDefault());
 
-            if (m_capturer) {
-                webrtc::DesktopCapturer::SourceList sourceList;
-                if (m_capturer->GetSourceList(&sourceList)) {
-                    const std::string windowtitle(
-                            url.substr(windowprefix.length()));
-                    for (auto source : sourceList) {
-                        RTC_LOG(LS_ERROR)
-                                << "ImageCapturer source:" << source.id
-                                << " title:" << source.title;
-                        if (windowtitle == source.title) {
-                            m_capturer->SelectSource(source.id);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        //     if (m_capturer) {
+        //         webrtc::DesktopCapturer::SourceList sourceList;
+        //         if (m_capturer->GetSourceList(&sourceList)) {
+        //             const std::string windowtitle(
+        //                     url.substr(windowprefix.length()));
+        //             for (auto source : sourceList) {
+        //                 RTC_LOG(LS_ERROR)
+        //                         << "ImageCapturer source:" << source.id
+        //                         << " title:" << source.title;
+        //                 if (windowtitle == source.title) {
+        //                     m_capturer->SelectSource(source.id);
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     static ImageCapturer* Create(
@@ -132,9 +126,9 @@ public:
     }
 
     bool Start() {
+        m_capturer->Start(this);
         m_isrunning = true;
         m_capturethread = std::thread(&ImageCapturer::CaptureThread, this);
-        m_capturer->Start(this);
         return true;
     }
     void Stop() {
@@ -146,66 +140,60 @@ public:
     // overide webrtc::DesktopCapturer::Callback
     // See: WindowCapturerX11::CaptureFrame
     // build/webrtc/src/ext_webrtc/src/modules/desktop_capture/linux/window_capturer_x11.cc
-    virtual void OnCaptureResult(webrtc::DesktopCapturer::Result result,
-                                 std::unique_ptr<webrtc::DesktopFrame> frame) {
+    virtual void OnCaptureResult() {
         RTC_LOG(INFO) << "ImageCapturer:OnCaptureResult";
 
-        if (result == webrtc::DesktopCapturer::Result::SUCCESS) {
-            int width = frame->stride() / webrtc::DesktopFrame::kBytesPerPixel;
-            int height = frame->rect().height();
+        // int width = frame->stride() /
+        // webrtc::DesktopFrame::kBytesPerPixel; int height =
+        // frame->rect().height();
 
-            rtc::scoped_refptr<webrtc::I420Buffer> I420buffer =
-                    webrtc::I420Buffer::Create(width, height);
+        int height = (int)im_buffer_.GetShape(0);
+        int width = (int)im_buffer_.GetShape(1);
 
-            // frame->data()
-            const int conversionResult = libyuv::ConvertToI420(
-                    static_cast<const uint8_t*>(im_buffer_.GetDataPtr()), 0,
-                    I420buffer->MutableDataY(), I420buffer->StrideY(),
-                    I420buffer->MutableDataU(), I420buffer->StrideU(),
-                    I420buffer->MutableDataV(), I420buffer->StrideV(), 0, 0,
-                    width, height, I420buffer->width(), I420buffer->height(),
-                    libyuv::kRotate0, ::libyuv::FOURCC_ARGB);
+        rtc::scoped_refptr<webrtc::I420Buffer> I420buffer =
+                webrtc::I420Buffer::Create(width, height);
 
-            if (conversionResult >= 0) {
-                webrtc::VideoFrame videoFrame(
-                        I420buffer, webrtc::VideoRotation::kVideoRotation_0,
-                        rtc::TimeMicros());
-                if ((m_height == 0) && (m_width == 0)) {
-                    broadcaster_.OnFrame(videoFrame);
+        // frame->data()
+        const int conversionResult = libyuv::ConvertToI420(
+                static_cast<const uint8_t*>(im_buffer_.GetDataPtr()), 0,
+                I420buffer->MutableDataY(), I420buffer->StrideY(),
+                I420buffer->MutableDataU(), I420buffer->StrideU(),
+                I420buffer->MutableDataV(), I420buffer->StrideV(), 0, 0, width,
+                height, I420buffer->width(), I420buffer->height(),
+                libyuv::kRotate0, ::libyuv::FOURCC_ARGB);
 
-                } else {
-                    int height = m_height;
-                    int width = m_width;
-                    if (height == 0) {
-                        height = (videoFrame.height() * width) /
-                                 videoFrame.width();
-                    } else if (width == 0) {
-                        width = (videoFrame.width() * height) /
-                                videoFrame.height();
-                    }
-                    int stride_y = width;
-                    int stride_uv = (width + 1) / 2;
-                    rtc::scoped_refptr<webrtc::I420Buffer> scaled_buffer =
-                            webrtc::I420Buffer::Create(width, height, stride_y,
-                                                       stride_uv, stride_uv);
-                    scaled_buffer->ScaleFrom(
-                            *videoFrame.video_frame_buffer()->ToI420());
-                    webrtc::VideoFrame frame = webrtc::VideoFrame(
-                            scaled_buffer, webrtc::kVideoRotation_0,
-                            rtc::TimeMicros());
+        if (conversionResult >= 0) {
+            webrtc::VideoFrame videoFrame(
+                    I420buffer, webrtc::VideoRotation::kVideoRotation_0,
+                    rtc::TimeMicros());
+            if ((m_height == 0) && (m_width == 0)) {
+                broadcaster_.OnFrame(videoFrame);
 
-                    broadcaster_.OnFrame(frame);
-                }
             } else {
-                RTC_LOG(LS_ERROR)
-                        << "DesktopCapturer:OnCaptureResult conversion error:"
-                        << conversionResult;
-            }
+                int height = m_height;
+                int width = m_width;
+                if (height == 0) {
+                    height = (videoFrame.height() * width) / videoFrame.width();
+                } else if (width == 0) {
+                    width = (videoFrame.width() * height) / videoFrame.height();
+                }
+                int stride_y = width;
+                int stride_uv = (width + 1) / 2;
+                rtc::scoped_refptr<webrtc::I420Buffer> scaled_buffer =
+                        webrtc::I420Buffer::Create(width, height, stride_y,
+                                                   stride_uv, stride_uv);
+                scaled_buffer->ScaleFrom(
+                        *videoFrame.video_frame_buffer()->ToI420());
+                webrtc::VideoFrame frame = webrtc::VideoFrame(
+                        scaled_buffer, webrtc::kVideoRotation_0,
+                        rtc::TimeMicros());
 
+                broadcaster_.OnFrame(frame);
+            }
         } else {
             RTC_LOG(LS_ERROR)
-                    << "DesktopCapturer:OnCaptureResult capture error:"
-                    << (int)result;
+                    << "DesktopCapturer:OnCaptureResult conversion error:"
+                    << conversionResult;
         }
     }
 
@@ -222,7 +210,7 @@ public:
 
 protected:
     std::thread m_capturethread;
-    std::unique_ptr<webrtc::DesktopCapturer> m_capturer;
+    std::unique_ptr<ImageReader> m_capturer;
     int m_width;
     int m_height;
     bool m_isrunning;
