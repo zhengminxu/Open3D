@@ -18,6 +18,8 @@
 #include <modules/desktop_capture/desktop_capturer.h>
 #include <rtc_base/logging.h>
 
+#include <chrono>
+#include <iostream>
 #include <memory>
 #include <thread>
 
@@ -39,9 +41,13 @@ public:
                 im);
         frame_ = core::Tensor::Zeros({im.GetRows(), im.GetCols(), 4},
                                      im.GetDtype());
-        frame_.Slice(2, 0, 1) = im.AsTensor().Slice(2, 2, 3);
-        frame_.Slice(2, 1, 2) = im.AsTensor().Slice(2, 1, 2);
-        frame_.Slice(2, 2, 3) = im.AsTensor().Slice(2, 0, 1);
+        blank_ = core::Tensor::Zeros({im.GetRows(), im.GetCols(), 4},
+                                     im.GetDtype());
+        lena_ = core::Tensor::Zeros({im.GetRows(), im.GetCols(), 4},
+                                    im.GetDtype());
+        lena_.Slice(2, 0, 1) = im.AsTensor().Slice(2, 2, 3);
+        lena_.Slice(2, 1, 2) = im.AsTensor().Slice(2, 1, 2);
+        lena_.Slice(2, 2, 3) = im.AsTensor().Slice(2, 0, 1);
     }
     virtual ~ImageReader() {}
 
@@ -58,12 +64,29 @@ public:
         callback_ = callback;
     }
 
-    void CaptureFrame() { callback_->OnCaptureResult(frame_); }
+    void CaptureFrame() {
+        if (!is_init_) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        is_init_ = false;
+        if (is_blank_) {
+            frame_.AsRvalue() = lena_;
+            is_blank_ = false;
+        } else {
+            frame_.AsRvalue() = blank_;
+            is_blank_ = true;
+        }
+        callback_->OnCaptureResult(frame_);
+    }
 
     Callback* callback_ = nullptr;
 
 private:
     core::Tensor frame_;
+    core::Tensor lena_;
+    core::Tensor blank_;
+    bool is_init_ = true;
+    bool is_blank_ = true;
 };
 
 class ImageCapturer : public rtc::VideoSourceInterface<webrtc::VideoFrame>,
