@@ -18,6 +18,7 @@
 #include <modules/desktop_capture/desktop_capturer.h>
 #include <rtc_base/logging.h>
 
+#include <memory>
 #include <thread>
 
 #include "open3d/core/Tensor.h"
@@ -27,6 +28,35 @@
 namespace open3d {
 namespace visualization {
 namespace webrtc_server {
+
+class ImageReader {
+public:
+    class Callback {
+    public:
+        // Called after a frame has been captured. |frame| is not nullptr if and
+        // only if |result| is SUCCESS.
+        virtual void OnCaptureResult(
+                webrtc::DesktopCapturer::Result result,
+                std::unique_ptr<webrtc::DesktopFrame> frame) = 0;
+
+    protected:
+        virtual ~Callback() {}
+    };
+
+    void Start(Callback* callback) {
+        utility::LogInfo("ImageReader::Start");
+        callback_ = callback;
+    }
+
+    void CaptureFrame() {
+        std::unique_ptr<webrtc::DesktopFrame> frame(
+                new webrtc::BasicDesktopFrame(webrtc::DesktopSize(1, 1)));
+        callback_->OnCaptureResult(webrtc::DesktopCapturer::Result::SUCCESS,
+                                   std::move(frame));
+    }
+
+    Callback* callback_ = nullptr;
+};
 
 class ImageCapturer : public rtc::VideoSourceInterface<webrtc::VideoFrame>,
                       public webrtc::DesktopCapturer::Callback {
@@ -114,6 +144,8 @@ public:
     bool IsRunning() { return m_isrunning; }
 
     // overide webrtc::DesktopCapturer::Callback
+    // See: WindowCapturerX11::CaptureFrame
+    // build/webrtc/src/ext_webrtc/src/modules/desktop_capture/linux/window_capturer_x11.cc
     virtual void OnCaptureResult(webrtc::DesktopCapturer::Result result,
                                  std::unique_ptr<webrtc::DesktopFrame> frame) {
         RTC_LOG(INFO) << "ImageCapturer:OnCaptureResult";
