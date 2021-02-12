@@ -39,6 +39,16 @@ public:
         if (opts.find("height") != opts.end()) {
             m_height = std::stoi(opts.at("height"));
         }
+        t::geometry::Image im;
+        t::io::ReadImage(
+                "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
+                "webrtc_server/html/lena_color_640_480.jpg",
+                im);
+        im_buffer_ = core::Tensor::Zeros({im.GetRows(), im.GetCols(), 4},
+                                         im.GetDtype());
+        im_buffer_.Slice(2, 0, 1) = im.AsTensor().Slice(2, 2, 3);
+        im_buffer_.Slice(2, 1, 2) = im.AsTensor().Slice(2, 1, 2);
+        im_buffer_.Slice(2, 2, 3) = im.AsTensor().Slice(2, 0, 1);
     }
     bool Init() { return this->Start(); }
     virtual ~ImageCapturer() { this->Stop(); }
@@ -69,19 +79,6 @@ public:
         RTC_LOG(INFO) << "ImageCapturer:OnCaptureResult";
 
         if (result == webrtc::DesktopCapturer::Result::SUCCESS) {
-            t::geometry::Image im;
-            t::io::ReadImage(
-                    "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
-                    "webrtc_server/html/lena_color_640_480.jpg",
-                    im);
-            core::Tensor im_tensor = im.AsTensor();
-            core::Tensor im_tensor_bgra = core::Tensor::Zeros(
-                    {im.GetRows(), im.GetCols(), 4}, im_tensor.GetDtype());
-            im_tensor_bgra.Slice(2, 0, 1) = im_tensor.Slice(2, 2, 3);
-            im_tensor_bgra.Slice(2, 1, 2) = im_tensor.Slice(2, 1, 2);
-            im_tensor_bgra.Slice(2, 2, 3) = im_tensor.Slice(2, 0, 1);
-            // set data to:
-
             // import numpy as np
             // import matplotlib.pyplot as plt
             // im = np.load("build/t_frame.npy")
@@ -112,7 +109,7 @@ public:
 
             // frame->data()
             const int conversionResult = libyuv::ConvertToI420(
-                    static_cast<const uint8_t*>(im_tensor_bgra.GetDataPtr()), 0,
+                    static_cast<const uint8_t*>(im_buffer_.GetDataPtr()), 0,
                     I420buffer->MutableDataY(), I420buffer->StrideY(),
                     I420buffer->MutableDataU(), I420buffer->StrideU(),
                     I420buffer->MutableDataV(), I420buffer->StrideV(), 0, 0,
@@ -180,6 +177,7 @@ protected:
     int m_height;
     bool m_isrunning;
     rtc::VideoBroadcaster broadcaster_;
+    core::Tensor im_buffer_;  // Currently BGRA. TODO: make this RGB only.
 };
 
 class ImageWindowCapturer : public ImageCapturer {
