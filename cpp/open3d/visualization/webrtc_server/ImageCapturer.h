@@ -65,10 +65,12 @@ public:
     }
 
     void CaptureFrame() {
-        if (!is_init_) {
+        if (init_frame_count_ < 24) {
+            init_frame_count_++;
+            callback_->OnCaptureResult(frame_);
+        } else {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        is_init_ = false;
         if (is_blank_) {
             frame_.AsRvalue() = lena_;
             is_blank_ = false;
@@ -85,7 +87,7 @@ private:
     core::Tensor frame_;
     core::Tensor lena_;
     core::Tensor blank_;
-    bool is_init_ = true;
+    int init_frame_count_ = 0;
     bool is_blank_ = true;
 };
 
@@ -155,7 +157,7 @@ public:
     // See: WindowCapturerX11::CaptureFrame
     // build/webrtc/src/ext_webrtc/src/modules/desktop_capture/linux/window_capturer_x11.cc
     virtual void OnCaptureResult(const core::Tensor& frame) {
-        RTC_LOG(INFO) << "ImageCapturer:OnCaptureResult";
+        utility::LogInfo("ImageCapturer:OnCaptureResult callback");
         int height = (int)frame.GetShape(0);
         int width = (int)frame.GetShape(1);
 
