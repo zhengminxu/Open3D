@@ -73,10 +73,11 @@ protected:
 
 class ImageWindowCapturer : public ImageCapturer {
 public:
-    ImageWindowCapturer(const std::string& url,
+    ImageWindowCapturer(const std::string& url_,
                         const std::map<std::string, std::string>& opts)
         : ImageCapturer(opts) {
-        utility::LogInfo("ImageWindowCapturer::url: {}", url);
+        utility::LogInfo("ImageWindowCapturer::url_: {}", url_);
+        std::string url = "window://Open3D";
         const std::string windowprefix("window://");
         if (url.find(windowprefix) == 0) {
             m_capturer = webrtc::DesktopCapturer::CreateWindowCapturer(

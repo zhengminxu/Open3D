@@ -35,6 +35,7 @@
 #endif
 
 #ifdef USE_X11
+#include "open3d/visualization/webrtc_server/ImageCapturer.h"
 #include "open3d/visualization/webrtc_server/ScreenCapturer.h"
 #include "open3d/visualization/webrtc_server/WindowCapturer.h"
 #endif
@@ -180,6 +181,9 @@ public:
 #ifdef USE_X11
             videoSource = TrackSource<WindowCapturer>::Create(videourl, opts);
 #endif
+        } else if (videourl.find("image://") == 0) {
+            videoSource =
+                    TrackSource<ImageWindowCapturer>::Create(videourl, opts);
         } else if (std::regex_match("videocap://", publishFilter)) {
             videoSource = TrackSource<VcmCapturer>::Create(videourl, opts);
         }
