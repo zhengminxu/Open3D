@@ -182,8 +182,7 @@ public:
             videoSource = TrackSource<WindowCapturer>::Create(videourl, opts);
 #endif
         } else if (videourl.find("image://") == 0) {
-            videoSource =
-                    TrackSource<ImageWindowCapturer>::Create(videourl, opts);
+            videoSource = TrackSource<ImageCapturer>::Create(videourl, opts);
         } else if (std::regex_match("videocap://", publishFilter)) {
             videoSource = TrackSource<VcmCapturer>::Create(videourl, opts);
         }
