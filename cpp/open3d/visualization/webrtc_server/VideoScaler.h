@@ -23,18 +23,18 @@ public:
             rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource,
             const std::map<std::string, std::string> &opts)
         : m_videoSource(videoSource),
-          m_width(0),
-          m_height(0),
+          width_(0),
+          height_(0),
           m_rotation(webrtc::kVideoRotation_0),
           m_roi_x(0),
           m_roi_y(0),
           m_roi_width(0),
           m_roi_height(0) {
         if (opts.find("width") != opts.end()) {
-            m_width = std::stoi(opts.at("width"));
+            width_ = std::stoi(opts.at("width"));
         }
         if (opts.find("height") != opts.end()) {
-            m_height = std::stoi(opts.at("height"));
+            height_ = std::stoi(opts.at("height"));
         }
         if (opts.find("rotation") != opts.end()) {
             int rotation = std::stoi(opts.at("rotation"));
@@ -117,17 +117,17 @@ public:
 
         // source image is croped but destination image size is not set
         if ((m_roi_width != frame.width() || m_roi_height != frame.height()) &&
-            (m_height == 0 && m_width == 0)) {
-            m_height = m_roi_height;
-            m_width = m_roi_width;
+            (height_ == 0 && width_ == 0)) {
+            height_ = m_roi_height;
+            width_ = m_roi_width;
         }
 
-        if ((m_height == 0) && (m_width == 0) &&
+        if ((height_ == 0) && (width_ == 0) &&
             (m_rotation == webrtc::kVideoRotation_0)) {
             m_broadcaster.OnFrame(frame);
         } else {
-            int height = m_height;
-            int width = m_width;
+            int height = height_;
+            int width = width_;
             if ((height == 0) && (width == 0)) {
                 height = frame.height();
                 width = frame.width();
@@ -175,8 +175,8 @@ private:
     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> m_videoSource;
     rtc::VideoBroadcaster m_broadcaster;
 
-    int m_width;
-    int m_height;
+    int width_;
+    int height_;
     webrtc::VideoRotation m_rotation;
     int m_roi_x;
     int m_roi_y;

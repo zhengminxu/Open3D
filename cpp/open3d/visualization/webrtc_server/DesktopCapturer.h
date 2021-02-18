@@ -25,12 +25,12 @@ class DesktopCapturer : public rtc::VideoSourceInterface<webrtc::VideoFrame>,
                         public webrtc::DesktopCapturer::Callback {
 public:
     DesktopCapturer(const std::map<std::string, std::string>& opts)
-        : m_width(0), m_height(0) {
+        : width_(0), height_(0) {
         if (opts.find("width") != opts.end()) {
-            m_width = std::stoi(opts.at("width"));
+            width_ = std::stoi(opts.at("width"));
         }
         if (opts.find("height") != opts.end()) {
-            m_height = std::stoi(opts.at("height"));
+            height_ = std::stoi(opts.at("height"));
         }
     }
     bool Init() { return this->Start(); }
@@ -40,7 +40,7 @@ public:
 
     bool Start();
     void Stop();
-    bool IsRunning() { return m_isrunning; }
+    bool IsRunning() { return is_running_; }
 
     // overide webrtc::DesktopCapturer::Callback
     virtual void OnCaptureResult(webrtc::DesktopCapturer::Result result,
@@ -58,11 +58,11 @@ public:
     }
 
 protected:
-    std::thread m_capturethread;
-    std::unique_ptr<webrtc::DesktopCapturer> m_capturer;
-    int m_width;
-    int m_height;
-    bool m_isrunning;
+    std::thread capture_thread_;
+    std::unique_ptr<webrtc::DesktopCapturer> capturer_;
+    int width_;
+    int height_;
+    bool is_running_;
     rtc::VideoBroadcaster broadcaster_;
 };
 

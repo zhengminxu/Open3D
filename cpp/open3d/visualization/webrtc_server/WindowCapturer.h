@@ -22,12 +22,12 @@ public:
         : DesktopCapturer(opts) {
         const std::string windowprefix("window://");
         if (url.find(windowprefix) == 0) {
-            m_capturer = webrtc::DesktopCapturer::CreateWindowCapturer(
+            capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(
                     webrtc::DesktopCaptureOptions::CreateDefault());
 
-            if (m_capturer) {
+            if (capturer_) {
                 webrtc::DesktopCapturer::SourceList sourceList;
-                if (m_capturer->GetSourceList(&sourceList)) {
+                if (capturer_->GetSourceList(&sourceList)) {
                     const std::string windowtitle(
                             url.substr(windowprefix.length()));
                     for (auto source : sourceList) {
@@ -35,7 +35,7 @@ public:
                                 << "WindowCapturer source:" << source.id
                                 << " title:" << source.title;
                         if (windowtitle == source.title) {
-                            m_capturer->SelectSource(source.id);
+                            capturer_->SelectSource(source.id);
                             break;
                         }
                     }

@@ -96,7 +96,7 @@ public:
     ImageCapturer(const std::string& url_,
                   const std::map<std::string, std::string>& opts)
         : ImageCapturer(opts) {
-        m_capturer = std::unique_ptr<ImageReader>(new ImageReader());
+        capturer_ = std::unique_ptr<ImageReader>(new ImageReader());
     }
 
     static ImageCapturer* Create(
@@ -111,22 +111,22 @@ public:
     }
 
     ImageCapturer(const std::map<std::string, std::string>& opts)
-        : m_width(0), m_height(0) {
+        : width_(0), height_(0) {
         if (opts.find("width") != opts.end()) {
-            m_width = std::stoi(opts.at("width"));
+            width_ = std::stoi(opts.at("width"));
         }
         if (opts.find("height") != opts.end()) {
-            m_height = std::stoi(opts.at("height"));
+            height_ = std::stoi(opts.at("height"));
         }
-        // if (m_height != 480) {
+        // if (height_ != 480) {
         //     utility::LogError(
         //             "TODO: flexible height. Unsupported hight for now: {}",
-        //             m_height);
+        //             height_);
         // }
-        // if (m_width != 640) {
+        // if (width_ != 640) {
         //     utility::LogError(
         //             "TODO: flexible width. Unsupported width for now: {}",
-        //             m_width);
+        //             width_);
         // }
     }
     bool Init() { return this->Start(); }
@@ -135,22 +135,22 @@ public:
     void CaptureThread() {
         RTC_LOG(INFO) << "DesktopCapturer:Run start";
         while (IsRunning()) {
-            m_capturer->CaptureFrame();
+            capturer_->CaptureFrame();
         }
         RTC_LOG(INFO) << "DesktopCapturer:Run exit";
     }
 
     bool Start() {
-        m_capturer->Start(this);
-        m_isrunning = true;
-        m_capturethread = std::thread(&ImageCapturer::CaptureThread, this);
+        capturer_->Start(this);
+        is_running_ = true;
+        capture_thread_ = std::thread(&ImageCapturer::CaptureThread, this);
         return true;
     }
     void Stop() {
-        m_isrunning = false;
-        m_capturethread.join();
+        is_running_ = false;
+        capture_thread_.join();
     }
-    bool IsRunning() { return m_isrunning; }
+    bool IsRunning() { return is_running_; }
 
     // overide webrtc::DesktopCapturer::Callback
     // See: WindowCapturerX11::CaptureFrame
@@ -176,12 +176,12 @@ public:
             webrtc::VideoFrame videoFrame(
                     I420buffer, webrtc::VideoRotation::kVideoRotation_0,
                     rtc::TimeMicros());
-            if ((m_height == 0) && (m_width == 0)) {
+            if ((height_ == 0) && (width_ == 0)) {
                 broadcaster_.OnFrame(videoFrame);
 
             } else {
-                int height = m_height;
-                int width = m_width;
+                int height = height_;
+                int width = width_;
                 if (height == 0) {
                     height = (videoFrame.height() * width) / videoFrame.width();
                 } else if (width == 0) {
@@ -219,11 +219,11 @@ public:
     }
 
 protected:
-    std::thread m_capturethread;
-    std::unique_ptr<ImageReader> m_capturer;
-    int m_width;
-    int m_height;
-    bool m_isrunning;
+    std::thread capture_thread_;
+    std::unique_ptr<ImageReader> capturer_;
+    int width_;
+    int height_;
+    bool is_running_;
     rtc::VideoBroadcaster broadcaster_;
 };
 

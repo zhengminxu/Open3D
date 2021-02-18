@@ -79,12 +79,12 @@ void DesktopCapturer::OnCaptureResult(
             webrtc::VideoFrame videoFrame(
                     I420buffer, webrtc::VideoRotation::kVideoRotation_0,
                     rtc::TimeMicros());
-            if ((m_height == 0) && (m_width == 0)) {
+            if ((height_ == 0) && (width_ == 0)) {
                 broadcaster_.OnFrame(videoFrame);
 
             } else {
-                int height = m_height;
-                int width = m_width;
+                int height = height_;
+                int width = width_;
                 if (height == 0) {
                     height = (videoFrame.height() * width) / videoFrame.width();
                 } else if (width == 0) {
@@ -118,20 +118,20 @@ void DesktopCapturer::OnCaptureResult(
 void DesktopCapturer::CaptureThread() {
     RTC_LOG(INFO) << "DesktopCapturer:Run start";
     while (IsRunning()) {
-        m_capturer->CaptureFrame();
+        capturer_->CaptureFrame();
     }
     RTC_LOG(INFO) << "DesktopCapturer:Run exit";
 }
 bool DesktopCapturer::Start() {
-    m_isrunning = true;
-    m_capturethread = std::thread(&DesktopCapturer::CaptureThread, this);
-    m_capturer->Start(this);
+    is_running_ = true;
+    capture_thread_ = std::thread(&DesktopCapturer::CaptureThread, this);
+    capturer_->Start(this);
     return true;
 }
 
 void DesktopCapturer::Stop() {
-    m_isrunning = false;
-    m_capturethread.join();
+    is_running_ = false;
+    capture_thread_.join();
 }
 
 }  // namespace webrtc_server
