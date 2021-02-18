@@ -34,7 +34,7 @@ const struct CivetCallbacks *getCivetCallbacks() {
 class RequestHandler : public CivetHandler {
 public:
     RequestHandler(HttpServerRequestHandler::httpFunction &func)
-        : m_func(func) {}
+        : func_(func) {}
 
     bool handle(CivetServer *server, struct mg_connection *conn) {
         bool ret = false;
@@ -46,7 +46,7 @@ public:
         Json::Value in = this->getInputMessage(req_info, conn);
 
         // invoke API implementation
-        Json::Value out(m_func(req_info, in));
+        Json::Value out(func_(req_info, in));
 
         // fill out
         if (out.isNull() == false) {
@@ -73,7 +73,7 @@ public:
     }
 
 private:
-    HttpServerRequestHandler::httpFunction m_func;
+    HttpServerRequestHandler::httpFunction func_;
     Json::StreamWriterBuilder m_writerBuilder;
     Json::CharReaderBuilder m_readerBuilder;
 

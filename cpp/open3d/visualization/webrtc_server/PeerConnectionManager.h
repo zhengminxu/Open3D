@@ -331,7 +331,7 @@ public:
     bool InitializePeerConnection();
     const std::map<std::string, HttpServerRequestHandler::httpFunction>
     getHttpApi() {
-        return m_func;
+        return func_;
     };
 
     const Json::Value getIceCandidateList(const std::string& peerid);
@@ -370,15 +370,15 @@ protected:
     std::unique_ptr<webrtc::TaskQueueFactory> task_queue_factory_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
             peer_connection_factory_;
-    std::mutex m_peerMapMutex;
+    std::mutex peer_map_mutex_;
     std::map<std::string, PeerConnectionObserver*> peer_connectionobs_map_;
     std::map<std::string, rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>>
             stream_map_;
     std::mutex stream_map_mutex_;
     std::list<std::string> ice_server_list_;
-    const Json::Value m_config;
+    const Json::Value config_;
     const std::regex publish_filter_;
-    std::map<std::string, HttpServerRequestHandler::httpFunction> m_func;
+    std::map<std::string, HttpServerRequestHandler::httpFunction> func_;
     std::string webrtc_port_range_;
 };
 

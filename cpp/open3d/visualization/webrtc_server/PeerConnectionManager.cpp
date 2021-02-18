@@ -184,25 +184,24 @@ PeerConnectionManager::PeerConnectionManager(
       peer_connection_factory_(webrtc::CreateModularPeerConnectionFactory(
               CreatePeerConnectionFactoryDependencies())),
       ice_server_list_(iceServerList),
-      m_config(config),
+      config_(config),
       publish_filter_(publishFilter) {
     // Set the webrtc port range
     webrtc_port_range_ = webrtcUdpPortRange;
 
     // register api in http server
-    m_func["/api/getMediaList"] = [this](const struct mg_request_info *req_info,
-                                         const Json::Value &in) -> Json::Value {
+    func_["/api/getMediaList"] = [this](const struct mg_request_info *req_info,
+                                        const Json::Value &in) -> Json::Value {
         return this->getMediaList();
     };
 
-    m_func["/api/getIceServers"] =
-            [this](const struct mg_request_info *req_info,
-                   const Json::Value &in) -> Json::Value {
+    func_["/api/getIceServers"] = [this](const struct mg_request_info *req_info,
+                                         const Json::Value &in) -> Json::Value {
         return this->getIceServers(req_info->remote_addr);
     };
 
-    m_func["/api/call"] = [this](const struct mg_request_info *req_info,
-                                 const Json::Value &in) -> Json::Value {
+    func_["/api/call"] = [this](const struct mg_request_info *req_info,
+                                const Json::Value &in) -> Json::Value {
         std::string peerid;
         std::string url;
         std::string options;
@@ -214,8 +213,8 @@ PeerConnectionManager::PeerConnectionManager(
         return this->call(peerid, url, options, in);
     };
 
-    m_func["/api/hangup"] = [this](const struct mg_request_info *req_info,
-                                   const Json::Value &in) -> Json::Value {
+    func_["/api/hangup"] = [this](const struct mg_request_info *req_info,
+                                  const Json::Value &in) -> Json::Value {
         std::string peerid;
         if (req_info->query_string) {
             CivetServer::getParam(req_info->query_string, "peerid", peerid);
@@ -223,8 +222,8 @@ PeerConnectionManager::PeerConnectionManager(
         return this->hangUp(peerid);
     };
 
-    m_func["/api/createOffer"] = [this](const struct mg_request_info *req_info,
-                                        const Json::Value &in) -> Json::Value {
+    func_["/api/createOffer"] = [this](const struct mg_request_info *req_info,
+                                       const Json::Value &in) -> Json::Value {
         std::string peerid;
         std::string url;
         std::string options;
@@ -235,8 +234,8 @@ PeerConnectionManager::PeerConnectionManager(
         }
         return this->createOffer(peerid, url, options);
     };
-    m_func["/api/setAnswer"] = [this](const struct mg_request_info *req_info,
-                                      const Json::Value &in) -> Json::Value {
+    func_["/api/setAnswer"] = [this](const struct mg_request_info *req_info,
+                                     const Json::Value &in) -> Json::Value {
         std::string peerid;
         if (req_info->query_string) {
             CivetServer::getParam(req_info->query_string, "peerid", peerid);
@@ -244,7 +243,7 @@ PeerConnectionManager::PeerConnectionManager(
         return this->setAnswer(peerid, in);
     };
 
-    m_func["/api/getIceCandidate"] =
+    func_["/api/getIceCandidate"] =
             [this](const struct mg_request_info *req_info,
                    const Json::Value &in) -> Json::Value {
         std::string peerid;
@@ -254,7 +253,7 @@ PeerConnectionManager::PeerConnectionManager(
         return this->getIceCandidateList(peerid);
     };
 
-    m_func["/api/addIceCandidate"] =
+    func_["/api/addIceCandidate"] =
             [this](const struct mg_request_info *req_info,
                    const Json::Value &in) -> Json::Value {
         std::string peerid;
@@ -264,20 +263,19 @@ PeerConnectionManager::PeerConnectionManager(
         return this->addIceCandidate(peerid, in);
     };
 
-    m_func["/api/getPeerConnectionList"] =
+    func_["/api/getPeerConnectionList"] =
             [this](const struct mg_request_info *req_info,
                    const Json::Value &in) -> Json::Value {
         return this->getPeerConnectionList();
     };
 
-    m_func["/api/getStreamList"] =
-            [this](const struct mg_request_info *req_info,
-                   const Json::Value &in) -> Json::Value {
+    func_["/api/getStreamList"] = [this](const struct mg_request_info *req_info,
+                                         const Json::Value &in) -> Json::Value {
         return this->getStreamList();
     };
 
-    m_func["/api/log"] = [](const struct mg_request_info *req_info,
-                            const Json::Value &in) -> Json::Value {
+    func_["/api/log"] = [](const struct mg_request_info *req_info,
+                           const Json::Value &in) -> Json::Value {
         std::string loglevel;
         if (req_info->query_string) {
             CivetServer::getParam(req_info->query_string, "level", loglevel);
@@ -388,7 +386,7 @@ const Json::Value PeerConnectionManager::addIceCandidate(
         if (!candidate.get()) {
             RTC_LOG(WARNING) << "Can't parse received candidate message.";
         } else {
-            std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+            std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
             rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection =
                     this->getPeerConnection(peerid);
             if (peerConnection) {
@@ -433,7 +431,7 @@ const Json::Value PeerConnectionManager::createOffer(
 
         // register peerid
         {
-            std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+            std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
             peer_connectionobs_map_.insert(
                     std::pair<std::string, PeerConnectionObserver *>(
                             peerid, peerConnectionObserver));
@@ -500,7 +498,7 @@ const Json::Value PeerConnectionManager::setAnswer(
                             << " received session description :"
                             << session_description->type();
 
-            std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+            std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
             rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection =
                     this->getPeerConnection(peerid);
             if (peerConnection) {
@@ -577,7 +575,7 @@ const Json::Value PeerConnectionManager::call(const std::string &peerid,
 
             // register peerid
             {
-                std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+                std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
                 peer_connectionobs_map_.insert(
                         std::pair<std::string, PeerConnectionObserver *>(
                                 peerid, peerConnectionObserver));
@@ -672,7 +670,7 @@ const Json::Value PeerConnectionManager::hangUp(const std::string &peerid) {
 
     PeerConnectionObserver *pcObserver = nullptr;
     {
-        std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+        std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
         std::map<std::string, PeerConnectionObserver *>::iterator it =
                 peer_connectionobs_map_.find(peerid);
         if (it != peer_connectionobs_map_.end()) {
@@ -727,7 +725,7 @@ const Json::Value PeerConnectionManager::getIceCandidateList(
     RTC_LOG(INFO) << __FUNCTION__;
 
     Json::Value value;
-    std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+    std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
     std::map<std::string, PeerConnectionObserver *>::iterator it =
             peer_connectionobs_map_.find(peerid);
     if (it != peer_connectionobs_map_.end()) {
@@ -747,7 +745,7 @@ const Json::Value PeerConnectionManager::getIceCandidateList(
 const Json::Value PeerConnectionManager::getPeerConnectionList() {
     Json::Value value(Json::arrayValue);
 
-    std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
+    std::lock_guard<std::mutex> peerlock(peer_map_mutex_);
     for (auto it : peer_connectionobs_map_) {
         Json::Value content;
 
@@ -884,8 +882,8 @@ PeerConnectionManager::CreateVideoSource(
     RTC_LOG(INFO) << "videourl:" << videourl;
 
     std::string video = videourl;
-    if (m_config.isMember(video)) {
-        video = m_config[video]["video"].asString();
+    if (config_.isMember(video)) {
+        video = config_[video]["video"].asString();
     }
 
     return CapturerFactory::CreateVideoSource(video, opts, publish_filter_,
@@ -918,8 +916,8 @@ bool PeerConnectionManager::AddStreams(
 
     // compute options
     std::string optstring = options;
-    if (m_config.isMember(videourl)) {
-        std::string urlopts = m_config[videourl]["options"].asString();
+    if (config_.isMember(videourl)) {
+        std::string urlopts = config_[videourl]["options"].asString();
         if (options.empty()) {
             optstring = urlopts;
         } else if (options.find_first_of("&") == 0) {
@@ -938,8 +936,8 @@ bool PeerConnectionManager::AddStreams(
     }
 
     std::string video = videourl;
-    if (m_config.isMember(video)) {
-        video = m_config[video]["video"].asString();
+    if (config_.isMember(video)) {
+        video = config_[video]["video"].asString();
     }
 
     // set bandwidth

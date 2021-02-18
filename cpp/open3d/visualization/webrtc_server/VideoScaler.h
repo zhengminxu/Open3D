@@ -124,7 +124,7 @@ public:
 
         if ((height_ == 0) && (width_ == 0) &&
             (m_rotation == webrtc::kVideoRotation_0)) {
-            m_broadcaster.OnFrame(frame);
+            broadcaster_.OnFrame(frame);
         } else {
             int height = height_;
             int width = width_;
@@ -150,7 +150,7 @@ public:
                     webrtc::VideoFrame(scaled_buffer, frame.timestamp(),
                                        frame.render_time_ms(), m_rotation);
 
-            m_broadcaster.OnFrame(scaledFrame);
+            broadcaster_.OnFrame(scaledFrame);
         }
     }
 
@@ -158,14 +158,14 @@ public:
                          const rtc::VideoSinkWants &wants) override {
         m_videoSource->AddOrUpdateSink(this, wants);
 
-        m_broadcaster.AddOrUpdateSink(sink, wants);
+        broadcaster_.AddOrUpdateSink(sink, wants);
     }
 
     void RemoveSink(
             rtc::VideoSinkInterface<webrtc::VideoFrame> *sink) override {
         m_videoSource->RemoveSink(this);
 
-        m_broadcaster.RemoveSink(sink);
+        broadcaster_.RemoveSink(sink);
     }
 
     int width() { return m_roi_width; }
@@ -173,7 +173,7 @@ public:
 
 private:
     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> m_videoSource;
-    rtc::VideoBroadcaster m_broadcaster;
+    rtc::VideoBroadcaster broadcaster_;
 
     int width_;
     int height_;
