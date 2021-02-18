@@ -340,14 +340,14 @@ public:
     const Json::Value getMediaList();
     const Json::Value hangUp(const std::string& peerid);
     const Json::Value call(const std::string& peerid,
-                           const std::string& videourl,
+                           const std::string& video_url,
                            const std::string& options,
                            const Json::Value& jmessage);
     const Json::Value getIceServers(const std::string& clientIp);
     const Json::Value getPeerConnectionList();
     const Json::Value getStreamList();
     const Json::Value createOffer(const std::string& peerid,
-                                  const std::string& videourl,
+                                  const std::string& video_url,
                                   const std::string& options);
     const Json::Value setAnswer(const std::string& peerid,
                                 const Json::Value& jmessage);
@@ -355,10 +355,10 @@ public:
 protected:
     PeerConnectionObserver* CreatePeerConnection(const std::string& peerid);
     bool AddStreams(webrtc::PeerConnectionInterface* peer_connection,
-                    const std::string& videourl,
+                    const std::string& video_url,
                     const std::string& options);
     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> CreateVideoSource(
-            const std::string& videourl,
+            const std::string& video_url,
             const std::map<std::string, std::string>& opts);
     bool streamStillUsed(const std::string& streamLabel);
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> getPeerConnection(

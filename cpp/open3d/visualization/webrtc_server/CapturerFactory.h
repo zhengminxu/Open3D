@@ -31,10 +31,10 @@ template <class T>
 class TrackSource : public webrtc::VideoTrackSource {
 public:
     static rtc::scoped_refptr<TrackSource> Create(
-            const std::string& videourl,
+            const std::string& video_url,
             const std::map<std::string, std::string>& opts) {
         std::unique_ptr<T> capturer =
-                absl::WrapUnique(T::Create(videourl, opts));
+                absl::WrapUnique(T::Create(video_url, opts));
         if (!capturer) {
             return nullptr;
         }
@@ -80,22 +80,22 @@ public:
     }
 
     static rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
-    CreateVideoSource(const std::string& videourl,
+    CreateVideoSource(const std::string& video_url,
                       const std::map<std::string, std::string>& opts,
                       const std::regex& publishFilter,
                       rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
                               peer_connection_factory) {
         rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource;
-        if ((videourl.find("window://") == 0) &&
+        if ((video_url.find("window://") == 0) &&
             (std::regex_match("window://", publishFilter))) {
 #ifdef USE_X11
-            videoSource = TrackSource<WindowCapturer>::Create(videourl, opts);
+            videoSource = TrackSource<WindowCapturer>::Create(video_url, opts);
 #endif
-        } else if (videourl.find("image://") == 0) {
-            videoSource = TrackSource<ImageCapturer>::Create(videourl, opts);
+        } else if (video_url.find("image://") == 0) {
+            videoSource = TrackSource<ImageCapturer>::Create(video_url, opts);
         } else {
-            utility::LogError("CreateVideoSource failed for videourl: {}",
-                              videourl);
+            utility::LogError("CreateVideoSource failed for video_url: {}",
+                              video_url);
         }
         return videoSource;
     }

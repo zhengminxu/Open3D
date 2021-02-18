@@ -411,9 +411,9 @@ const Json::Value PeerConnectionManager::addIceCandidate(
 ** -------------------------------------------------------------------------*/
 const Json::Value PeerConnectionManager::createOffer(
         const std::string &peerid,
-        const std::string &videourl,
+        const std::string &video_url,
         const std::string &options) {
-    RTC_LOG(INFO) << __FUNCTION__ << " video:" << videourl
+    RTC_LOG(INFO) << __FUNCTION__ << " video:" << video_url
                   << " options:" << options;
     Json::Value offer;
 
@@ -425,7 +425,7 @@ const Json::Value PeerConnectionManager::createOffer(
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection =
                 peerConnectionObserver->getPeerConnection();
 
-        if (!this->AddStreams(peerConnection, videourl, options)) {
+        if (!this->AddStreams(peerConnection, video_url, options)) {
             RTC_LOG(WARNING) << "Can't add stream";
         }
 
@@ -539,10 +539,10 @@ const Json::Value PeerConnectionManager::setAnswer(
 **  auto-answer to a call
 ** -------------------------------------------------------------------------*/
 const Json::Value PeerConnectionManager::call(const std::string &peerid,
-                                              const std::string &videourl,
+                                              const std::string &video_url,
                                               const std::string &options,
                                               const Json::Value &jmessage) {
-    RTC_LOG(INFO) << __FUNCTION__ << " video:" << videourl
+    RTC_LOG(INFO) << __FUNCTION__ << " video:" << video_url
                   << " options:" << options;
 
     Json::Value answer;
@@ -606,7 +606,7 @@ const Json::Value PeerConnectionManager::call(const std::string &peerid,
             }
 
             // add local stream
-            if (!this->AddStreams(peerConnection, videourl, options)) {
+            if (!this->AddStreams(peerConnection, video_url, options)) {
                 RTC_LOG(WARNING) << "Can't add stream";
             }
 
@@ -877,11 +877,11 @@ PeerConnectionManager::CreatePeerConnection(const std::string &peerid) {
 
 rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
 PeerConnectionManager::CreateVideoSource(
-        const std::string &videourl,
+        const std::string &video_url,
         const std::map<std::string, std::string> &opts) {
-    RTC_LOG(INFO) << "videourl:" << videourl;
+    RTC_LOG(INFO) << "video_url:" << video_url;
 
-    std::string video = videourl;
+    std::string video = video_url;
     if (config_.isMember(video)) {
         video = config_[video]["video"].asString();
     }
@@ -910,14 +910,14 @@ const std::string PeerConnectionManager::sanitizeLabel(
 ** -------------------------------------------------------------------------*/
 bool PeerConnectionManager::AddStreams(
         webrtc::PeerConnectionInterface *peer_connection,
-        const std::string &videourl,
+        const std::string &video_url,
         const std::string &options) {
     bool ret = false;
 
     // compute options
     std::string optstring = options;
-    if (config_.isMember(videourl)) {
-        std::string urlopts = config_[videourl]["options"].asString();
+    if (config_.isMember(video_url)) {
+        std::string urlopts = config_[video_url]["options"].asString();
         if (options.empty()) {
             optstring = urlopts;
         } else if (options.find_first_of("&") == 0) {
@@ -935,7 +935,7 @@ bool PeerConnectionManager::AddStreams(
         opts[key] = value;
     }
 
-    std::string video = videourl;
+    std::string video = video_url;
     if (config_.isMember(video)) {
         video = config_[video]["video"].asString();
     }
@@ -954,7 +954,7 @@ bool PeerConnectionManager::AddStreams(
     }
 
     // compute stream label removing space because SDP use label
-    std::string streamLabel = this->sanitizeLabel(videourl);
+    std::string streamLabel = this->sanitizeLabel(video_url);
 
     bool existingStream = false;
     {
@@ -987,7 +987,7 @@ bool PeerConnectionManager::AddStreams(
                 rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track;
                 if (!videoSource) {
                     RTC_LOG(LS_ERROR)
-                            << "Cannot create capturer video:" << videourl;
+                            << "Cannot create capturer video:" << video_url;
                 } else {
                     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
                             videoScaled = VideoFilter<VideoScaler>::Create(
