@@ -28,19 +28,17 @@ void DesktopCapturer::OnCaptureResult(
     RTC_LOG(INFO) << "DesktopCapturer:OnCaptureResult";
 
     if (result == webrtc::DesktopCapturer::Result::SUCCESS) {
-        // t::geometry::Image im;
-        // t::io::ReadImage(
-        //         "/home/yixing/repo/Open3D/cpp/open3d/visualization/"
-        //         "webrtc_server/html/lena_color_640_480.jpg",
-        //         im);
-        // core::Tensor im_tensor = im.AsTensor();
-        // core::Tensor im_tensor_bgra = core::Tensor::Zeros(
-        //         {im.GetRows(), im.GetCols(), 4}, im_tensor.GetDtype());
-        // im_tensor_bgra.Slice(2, 0, 1) = im_tensor.Slice(2, 2, 3);
-        // im_tensor_bgra.Slice(2, 1, 2) = im_tensor.Slice(2, 1, 2);
-        // im_tensor_bgra.Slice(2, 2, 3) = im_tensor.Slice(2, 0, 1);
-        // set data to: static_cast<const uint8_t*>(im_tensor_bgra.GetDataPtr())
-
+        // Default
+        // width: 640,
+        // height: 480
+        // kBytesPerPixel: 4,
+        // frame->stride(): 2560
+        int width = frame->stride() / webrtc::DesktopFrame::kBytesPerPixel;
+        int height = frame->rect().height();
+        // core::Tensor t_frame(static_cast<const uint8_t*>(frame->data()),
+        //                      {height, width, 4}, core::Dtype::UInt8);
+        // t_frame.Save("t_frame.npy");
+        //
         // import numpy as np
         // import matplotlib.pyplot as plt
         // im = np.load("build/t_frame.npy")
@@ -48,22 +46,7 @@ void DesktopCapturer::OnCaptureResult(
         // print(im.shape)
         // print(im.dtype)
         // plt.imshow(im)
-        int width = frame->stride() / webrtc::DesktopFrame::kBytesPerPixel;
-        int height = frame->rect().height();
-        // core::Tensor t_frame(static_cast<const uint8_t*>(frame->data()),
-        //                      {height, width, 4}, core::Dtype::UInt8);
-        // t_frame.Save("t_frame.npy");
-
-        // width: 640,
-        // height: 480
-        // kBytesPerPixel: 4,
-        // frame->stride(): 2560
-        // utility::LogInfo(
-        //         "width: {}, height: {}, kBytesPerPixel: {}, frame->stride():
-        //         "
-        //         "{}",
-        //         width, height, webrtc::DesktopFrame::kBytesPerPixel,
-        //         frame->stride());
+        //
 
         rtc::scoped_refptr<webrtc::I420Buffer> I420buffer =
                 webrtc::I420Buffer::Create(width, height);
