@@ -179,15 +179,15 @@ PeerConnectionManager::PeerConnectionManager(
         const Json::Value &config,
         const std::string &publishFilter,
         const std::string &webrtcUdpPortRange)
-    : m_webrtc_server(webrtc_server),
-      m_task_queue_factory(webrtc::CreateDefaultTaskQueueFactory()),
-      m_peer_connection_factory(webrtc::CreateModularPeerConnectionFactory(
+    : webrtc_server_(webrtc_server),
+      task_queue_factory_(webrtc::CreateDefaultTaskQueueFactory()),
+      peer_connection_factory_(webrtc::CreateModularPeerConnectionFactory(
               CreatePeerConnectionFactoryDependencies())),
-      m_iceServerList(iceServerList),
+      ice_server_list_(iceServerList),
       m_config(config),
-      m_publishFilter(publishFilter) {
+      publish_filter_(publishFilter) {
     // Set the webrtc port range
-    m_webrtcPortRange = webrtcUdpPortRange;
+    webrtc_port_range_ = webrtcUdpPortRange;
 
     // register api in http server
     m_func["/api/getMediaList"] = [this](const struct mg_request_info *req_info,
@@ -304,7 +304,7 @@ const Json::Value PeerConnectionManager::getMediaList() {
 
     // Windows, desktops.
     const std::list<std::string> videoList =
-            CapturerFactory::GetVideoSourceList(m_publishFilter);
+            CapturerFactory::GetVideoSourceList(publish_filter_);
     for (auto videoSource : videoList) {
         Json::Value media;
         // TODO: fix the hard-coded window name, or, don't use the window name.
@@ -335,7 +335,7 @@ const Json::Value PeerConnectionManager::getIceServers(
         const std::string &clientIp) {
     Json::Value urls(Json::arrayValue);
 
-    for (auto iceServer : m_iceServerList) {
+    for (auto iceServer : ice_server_list_) {
         Json::Value server;
         Json::Value urlList(Json::arrayValue);
         IceServer srv = getIceServerFromUrl(iceServer, clientIp);
@@ -360,8 +360,8 @@ rtc::scoped_refptr<webrtc::PeerConnectionInterface>
 PeerConnectionManager::getPeerConnection(const std::string &peerid) {
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection;
     std::map<std::string, PeerConnectionObserver *>::iterator it =
-            m_peer_connectionobs_map.find(peerid);
-    if (it != m_peer_connectionobs_map.end()) {
+            peer_connectionobs_map_.find(peerid);
+    if (it != peer_connectionobs_map_.end()) {
         peerConnection = it->second->getPeerConnection();
     }
     return peerConnection;
@@ -434,7 +434,7 @@ const Json::Value PeerConnectionManager::createOffer(
         // register peerid
         {
             std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
-            m_peer_connectionobs_map.insert(
+            peer_connectionobs_map_.insert(
                     std::pair<std::string, PeerConnectionObserver *>(
                             peerid, peerConnectionObserver));
         }
@@ -578,7 +578,7 @@ const Json::Value PeerConnectionManager::call(const std::string &peerid,
             // register peerid
             {
                 std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
-                m_peer_connectionobs_map.insert(
+                peer_connectionobs_map_.insert(
                         std::pair<std::string, PeerConnectionObserver *>(
                                 peerid, peerConnectionObserver));
             }
@@ -648,7 +648,7 @@ const Json::Value PeerConnectionManager::call(const std::string &peerid,
 
 bool PeerConnectionManager::streamStillUsed(const std::string &streamLabel) {
     bool stillUsed = false;
-    for (auto it : m_peer_connectionobs_map) {
+    for (auto it : peer_connectionobs_map_) {
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection =
                 it.second->getPeerConnection();
         rtc::scoped_refptr<webrtc::StreamCollectionInterface> localstreams(
@@ -674,11 +674,11 @@ const Json::Value PeerConnectionManager::hangUp(const std::string &peerid) {
     {
         std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
         std::map<std::string, PeerConnectionObserver *>::iterator it =
-                m_peer_connectionobs_map.find(peerid);
-        if (it != m_peer_connectionobs_map.end()) {
+                peer_connectionobs_map_.find(peerid);
+        if (it != peer_connectionobs_map_.end()) {
             pcObserver = it->second;
             RTC_LOG(LS_ERROR) << "Remove PeerConnection peerid:" << peerid;
-            m_peer_connectionobs_map.erase(it);
+            peer_connectionobs_map_.erase(it);
         }
 
         if (pcObserver) {
@@ -695,10 +695,10 @@ const Json::Value PeerConnectionManager::hangUp(const std::string &peerid) {
                 if (!stillUsed) {
                     RTC_LOG(LS_ERROR)
                             << "hangUp stream is no more used " << streamLabel;
-                    std::lock_guard<std::mutex> mlock(m_streamMapMutex);
-                    auto it = m_stream_map.find(streamLabel);
-                    if (it != m_stream_map.end()) {
-                        m_stream_map.erase(it);
+                    std::lock_guard<std::mutex> mlock(stream_map_mutex_);
+                    auto it = stream_map_.find(streamLabel);
+                    if (it != stream_map_.end()) {
+                        stream_map_.erase(it);
                     }
 
                     RTC_LOG(LS_ERROR) << "hangUp stream closed " << streamLabel;
@@ -729,8 +729,8 @@ const Json::Value PeerConnectionManager::getIceCandidateList(
     Json::Value value;
     std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
     std::map<std::string, PeerConnectionObserver *>::iterator it =
-            m_peer_connectionobs_map.find(peerid);
-    if (it != m_peer_connectionobs_map.end()) {
+            peer_connectionobs_map_.find(peerid);
+    if (it != peer_connectionobs_map_.end()) {
         PeerConnectionObserver *obs = it->second;
         if (obs) {
             value = obs->getIceCandidateList();
@@ -748,7 +748,7 @@ const Json::Value PeerConnectionManager::getPeerConnectionList() {
     Json::Value value(Json::arrayValue);
 
     std::lock_guard<std::mutex> peerlock(m_peerMapMutex);
-    for (auto it : m_peer_connectionobs_map) {
+    for (auto it : peer_connectionobs_map_) {
         Json::Value content;
 
         // get local SDP
@@ -814,9 +814,9 @@ const Json::Value PeerConnectionManager::getPeerConnectionList() {
 **  get StreamList list
 ** -------------------------------------------------------------------------*/
 const Json::Value PeerConnectionManager::getStreamList() {
-    std::lock_guard<std::mutex> mlock(m_streamMapMutex);
+    std::lock_guard<std::mutex> mlock(stream_map_mutex_);
     Json::Value value(Json::arrayValue);
-    for (auto it : m_stream_map) {
+    for (auto it : stream_map_) {
         value.append(it.first);
     }
     return value;
@@ -826,7 +826,7 @@ const Json::Value PeerConnectionManager::getStreamList() {
 **  check if factory is initialized
 ** -------------------------------------------------------------------------*/
 bool PeerConnectionManager::InitializePeerConnection() {
-    return (m_peer_connection_factory.get() != nullptr);
+    return (peer_connection_factory_.get() != nullptr);
 }
 
 /* ---------------------------------------------------------------------------
@@ -835,7 +835,7 @@ bool PeerConnectionManager::InitializePeerConnection() {
 PeerConnectionManager::PeerConnectionObserver *
 PeerConnectionManager::CreatePeerConnection(const std::string &peerid) {
     webrtc::PeerConnectionInterface::RTCConfiguration config;
-    for (auto iceServer : m_iceServerList) {
+    for (auto iceServer : ice_server_list_) {
         webrtc::PeerConnectionInterface::IceServer server;
         IceServer srv = getIceServerFromUrl(iceServer);
         server.uri = srv.url;
@@ -848,7 +848,7 @@ PeerConnectionManager::CreatePeerConnection(const std::string &peerid) {
     // https://soru.site/questions/51578447/api-c-webrtcyi-kullanarak-peerconnection-ve-ucretsiz-baglant-noktasn-serbest-nasl
     int minPort = 0;
     int maxPort = 65535;
-    std::istringstream is(m_webrtcPortRange);
+    std::istringstream is(webrtc_port_range_);
     std::string port;
     if (std::getline(is, port, ':')) {
         minPort = std::stoi(port);
@@ -865,7 +865,7 @@ PeerConnectionManager::CreatePeerConnection(const std::string &peerid) {
 
     RTC_LOG(INFO) << __FUNCTION__ << "CreatePeerConnection peerid:" << peerid;
     PeerConnectionObserver *obs =
-            new PeerConnectionObserver(this->m_webrtc_server, this, peerid,
+            new PeerConnectionObserver(this->webrtc_server_, this, peerid,
                                        config, std::move(port_allocator));
     if (!obs) {
         RTC_LOG(LERROR) << __FUNCTION__ << "CreatePeerConnection failed";
@@ -888,8 +888,8 @@ PeerConnectionManager::CreateVideoSource(
         video = m_config[video]["video"].asString();
     }
 
-    return CapturerFactory::CreateVideoSource(video, opts, m_publishFilter,
-                                              m_peer_connection_factory);
+    return CapturerFactory::CreateVideoSource(video, opts, publish_filter_,
+                                              peer_connection_factory_);
 }
 
 const std::string PeerConnectionManager::sanitizeLabel(
@@ -960,8 +960,8 @@ bool PeerConnectionManager::AddStreams(
 
     bool existingStream = false;
     {
-        std::lock_guard<std::mutex> mlock(m_streamMapMutex);
-        existingStream = (m_stream_map.find(streamLabel) != m_stream_map.end());
+        std::lock_guard<std::mutex> mlock(stream_map_mutex_);
+        existingStream = (stream_map_.find(streamLabel) != stream_map_.end());
     }
 
     if (!existingStream) {
@@ -969,17 +969,17 @@ bool PeerConnectionManager::AddStreams(
         rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource(
                 this->CreateVideoSource(video, opts));
         RTC_LOG(INFO) << "Adding Stream to map";
-        std::lock_guard<std::mutex> mlock(m_streamMapMutex);
-        m_stream_map[streamLabel] = videoSource;
+        std::lock_guard<std::mutex> mlock(stream_map_mutex_);
+        stream_map_[streamLabel] = videoSource;
     }
 
     // create a new webrtc stream
     {
-        std::lock_guard<std::mutex> mlock(m_streamMapMutex);
-        auto it = m_stream_map.find(streamLabel);
-        if (it != m_stream_map.end()) {
+        std::lock_guard<std::mutex> mlock(stream_map_mutex_);
+        auto it = stream_map_.find(streamLabel);
+        if (it != stream_map_.end()) {
             rtc::scoped_refptr<webrtc::MediaStreamInterface> stream =
-                    m_peer_connection_factory->CreateLocalMediaStream(
+                    peer_connection_factory_->CreateLocalMediaStream(
                             streamLabel);
             if (!stream.get()) {
                 RTC_LOG(LS_ERROR) << "Cannot create stream";
@@ -994,7 +994,7 @@ bool PeerConnectionManager::AddStreams(
                     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
                             videoScaled = VideoFilter<VideoScaler>::Create(
                                     videoSource, opts);
-                    video_track = m_peer_connection_factory->CreateVideoTrack(
+                    video_track = peer_connection_factory_->CreateVideoTrack(
                             streamLabel + "_video", videoScaled);
                 }
 

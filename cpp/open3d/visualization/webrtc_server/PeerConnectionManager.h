@@ -155,7 +155,7 @@ class PeerConnectionManager {
         DataChannelObserver(
                 WebRTCServer* webrtc_server,
                 rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannel)
-            : m_webrtc_server(webrtc_server), m_dataChannel(dataChannel) {
+            : webrtc_server_(webrtc_server), m_dataChannel(dataChannel) {
             m_dataChannel->RegisterObserver(this);
         }
         virtual ~DataChannelObserver() { m_dataChannel->UnregisterObserver(); }
@@ -180,11 +180,11 @@ class PeerConnectionManager {
                     << __PRETTY_FUNCTION__
                     << " channel:" << m_dataChannel->label() << " msg:" << msg;
 
-            m_webrtc_server->OnDataChannelMessage(msg);
+            webrtc_server_->OnDataChannelMessage(msg);
         }
 
     protected:
-        WebRTCServer* m_webrtc_server;
+        WebRTCServer* webrtc_server_;
         rtc::scoped_refptr<webrtc::DataChannelInterface> m_dataChannel;
     };
 
@@ -196,7 +196,7 @@ class PeerConnectionManager {
                 const std::string& peerid,
                 const webrtc::PeerConnectionInterface::RTCConfiguration& config,
                 std::unique_ptr<cricket::PortAllocator> portAllocator)
-            : m_webrtc_server(webrtc_server),
+            : webrtc_server_(webrtc_server),
               m_peerConnectionManager(peerConnectionManager),
               m_peerid(peerid),
               m_localChannel(nullptr),
@@ -205,7 +205,7 @@ class PeerConnectionManager {
               m_deleting(false) {
             RTC_LOG(INFO) << __FUNCTION__
                           << "CreatePeerConnection peerid:" << peerid;
-            m_pc = m_peerConnectionManager->m_peer_connection_factory
+            m_pc = m_peerConnectionManager->peer_connection_factory_
                            ->CreatePeerConnection(config,
                                                   std::move(portAllocator),
                                                   nullptr, this);
@@ -217,7 +217,7 @@ class PeerConnectionManager {
                 rtc::scoped_refptr<webrtc::DataChannelInterface> channel =
                         m_pc->CreateDataChannel("ServerDataChannel", nullptr);
                 m_localChannel =
-                        new DataChannelObserver(m_webrtc_server, channel);
+                        new DataChannelObserver(webrtc_server_, channel);
             }
 
             m_statsCallback = new rtc::RefCountedObject<
@@ -271,7 +271,7 @@ class PeerConnectionManager {
         virtual void OnDataChannel(
                 rtc::scoped_refptr<webrtc::DataChannelInterface> channel) {
             RTC_LOG(LERROR) << __PRETTY_FUNCTION__;
-            m_remoteChannel = new DataChannelObserver(m_webrtc_server, channel);
+            m_remoteChannel = new DataChannelObserver(webrtc_server_, channel);
         }
         virtual void OnRenegotiationNeeded() {
             RTC_LOG(LERROR) << __PRETTY_FUNCTION__ << " peerid:" << m_peerid;
@@ -307,7 +307,7 @@ class PeerConnectionManager {
                 webrtc::PeerConnectionInterface::IceGatheringState) {}
 
     private:
-        WebRTCServer* m_webrtc_server = nullptr;
+        WebRTCServer* webrtc_server_ = nullptr;
         PeerConnectionManager* m_peerConnectionManager;
         const std::string m_peerid;
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> m_pc;
@@ -366,20 +366,20 @@ protected:
     const std::string sanitizeLabel(const std::string& label);
 
 protected:
-    WebRTCServer* m_webrtc_server = nullptr;
-    std::unique_ptr<webrtc::TaskQueueFactory> m_task_queue_factory;
+    WebRTCServer* webrtc_server_ = nullptr;
+    std::unique_ptr<webrtc::TaskQueueFactory> task_queue_factory_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-            m_peer_connection_factory;
+            peer_connection_factory_;
     std::mutex m_peerMapMutex;
-    std::map<std::string, PeerConnectionObserver*> m_peer_connectionobs_map;
+    std::map<std::string, PeerConnectionObserver*> peer_connectionobs_map_;
     std::map<std::string, rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>>
-            m_stream_map;
-    std::mutex m_streamMapMutex;
-    std::list<std::string> m_iceServerList;
+            stream_map_;
+    std::mutex stream_map_mutex_;
+    std::list<std::string> ice_server_list_;
     const Json::Value m_config;
-    const std::regex m_publishFilter;
+    const std::regex publish_filter_;
     std::map<std::string, HttpServerRequestHandler::httpFunction> m_func;
-    std::string m_webrtcPortRange;
+    std::string webrtc_port_range_;
 };
 
 }  // namespace webrtc_server
