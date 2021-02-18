@@ -180,6 +180,8 @@ void WebRTCServer::Impl::Run() {
     options.push_back("yes");
     options.push_back("keep_alive_timeout_ms");
     options.push_back("1000");
+    options.push_back("decode_url");
+    options.push_back("no");
     try {
         // PeerConnectionManager provides a set of callback functions for
         // HttpServerRequestHandler.
