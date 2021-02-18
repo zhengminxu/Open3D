@@ -56,18 +56,18 @@ private:
 class CapturerFactory {
 public:
     static const std::list<std::string> GetVideoSourceList(
-            const std::regex& publishFilter) {
+            const std::regex& publish_filter) {
         std::list<std::string> videoList;
 
 #ifdef USE_X11
-        if (std::regex_match("window://", publishFilter)) {
+        if (std::regex_match("window://", publish_filter)) {
             std::unique_ptr<webrtc::DesktopCapturer> capturer =
                     webrtc::DesktopCapturer::CreateWindowCapturer(
                             webrtc::DesktopCaptureOptions::CreateDefault());
             if (capturer) {
-                webrtc::DesktopCapturer::SourceList sourceList;
-                if (capturer->GetSourceList(&sourceList)) {
-                    for (auto source : sourceList) {
+                webrtc::DesktopCapturer::SourceList source_list;
+                if (capturer->GetSourceList(&source_list)) {
+                    for (auto source : source_list) {
                         std::ostringstream os;
                         os << "window://" << source.title;
                         videoList.push_back(os.str());
@@ -82,22 +82,22 @@ public:
     static rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
     CreateVideoSource(const std::string& video_url,
                       const std::map<std::string, std::string>& opts,
-                      const std::regex& publishFilter,
+                      const std::regex& publish_filter,
                       rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
                               peer_connection_factory) {
-        rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource;
+        rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> video_source;
         if ((video_url.find("window://") == 0) &&
-            (std::regex_match("window://", publishFilter))) {
+            (std::regex_match("window://", publish_filter))) {
 #ifdef USE_X11
-            videoSource = TrackSource<WindowCapturer>::Create(video_url, opts);
+            video_source = TrackSource<WindowCapturer>::Create(video_url, opts);
 #endif
         } else if (video_url.find("image://") == 0) {
-            videoSource = TrackSource<ImageCapturer>::Create(video_url, opts);
+            video_source = TrackSource<ImageCapturer>::Create(video_url, opts);
         } else {
             utility::LogError("CreateVideoSource failed for video_url: {}",
                               video_url);
         }
-        return videoSource;
+        return video_source;
     }
 };
 

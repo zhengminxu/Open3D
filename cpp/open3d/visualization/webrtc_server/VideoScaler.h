@@ -20,9 +20,9 @@ class VideoScaler : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
                     public rtc::VideoSourceInterface<webrtc::VideoFrame> {
 public:
     VideoScaler(
-            rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource,
+            rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> video_source,
             const std::map<std::string, std::string> &opts)
-        : video_source_(videoSource),
+        : video_source_(video_source),
           width_(0),
           height_(0),
           rotation_(webrtc::kVideoRotation_0),

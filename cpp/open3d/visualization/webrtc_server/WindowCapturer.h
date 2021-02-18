@@ -26,11 +26,11 @@ public:
                     webrtc::DesktopCaptureOptions::CreateDefault());
 
             if (capturer_) {
-                webrtc::DesktopCapturer::SourceList sourceList;
-                if (capturer_->GetSourceList(&sourceList)) {
+                webrtc::DesktopCapturer::SourceList source_list;
+                if (capturer_->GetSourceList(&source_list)) {
                     const std::string windowtitle(
                             url.substr(windowprefix.length()));
-                    for (auto source : sourceList) {
+                    for (auto source : source_list) {
                         RTC_LOG(LS_ERROR)
                                 << "WindowCapturer source:" << source.id
                                 << " title:" << source.title;

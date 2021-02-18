@@ -177,7 +177,7 @@ PeerConnectionManager::PeerConnectionManager(
         WebRTCServer *webrtc_server,
         const std::list<std::string> &iceServerList,
         const Json::Value &config,
-        const std::string &publishFilter,
+        const std::string &publish_filter,
         const std::string &webrtcUdpPortRange)
     : webrtc_server_(webrtc_server),
       task_queue_factory_(webrtc::CreateDefaultTaskQueueFactory()),
@@ -185,7 +185,7 @@ PeerConnectionManager::PeerConnectionManager(
               CreatePeerConnectionFactoryDependencies())),
       ice_server_list_(iceServerList),
       config_(config),
-      publish_filter_(publishFilter) {
+      publish_filter_(publish_filter) {
     // Set the webrtc port range
     webrtc_port_range_ = webrtcUdpPortRange;
 
@@ -303,11 +303,11 @@ const Json::Value PeerConnectionManager::getMediaList() {
     // Windows, desktops.
     const std::list<std::string> videoList =
             CapturerFactory::GetVideoSourceList(publish_filter_);
-    for (auto videoSource : videoList) {
+    for (auto video_source : videoList) {
         Json::Value media;
         // TODO: fix the hard-coded window name, or, don't use the window name.
-        media["video"] = videoSource;
-        if (videoSource == "window://Open3D") {
+        media["video"] = video_source;
+        if (video_source == "window://Open3D") {
             value.append(media);
             std::cout << "Added media: "
                       << Json::writeString(Json::StreamWriterBuilder(), media)
@@ -964,11 +964,11 @@ bool PeerConnectionManager::AddStreams(
 
     if (!existingStream) {
         // need to create the stream
-        rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> videoSource(
+        rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> video_source(
                 this->CreateVideoSource(video, opts));
         RTC_LOG(INFO) << "Adding Stream to map";
         std::lock_guard<std::mutex> mlock(stream_map_mutex_);
-        stream_map_[streamLabel] = videoSource;
+        stream_map_[streamLabel] = video_source;
     }
 
     // create a new webrtc stream
@@ -983,15 +983,15 @@ bool PeerConnectionManager::AddStreams(
                 RTC_LOG(LS_ERROR) << "Cannot create stream";
             } else {
                 rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
-                        videoSource = it->second;
+                        video_source = it->second;
                 rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track;
-                if (!videoSource) {
+                if (!video_source) {
                     RTC_LOG(LS_ERROR)
                             << "Cannot create capturer video:" << video_url;
                 } else {
                     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>
                             videoScaled = VideoFilter<VideoScaler>::Create(
-                                    videoSource, opts);
+                                    video_source, opts);
                     video_track = peer_connection_factory_->CreateVideoTrack(
                             streamLabel + "_video", videoScaled);
                 }

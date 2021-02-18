@@ -324,7 +324,7 @@ public:
     PeerConnectionManager(WebRTCServer* webrtc_server,
                           const std::list<std::string>& iceServerList,
                           const Json::Value& config,
-                          const std::string& publishFilter,
+                          const std::string& publish_filter,
                           const std::string& webrtcUdpPortRange);
     virtual ~PeerConnectionManager();
 
