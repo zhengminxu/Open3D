@@ -31,12 +31,12 @@ public:
 protected:
     explicit VideoFilter(std::unique_ptr<T> source)
         : webrtc::VideoTrackSource(/*remote=*/false),
-          m_source(std::move(source)) {}
+          source_(std::move(source)) {}
 
     SourceState state() const override { return kLive; }
     bool GetStats(Stats* stats) override {
         bool result = false;
-        T* source = m_source.get();
+        T* source = source_.get();
         if (source) {
             stats->input_height = source->height();
             stats->input_width = source->width();
@@ -47,9 +47,9 @@ protected:
 
 private:
     rtc::VideoSourceInterface<webrtc::VideoFrame>* source() override {
-        return m_source.get();
+        return source_.get();
     }
-    std::unique_ptr<T> m_source;
+    std::unique_ptr<T> source_;
 };
 
 }  // namespace webrtc_server
