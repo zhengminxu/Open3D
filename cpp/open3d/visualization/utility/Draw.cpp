@@ -26,7 +26,9 @@
 
 #include "open3d/visualization/utility/Draw.h"
 
+#include <chrono>
 #include <sstream>
+#include <thread>
 
 #include "open3d/io/ImageIO.h"
 #include "open3d/utility/Console.h"
@@ -84,6 +86,13 @@ void Draw(
     Draw(objs, window_name, width, height, actions);
 }
 
+void SendMouseEvent() {
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        utility::LogInfo("SendMouseEvent called");
+    }
+}
+
 void Draw(const std::vector<DrawObject> &objects,
           const std::string &window_name /*= "Open3D"*/,
           int width /*= 1024*/,
@@ -101,6 +110,7 @@ void Draw(const std::vector<DrawObject> &objects,
     headless_window->SetOnWindowDraw(draw_callback);
     o3d_app.SetWindowSystem(headless_window);
     o3d_app.Initialize();
+    std::thread thead(SendMouseEvent);
 
     auto draw = std::make_shared<visualizer::O3DVisualizer>(window_name, width,
                                                             height);
