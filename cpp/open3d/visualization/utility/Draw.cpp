@@ -86,13 +86,6 @@ void Draw(
     Draw(objs, window_name, width, height, actions);
 }
 
-void SendMouseEvent() {
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        utility::LogInfo("SendMouseEvent called");
-    }
-}
-
 void Draw(const std::vector<DrawObject> &objects,
           const std::string &window_name /*= "Open3D"*/,
           int width /*= 1024*/,
@@ -110,7 +103,6 @@ void Draw(const std::vector<DrawObject> &objects,
     headless_window->SetOnWindowDraw(draw_callback);
     o3d_app.SetWindowSystem(headless_window);
     o3d_app.Initialize();
-    std::thread thead(SendMouseEvent);
 
     auto draw = std::make_shared<visualizer::O3DVisualizer>(window_name, width,
                                                             height);
@@ -131,6 +123,24 @@ void Draw(const std::vector<DrawObject> &objects,
 
     gui::Application::GetInstance().AddWindow(draw);
     draw.reset();  // so we don't hold onto the pointer after Run() cleans up
+
+    auto emulate_mouse_events = [headless_window]() -> void {
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            utility::LogInfo("emulate_mouse_events called");
+            gui::MouseEvent me;
+
+            utility::LogInfo("Send click");
+            me = gui::MouseEvent{gui::MouseEvent::Type::BUTTON_DOWN, 139, 366,
+                                 0};
+            me.button.button = gui::MouseButton::LEFT;
+            me.button.count = 1;
+            headless_window->PostMouseEvent(headless_window.get(), me);
+            utility::LogInfo("Send click done");
+        }
+    };
+    std::thread thead(emulate_mouse_events);
+
     gui::Application::GetInstance().Run();
 }
 
