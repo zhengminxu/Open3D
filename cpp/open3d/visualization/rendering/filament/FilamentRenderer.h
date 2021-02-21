@@ -69,11 +69,9 @@ public:
     void DestroyScene(const SceneHandle& id) override;
 
     virtual void SetClearColor(const Eigen::Vector4f& color) override;
-    void SetPreserveBuffer(bool preserve) override;
     void UpdateSwapChain() override;
     void UpdateHeadlessSwapChain(int width, int height) override;
 
-    void EnableCaching(bool enable) override;
     void BeginFrame() override;
     void Draw() override;
     void RequestReadPixels(int width,
@@ -129,7 +127,8 @@ private:
     std::unique_ptr<FilamentMaterialModifier> materials_modifier_;
     FilamentResourceManager& resource_mgr_;
 
-    std::unordered_set<FilamentRenderToBuffer*> buffer_renderers_;
+    std::unordered_set<std::shared_ptr<FilamentRenderToBuffer>>
+            buffer_renderers_;
 
     bool frame_started_ = false;
     bool render_caching_enabled_ = false;
