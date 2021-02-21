@@ -30,7 +30,8 @@
 
 using namespace open3d;
 
-const std::string TEST_DIR = "../../../examples/test_data";
+// TODO: remove hard-coded path.
+const std::string TEST_DIR = "/home/yixing/repo/Open3D/examples/test_data";
 
 double GetRandom() { return double(std::rand()) / double(RAND_MAX); }
 
@@ -90,7 +91,8 @@ void MultiObjects() {
 
     visualization::Draw({pc_nocolor, pc_color, sphere_unlit,
                          sphere_colored_unlit, sphere_lit, sphere_colored_lit,
-                         big_bbox, sphere_bbox, lines, lines_colored});
+                         big_bbox, sphere_bbox, lines, lines_colored},
+                        "Open3D", 640, 480);
 }
 
 void Actions() {
@@ -139,7 +141,7 @@ void Actions() {
 
     visualization::Draw({visualization::DrawObject(SOURCE_NAME, cloud),
                          visualization::DrawObject(TRUTH_NAME, bunny, false)},
-                        "Open3D: Draw Example: Actions", 1024, 768,
+                        "Open3D", 1024, 768,
                         {{"Create Mesh", make_mesh},
                          {"Toggle truth/result", toggle_result}});
 }
@@ -267,7 +269,7 @@ void Selections() {
 
     visualization::Draw({visualization::DrawObject(source_name, source),
                          visualization::DrawObject(target_name, target)},
-                        "Open3D: Draw example: Selection", 1024, 768,
+                        "Open3D", 1024, 768,
                         {{"ICP Registration (one set)", DoICPOneSet},
                          {"ICP Registration (two sets)", DoICPTwoSets}});
 }
@@ -279,8 +281,8 @@ int main(int argc, char **argv) {
                 "directory");
     }
 
-    SingleObject();
+    // SingleObject();
     MultiObjects();
-    Actions();
-    Selections();
+    // Actions();
+    // Selections();
 }
