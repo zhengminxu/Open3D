@@ -28,6 +28,7 @@
 
 #include <sstream>
 
+#include "open3d/io/ImageIO.h"
 #include "open3d/utility/Console.h"
 #include "open3d/visualization/gui/Application.h"
 #include "open3d/visualization/gui/HeadlessWindowSystem.h"
@@ -89,8 +90,16 @@ void Draw(const std::vector<DrawObject> &objects,
           int height /*= 768*/,
           const std::vector<DrawAction> &actions /*= {}*/) {
     auto &o3d_app = gui::Application::GetInstance();
-    auto gWindowSystem = std::make_shared<gui::HeadlessWindowSystem>();
-    o3d_app.SetWindowSystem(gWindowSystem);
+    auto headless_window = std::make_shared<gui::HeadlessWindowSystem>();
+    auto draw_callback = [](gui::Window *window,
+                            std::shared_ptr<geometry::Image> im) -> void {
+        static int image_id = 0;
+        utility::LogInfo("draw_callback called, image id {}", image_id);
+        io::WriteImage(fmt::format("headless_{}.jpg", image_id), *im);
+        image_id++;
+    };
+    headless_window->SetOnWindowDraw(draw_callback);
+    o3d_app.SetWindowSystem(headless_window);
     o3d_app.Initialize();
 
     auto draw = std::make_shared<visualizer::O3DVisualizer>(window_name, width,
