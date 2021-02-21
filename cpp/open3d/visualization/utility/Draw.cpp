@@ -30,6 +30,7 @@
 
 #include "open3d/utility/Console.h"
 #include "open3d/visualization/gui/Application.h"
+#include "open3d/visualization/gui/HeadlessWindowSystem.h"
 
 namespace open3d {
 namespace visualization {
@@ -87,7 +88,11 @@ void Draw(const std::vector<DrawObject> &objects,
           int width /*= 1024*/,
           int height /*= 768*/,
           const std::vector<DrawAction> &actions /*= {}*/) {
-    gui::Application::GetInstance().Initialize();
+    auto &o3d_app = gui::Application::GetInstance();
+    auto gWindowSystem = std::make_shared<gui::HeadlessWindowSystem>();
+    o3d_app.SetWindowSystem(gWindowSystem);
+    o3d_app.Initialize();
+
     auto draw = std::make_shared<visualizer::O3DVisualizer>(window_name, width,
                                                             height);
     for (auto &o : objects) {
