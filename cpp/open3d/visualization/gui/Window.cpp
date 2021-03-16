@@ -152,6 +152,13 @@ Window::Window(const std::string& title,
                int height,
                int flags /*= 0*/)
     : impl_(new Window::Impl()) {
+    // Make sure that the Application instance is initialized before creating
+    // the window. It is easy to call, e.g. O3DVisualizer() and forgetting to
+    // initialize the application. This will cause a crash because the window
+    // system will not exist, nor will the resource directory be located, and
+    // so the renderer will not load properly and give cryptic messages.
+    Application::GetInstance().VerifyIsInitialized();
+
     impl_->wants_auto_center_ = (x == CENTERED_X || y == CENTERED_Y);
     impl_->wants_auto_size_ =
             (width == AUTOSIZE_WIDTH || height == AUTOSIZE_HEIGHT);
@@ -627,16 +634,6 @@ void Window::CloseDialog() {
     }
     impl_->active_dialog_.reset();
 
-    ForceRedrawSceneWidget();
-
-    // Closing a dialog does not change the layout of widgets so the following
-    // is not necessary. However, on Apple, ForceRedrawSceneWidget isn't
-    // sufficent to force a SceneWidget to redraw and therefore flickering of
-    // the now closed dialog may occur. SetNeedsLayout ensures that
-    // SceneWidget::Layout gets called which will guarantee proper redraw of the
-    // SceneWidget.
-    SetNeedsLayout();
-
     // The dialog might not be closing from within a draw call, such as when
     // a native file dialog closes, so we need to post a redraw, just in case.
     // If it is from within a draw call, then any redraw request from that will
@@ -853,9 +850,6 @@ Widget::DrawResult Window::DrawOnce(bool is_layout_pass) {
         if (id != Menu::NO_ITEM) {
             OnMenuItemSelected(id);
             needs_redraw = true;
-        }
-        if (menubar->CheckVisibilityChange()) {
-            ForceRedrawSceneWidget();
         }
     }
 

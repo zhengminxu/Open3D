@@ -378,6 +378,23 @@ void Application::Initialize(const char *resource_path_) {
     impl_->is_initialized_ = true;
 }
 
+void Application::VerifyIsInitialized() {
+    if (impl_->is_initialized_) {
+        return;
+    }
+
+    // Call LogWarning() first because it is easier to visually parse than the
+    // error message.
+    utility::LogWarning("gui::Initialize() was not called");
+
+    // It would be nice to make this LogWarning() and then call Initialize(),
+    // but Python scripts requires a different heuristic for finding the
+    // resource path than C++.
+    utility::LogError(
+            "gui::Initialize() must be called before creating a window or UI "
+            "element.");
+}
+
 WindowSystem &Application::GetWindowSystem() const {
     return *impl_->window_system_;
 }
@@ -601,6 +618,21 @@ Application::RunStatus Application::ProcessQueuedEvents(EnvUnlocker &unlocker) {
         unlocker.relock();
 
         for (auto &p : impl_->posted_) {
+            // Make sure this window still exists. Unfortunately, p.window
+            // is a pointer but impl_->windows_ is a shared_ptr, so we can't
+            // use find.
+            if (p.window) {
+                bool found = false;
+                for (auto w : impl_->windows_) {
+                    if (w.get() == p.window) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    continue;
+                }
+            }
+
             void *old = nullptr;
             if (p.window) {
                 old = p.window->MakeDrawContextCurrent();
