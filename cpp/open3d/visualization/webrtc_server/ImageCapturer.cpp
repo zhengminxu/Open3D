@@ -58,6 +58,7 @@ void ImageReader::Start(Callback* callback) {
 }
 
 void ImageReader::CaptureFrame() {
+    // This will block until a new frame is read.
     callback_->OnCaptureResult(GlobalBuffer::GetInstance().Read());
 }
 
@@ -113,38 +114,27 @@ void ImageCapturer::Stop() {
 
 bool ImageCapturer::IsRunning() { return is_running_; }
 
-// An alias to call OnCaptureResult(). Called by external functions. This is
-// helpful when downcasting a webrtc::VideoTrackSourceInterfac pointer to an
-// ImageCapturer pointer, since we cannot mark OnCaptureResult as override.
-void ImageCapturer::OnFrame(const core::Tensor& frame) {
-    utility::LogInfo("ImageCapturer:OnFrame callback");
-    // e.g. ImageCapturer::OnFrame Tensor(shape={480, 640, 3}, dtype=UInt8)
-    utility::LogInfo("ImageCapturer::OnFrame Tensor(shape={}, dtype={})",
-                     frame.GetShape().ToString(), frame.GetDtype().ToString());
-    OnCaptureResult(frame);
-}
-
 // Overide webrtc::DesktopCapturer::Callback.
 // See: WindowCapturerX11::CaptureFrame
 // build/webrtc/src/ext_webrtc/src/modules/desktop_capture/linux/window_capturer_x11.cc
-void ImageCapturer::OnCaptureResult(const core::Tensor& frame) {
+void ImageCapturer::OnCaptureResult(
+        const std::shared_ptr<core::Tensor>& frame) {
     utility::LogInfo(
             "ImageCapturer:OnCaptureResult callback <<<<<<<<< Good "
             ">>>>>>>>>");
-    int height = (int)frame.GetShape(0);
-    int width = (int)frame.GetShape(1);
+    int height = (int)frame->GetShape(0);
+    int width = (int)frame->GetShape(1);
 
     rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer =
             webrtc::I420Buffer::Create(width, height);
 
     // frame->data()
     const int conversion_result = libyuv::ConvertToI420(
-            static_cast<const uint8_t*>(frame.GetDataPtr()), 0,
-            i420_buffer->MutableDataY(), i420_buffer->StrideY(),
-            i420_buffer->MutableDataU(), i420_buffer->StrideU(),
-            i420_buffer->MutableDataV(), i420_buffer->StrideV(), 0, 0, width,
-            height, i420_buffer->width(), i420_buffer->height(),
-            libyuv::kRotate0, ::libyuv::FOURCC_RAW);
+            frame->GetDataPtr<uint8_t>(), 0, i420_buffer->MutableDataY(),
+            i420_buffer->StrideY(), i420_buffer->MutableDataU(),
+            i420_buffer->StrideU(), i420_buffer->MutableDataV(),
+            i420_buffer->StrideV(), 0, 0, width, height, i420_buffer->width(),
+            i420_buffer->height(), libyuv::kRotate0, ::libyuv::FOURCC_RAW);
 
     if (conversion_result >= 0) {
         webrtc::VideoFrame video_frame(i420_buffer,

@@ -30,6 +30,7 @@
 #include <sstream>
 #include <thread>
 
+#include "open3d/core/Tensor.h"
 #include "open3d/io/ImageIO.h"
 #include "open3d/utility/Console.h"
 #include "open3d/visualization/gui/Application.h"
@@ -72,8 +73,8 @@ WebRTCWindowSystem::WebRTCWindowSystem()
     // TODO: handle multiple instances of windows, that is, the WebRTC server
     //       shall monitor and close connection to certain peerid.
     auto draw_callback = [this](gui::Window *window,
-                                std::shared_ptr<geometry::Image> im) -> void {
-        this->impl_->webrtc_server_->OnFrame(*im);
+                                std::shared_ptr<core::Tensor> im) -> void {
+        this->impl_->webrtc_server_->OnFrame(im);
     };
     SetOnWindowDraw(draw_callback);
 }
