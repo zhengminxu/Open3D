@@ -160,52 +160,32 @@ void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
 
     int64_t n = rows * cols;
 
-    std::vector<float> A_1x29(29, 0.0);
+    std::vector<float> A_1x29(29, 0.0);  // Final output result
 
-#ifdef _WIN32
-    std::vector<float> zeros_29(29, 0.0);
-    A_1x29 = tbb::parallel_reduce(
-            tbb::blocked_range<int>(0, n), zeros_29,
-            [&](tbb::blocked_range<int> r, std::vector<float> A_reduction) {
-                for (int workload_idx = r.begin(); workload_idx < r.end();
-                     workload_idx++) {
-#else
     float* A_reduction = A_1x29.data();
 #pragma omp parallel for reduction(+ : A_reduction[:29]) schedule(static)
     for (int workload_idx = 0; workload_idx < n; workload_idx++) {
-#endif
-                    float J_ij[6];
-                    float r;
+        float J_ij[6];
+        float r;
 
-                    bool valid = GetJacobianLocal(
-                            workload_idx, cols, depth_diff,
-                            source_vertex_indexer, target_vertex_indexer,
-                            source_normal_indexer, ti, J_ij, r);
+        bool valid = GetJacobianLocal(
+                workload_idx, cols, depth_diff, source_vertex_indexer,
+                target_vertex_indexer, source_normal_indexer, ti, J_ij, r);
 
-                    if (valid) {
-                        for (int i = 0, j = 0; j < 6; j++) {
-                            for (int k = 0; k <= j; k++) {
-                                A_reduction[i] += J_ij[j] * J_ij[k];
-                                i++;
-                            }
-                            A_reduction[21 + j] += J_ij[j] * r;
-                        }
-                        A_reduction[27] += r * r;
-                        A_reduction[28] += 1;
-                    }
+        if (valid) {
+            int i = 0;
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k <= j; k++) {
+                    A_reduction[i] += J_ij[j] * J_ij[k];
+                    i++;
                 }
-#ifdef _WIN32
-                return A_reduction;
-            },
-            // TBB: Defining reduction operation.
-            [&](std::vector<float> a, std::vector<float> b) {
-                std::vector<float> result(29);
-                for (int j = 0; j < 29; j++) {
-                    result[j] = a[j] + b[j];
-                }
-                return result;
-            });
-#endif
+                A_reduction[21 + j] += J_ij[j] * r;  // ATB
+            }
+            // Residuals
+            A_reduction[27] += r * r;
+            A_reduction[28] += 1;
+        }
+    }
 
     core::Tensor AtA =
             core::Tensor::Empty({6, 6}, core::Dtype::Float32, device);
