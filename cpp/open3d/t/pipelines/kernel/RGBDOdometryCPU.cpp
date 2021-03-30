@@ -173,17 +173,47 @@ void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
                 target_vertex_indexer, source_normal_indexer, ti, J_ij, r);
 
         if (valid) {
-            int i = 0;
-            for (int j = 0; j < 6; j++) {
-                for (int k = 0; k <= j; k++) {
-                    A_reduction[i] += J_ij[j] * J_ij[k];
-                    i++;
-                }
-                A_reduction[21 + j] += J_ij[j] * r;  // ATB
-            }
-            // Residuals
+            A_reduction[0] += J_ij[0] * J_ij[0];
+            A_reduction[1] += J_ij[1] * J_ij[0];
+            A_reduction[2] += J_ij[1] * J_ij[1];
+            A_reduction[3] += J_ij[2] * J_ij[0];
+            A_reduction[4] += J_ij[2] * J_ij[1];
+            A_reduction[5] += J_ij[2] * J_ij[2];
+            A_reduction[6] += J_ij[3] * J_ij[0];
+            A_reduction[7] += J_ij[3] * J_ij[1];
+            A_reduction[8] += J_ij[3] * J_ij[2];
+            A_reduction[9] += J_ij[3] * J_ij[3];
+            A_reduction[10] += J_ij[4] * J_ij[0];
+            A_reduction[11] += J_ij[4] * J_ij[1];
+            A_reduction[12] += J_ij[4] * J_ij[2];
+            A_reduction[13] += J_ij[4] * J_ij[3];
+            A_reduction[14] += J_ij[4] * J_ij[4];
+            A_reduction[15] += J_ij[5] * J_ij[0];
+            A_reduction[16] += J_ij[5] * J_ij[1];
+            A_reduction[17] += J_ij[5] * J_ij[2];
+            A_reduction[18] += J_ij[5] * J_ij[3];
+            A_reduction[19] += J_ij[5] * J_ij[4];
+            A_reduction[20] += J_ij[5] * J_ij[5];
+
+            A_reduction[21 + 0] += J_ij[0] * r;  // ATB
+            A_reduction[21 + 1] += J_ij[1] * r;  // ATB
+            A_reduction[21 + 2] += J_ij[2] * r;  // ATB
+            A_reduction[21 + 3] += J_ij[3] * r;  // ATB
+            A_reduction[21 + 4] += J_ij[4] * r;  // ATB
+            A_reduction[21 + 5] += J_ij[5] * r;  // ATB
+
             A_reduction[27] += r * r;
             A_reduction[28] += 1;
+
+            // int i = 0;
+            // for (int j = 0; j < 6; j++) {
+            //     for (int k = 0; k <= j; k++) {
+            //         A_reduction[i] += J_ij[j] * J_ij[k];
+            //         i++;
+            //     }
+            //     A_reduction[21 + j] += J_ij[j] * r;  // ATB
+            // }
+            // Residuals
         }
     }
 
