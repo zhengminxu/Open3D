@@ -160,8 +160,6 @@ void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
 
     int64_t n = rows * cols;
 
-    // std::vector<float> A_1x29(29, 0.0);  // Final output result
-
     typedef Eigen::Matrix<float, 29, 1> Vector29f;
     Vector29f results = Vector29f::Zero();
     Vector29f zeros = Vector29f::Zero();
@@ -223,64 +221,6 @@ void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
                 return lhs + rhs;
             });
 
-    //     float* A_reduction = A_1x29.data();
-    // #pragma omp parallel for reduction(+ : A_reduction[:29]) schedule(static)
-    //     for (int workload_idx = 0; workload_idx < n; workload_idx++) {
-    //         float J_ij[6];
-    //         float r;
-
-    //         bool valid = GetJacobianLocal(
-    //                 workload_idx, cols, depth_diff, source_vertex_indexer,
-    //                 target_vertex_indexer, source_normal_indexer, ti, J_ij,
-    //                 r);
-
-    //         if (valid) {
-    //             A_reduction[0] += J_ij[0] * J_ij[0];
-    //             A_reduction[1] += J_ij[1] * J_ij[0];
-    //             A_reduction[2] += J_ij[1] * J_ij[1];
-    //             A_reduction[3] += J_ij[2] * J_ij[0];
-    //             A_reduction[4] += J_ij[2] * J_ij[1];
-    //             A_reduction[5] += J_ij[2] * J_ij[2];
-    //             A_reduction[6] += J_ij[3] * J_ij[0];
-    //             A_reduction[7] += J_ij[3] * J_ij[1];
-    //             A_reduction[8] += J_ij[3] * J_ij[2];
-    //             A_reduction[9] += J_ij[3] * J_ij[3];
-    //             A_reduction[10] += J_ij[4] * J_ij[0];
-    //             A_reduction[11] += J_ij[4] * J_ij[1];
-    //             A_reduction[12] += J_ij[4] * J_ij[2];
-    //             A_reduction[13] += J_ij[4] * J_ij[3];
-    //             A_reduction[14] += J_ij[4] * J_ij[4];
-    //             A_reduction[15] += J_ij[5] * J_ij[0];
-    //             A_reduction[16] += J_ij[5] * J_ij[1];
-    //             A_reduction[17] += J_ij[5] * J_ij[2];
-    //             A_reduction[18] += J_ij[5] * J_ij[3];
-    //             A_reduction[19] += J_ij[5] * J_ij[4];
-    //             A_reduction[20] += J_ij[5] * J_ij[5];
-
-    //             A_reduction[21] += J_ij[0] * r;  // ATB
-    //             A_reduction[22] += J_ij[1] * r;  // ATB
-    //             A_reduction[23] += J_ij[2] * r;  // ATB
-    //             A_reduction[24] += J_ij[3] * r;  // ATB
-    //             A_reduction[25] += J_ij[4] * r;  // ATB
-    //             A_reduction[26] += J_ij[5] * r;  // ATB
-
-    //             A_reduction[27] += r * r;
-    //             A_reduction[28] += 1;
-
-    //             // int i = 0;
-    //             // for (int j = 0; j < 6; j++) {
-    //             //     for (int k = 0; k <= j; k++) {
-    //             //         A_reduction[i] += J_ij[j] * J_ij[k];
-    //             //         i++;
-    //             //     }
-    //             //     A_reduction[21 + j] += J_ij[j] * r;  // ATB
-    //             // }
-    //             // Residuals
-    //         }
-    //     }
-
-    // core::Tensor results_tensor =
-    //         core::eigen_converter::EigenMatrixToTensor(results);
     const float* A_1x29 = results.data();
 
     core::Tensor AtA =
