@@ -195,12 +195,12 @@ void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
             A_reduction[19] += J_ij[5] * J_ij[4];
             A_reduction[20] += J_ij[5] * J_ij[5];
 
-            A_reduction[21 + 0] += J_ij[0] * r;  // ATB
-            A_reduction[21 + 1] += J_ij[1] * r;  // ATB
-            A_reduction[21 + 2] += J_ij[2] * r;  // ATB
-            A_reduction[21 + 3] += J_ij[3] * r;  // ATB
-            A_reduction[21 + 4] += J_ij[4] * r;  // ATB
-            A_reduction[21 + 5] += J_ij[5] * r;  // ATB
+            A_reduction[21] += J_ij[0] * r;  // ATB
+            A_reduction[22] += J_ij[1] * r;  // ATB
+            A_reduction[23] += J_ij[2] * r;  // ATB
+            A_reduction[24] += J_ij[3] * r;  // ATB
+            A_reduction[25] += J_ij[4] * r;  // ATB
+            A_reduction[26] += J_ij[5] * r;  // ATB
 
             A_reduction[27] += r * r;
             A_reduction[28] += 1;
