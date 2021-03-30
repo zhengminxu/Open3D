@@ -133,6 +133,22 @@ void CreateNormalMapCPU(const core::Tensor& vertex_map,
             });
 }
 
+template <typename T = float[29]>
+T AssociativeReduce(const T* first, const T* last, T identity) {
+    return tbb::parallel_reduce(
+            // Index range for reduction
+            tbb::blocked_range<const T*>(first, last),
+            // Identity element
+            identity,
+            // Reduce a subrange and partial sum
+            [&](tbb::blocked_range<const T*> r, T partial_sum) -> float {
+                // partial_sum = T + T + T + .. + T (r.end() - r.begin() Ts)
+                return std::accumulate(r.begin(), r.end(), partial_sum);
+            },
+            // Reduce two partial sums
+            std::plus<T>());
+}
+
 void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
                                 const core::Tensor& target_vertex_map,
                                 const core::Tensor& source_normal_map,
