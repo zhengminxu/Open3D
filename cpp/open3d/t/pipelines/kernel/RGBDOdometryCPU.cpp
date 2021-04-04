@@ -24,6 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+// clang-format off
+// #include <Eigen/core> # this also works
+#include <Eigen/src/Core/util/Macros.h>
+#include <Eigen/src/Core/util/ConfigureVectorization.h>
+// clang-format on
+
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_reduce.h>
 
@@ -171,7 +177,6 @@ void ComputePosePointToPlaneCPU(const core::Tensor& source_vertex_map,
                      workload_idx++) {
 #else
     float* A_reduction = A_1x29.data();
-#pragma omp parallel for reduction(+ : A_reduction[:29]) schedule(static)
     for (int workload_idx = 0; workload_idx < n; workload_idx++) {
 #endif
                     float J_ij[6];
