@@ -8,7 +8,9 @@
 #include <thrust/sequence.h>
 
 #include <iostream>
+#include <sstream>
 #include <stdgpu/unordered_map.cuh>  // stdgpu::unordered_map
+#include <string>
 
 struct is_odd {
     STDGPU_HOST_DEVICE bool operator()(const int x) const { return x % 2 == 1; }
@@ -35,82 +37,115 @@ __global__ void insert_neighbors(const int* d_result,
 
     if (i >= n) return;
 
+    // num is the middle number
     int num = d_result[i];
-    int num_neighborhood[3] = {num - 1, num, num + 1};
+    int neighbors[3] = {num - 1, num, num + 1};
 
-    for (int num_neighbor : num_neighborhood) {
-        auto result = map.emplace(num_neighbor, square()(num_neighbor));
-        // result.first->second += 1;
+    // e.g. if num == 5
+    // map[4] = 4 * 4
+    // map[5] = 5 * 5
+    // map[6] = 6 * 6
+    for (int neighbor : neighbors) {
+        auto result = map.emplace(neighbor, square()(neighbor));
     }
 }
 
-struct collect {
+struct GetFirst {
+    STDGPU_HOST_DEVICE int operator()(const thrust::pair<int, int>& x) const {
+        return x.first;
+    }
+};
+
+struct GetSecond {
     STDGPU_HOST_DEVICE int operator()(const thrust::pair<int, int>& x) const {
         return x.second;
     }
 };
 
+__global__ void InsertKeyValuePair(
+        const int* d_keys,
+        const int* d_values,
+        int num_keys,
+        stdgpu::unordered_map<int, int> key_to_value) {
+    // stdgpu::unordered_map pass-by-value does not actually copy.
+    int workload_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (workload_idx >= num_keys) {
+        return;
+    }
+    key_to_value.emplace(d_keys[workload_idx], d_values[workload_idx]);
+}
+
+template <typename T>
+std::string Join(const T& vals, const std::string& delimeter = ", ") {
+    std::ostringstream ss;
+    for (const auto& val : vals) {
+        if (&val != &vals[0]) {
+            ss << delimeter;
+        }
+        ss << val;
+    }
+    return ss.str();
+}
+
 int main() {
-    //
-    // EXAMPLE DESCRIPTION
-    // -------------------
-    // This example demonstrates how stdgpu::unordered_map is used to compute a
-    // duplicate-free set of numbers.
-    //
+    stdgpu::index_t n = 10;
 
-    stdgpu::index_t n = 100;
+    // Host keys and values
+    std::vector<int> h_keys{0, 1, 2, 2, 2, 3, 4, 4, 5};
+    std::vector<int> h_values{0, 10, 20, 20, 20, 30, 40, 40, 50};
 
-    int* d_input = createDeviceArray<int>(n);
-    int* d_result = createDeviceArray<int>(n / 2);
-    stdgpu::unordered_map<int, int> map =
+    // Allocate device
+    int* d_keys = createDeviceArray<int>(n);
+    int* d_values = createDeviceArray<int>(n);
+
+    // Copy keys and values to device
+    thrust::copy(h_keys.begin(), h_keys.end(), stdgpu::device_begin(d_keys));
+    thrust::copy(h_values.begin(), h_values.end(),
+                 stdgpu::device_begin(d_values));
+
+    // Create map
+    stdgpu::unordered_map<int, int> key_to_value =
             stdgpu::unordered_map<int, int>::createDeviceObject(n);
 
-    thrust::sequence(stdgpu::device_begin(d_input), stdgpu::device_end(d_input),
-                     1);
-
-    // d_input : 1, 2, 3, ..., 100
-    thrust::copy_if(stdgpu::device_cbegin(d_input),
-                    stdgpu::device_cend(d_input),
-                    stdgpu::device_begin(d_result), is_odd());
-
-    // d_result : 1, 3, 5, ..., 99
-    stdgpu::index_t threads = 32;
-    stdgpu::index_t blocks = (n / 2 + threads - 1) / threads;
-    insert_neighbors<<<static_cast<unsigned int>(blocks),
-                       static_cast<unsigned int>(threads)>>>(d_result, n / 2,
-                                                             map);
+    // Insert to map
+    unsigned int num_keys = static_cast<unsigned int>(h_keys.size());
+    unsigned int threads = 32;
+    unsigned int blocks = (num_keys + threads - 1) / threads;
+    InsertKeyValuePair<<<blocks, threads>>>(
+            d_keys, d_values, static_cast<int>(num_keys), key_to_value);
     cudaDeviceSynchronize();
+    stdgpu::index_t map_size = key_to_value.size();
+    std::cout << "num_keys: " << num_keys << ", map_size: " << map_size
+              << std::endl;
 
-    // map : 0, 1, 2, 3, ..., 100
-    auto range_map = map.device_range();
-    std::cout << map.size() << " " << range_map.size() << "\n";
-    insert_neighbors<<<static_cast<unsigned int>(blocks),
-                       static_cast<unsigned int>(threads)>>>(d_result, n / 2,
-                                                             map);
+    // Get all (unique) keys
+    auto key_to_value_range_map = key_to_value.device_range();
+    int* d_unique_keys = createDeviceArray<int>(map_size);
+    thrust::transform(key_to_value_range_map.begin(),
+                      key_to_value_range_map.end(),
+                      stdgpu::device_begin(d_unique_keys), GetFirst());
+    std::vector<int> h_unique_keys(map_size);
+    thrust::device_ptr<int> d_unique_keys_ptr(d_unique_keys);
+    thrust::copy(d_unique_keys_ptr, d_unique_keys_ptr + map_size,
+                 h_unique_keys.begin());
+    std::cout << "h_unique_keys: " << Join(h_unique_keys) << std::endl;
 
-    int* output_ptr;
-    cudaMalloc(&output_ptr, sizeof(int) * n);
-    thrust::transform(range_map.begin(), range_map.end(), output_ptr,
-                      collect());
+    // Get all values (corresponding to all unique keys)
+    int* d_unique_values = createDeviceArray<int>(map_size);
+    thrust::transform(key_to_value_range_map.begin(),
+                      key_to_value_range_map.end(),
+                      stdgpu::device_begin(d_unique_values), GetSecond());
+    std::vector<int> h_unique_values(map_size);
+    thrust::device_ptr<int> d_unique_values_ptr(d_unique_values);
+    thrust::copy(d_unique_values_ptr, d_unique_values_ptr + map_size,
+                 h_unique_values.begin());
+    std::cout << "h_unique_values: " << Join(h_unique_values) << std::endl;
 
-    thrust::device_ptr<int> dev_ptr(output_ptr);
-    thrust::copy(dev_ptr, dev_ptr + n,
-                 std::ostream_iterator<int>(std::cout, "\n"));
+    // Clean up
+    destroyDeviceArray<int>(d_keys);
+    destroyDeviceArray<int>(d_values);
+    destroyDeviceArray<int>(d_unique_keys);
+    destroyDeviceArray<int>(d_unique_values);
 
-    thrust::pair<int, int> sum =
-            thrust::reduce(range_map.begin(), range_map.end(),
-                           thrust::make_pair(0, 0), int_pair_plus());
-
-    const thrust::pair<int, int> sum_closed_form = {
-            n * (n + 1) / 2, n * (n + 1) * (2 * n + 1) / 6};
-
-    std::cout << "The duplicate-free map of numbers contains " << map.size()
-              << " elements (" << n + 1
-              << " expected) and the computed sums are (" << sum.first << ", "
-              << sum.second << ") ((" << sum_closed_form.first << ", "
-              << sum_closed_form.second << ") expected)" << std::endl;
-
-    destroyDeviceArray<int>(d_input);
-    destroyDeviceArray<int>(d_result);
-    stdgpu::unordered_map<int, int>::destroyDeviceObject(map);
+    return 0;
 }
