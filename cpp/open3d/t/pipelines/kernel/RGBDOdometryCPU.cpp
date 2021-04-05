@@ -24,6 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+// clang-format off
+#include <Eigen/Core>
+// #include <Eigen/src/Core/util/Macros.h>
+// #include <Eigen/src/Core/util/ConfigureVectorization.h>
+// clang-format on
+
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_reduce.h>
 
