@@ -12,44 +12,6 @@
 #include <stdgpu/unordered_map.cuh>  // stdgpu::unordered_map
 #include <string>
 
-struct is_odd {
-    STDGPU_HOST_DEVICE bool operator()(const int x) const { return x % 2 == 1; }
-};
-
-struct square {
-    STDGPU_HOST_DEVICE int operator()(const int x) const { return x * x; }
-};
-
-struct int_pair_plus {
-    STDGPU_HOST_DEVICE thrust::pair<int, int> operator()(
-            const thrust::pair<int, int>& lhs,
-            const thrust::pair<int, int>& rhs) const {
-        return thrust::make_pair(lhs.first + rhs.first,
-                                 lhs.second + rhs.second);
-    }
-};
-
-__global__ void insert_neighbors(const int* d_result,
-                                 const stdgpu::index_t n,
-                                 stdgpu::unordered_map<int, int> map) {
-    stdgpu::index_t i =
-            static_cast<stdgpu::index_t>(blockIdx.x * blockDim.x + threadIdx.x);
-
-    if (i >= n) return;
-
-    // num is the middle number
-    int num = d_result[i];
-    int neighbors[3] = {num - 1, num, num + 1};
-
-    // e.g. if num == 5
-    // map[4] = 4 * 4
-    // map[5] = 5 * 5
-    // map[6] = 6 * 6
-    for (int neighbor : neighbors) {
-        auto result = map.emplace(neighbor, square()(neighbor));
-    }
-}
-
 struct GetFirst {
     STDGPU_HOST_DEVICE int operator()(const thrust::pair<int, int>& x) const {
         return x.first;
