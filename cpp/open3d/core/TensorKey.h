@@ -78,7 +78,13 @@ public:
     static TensorKey IndexTensor(const Tensor& index_tensor);
 
     enum class TensorKeyMode { Index, Slice, IndexTensor };
-    ~TensorKey() {}
+
+    /// This won't copy the Tensor data, it only copies the Tensor "view".
+    /// Why do you need this? If we use unique_ptr, TensorKey cannot be copied
+    /// unless we define its copy semantics clearly.
+    TensorKey(const TensorKey& other);
+
+    ~TensorKey();
 
     /// Returns TensorKey mode.
     TensorKeyMode GetMode() const;
@@ -123,8 +129,8 @@ private:
     class IndexImpl;
     class SliceImpl;
     class IndexTensorImpl;
-    std::shared_ptr<Impl> impl_;
-    TensorKey(const std::shared_ptr<Impl>& impl);
+    std::unique_ptr<Impl> impl_;
+    TensorKey(std::unique_ptr<Impl> impl);
 };
 
 }  // namespace core

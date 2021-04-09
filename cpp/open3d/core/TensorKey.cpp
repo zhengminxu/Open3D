@@ -35,6 +35,8 @@
 namespace open3d {
 namespace core {
 
+TensorKey::~TensorKey() = default;
+
 class TensorKey::Impl {
 public:
     Impl(TensorKeyMode mode) : mode_(mode) {}
@@ -70,11 +72,11 @@ public:
           start_(start),
           stop_(stop),
           step_(step) {}
-    std::shared_ptr<SliceImpl> InstantiateDimSize(int64_t dim_size) const {
-        return std::make_shared<SliceImpl>(
+    std::unique_ptr<SliceImpl> InstantiateDimSize(int64_t dim_size) const {
+        return std::move(std::make_unique<SliceImpl>(
                 start_.has_value() ? start_.value() : 0,
                 stop_.has_value() ? stop_.value() : dim_size,
-                step_.has_value() ? step_.value() : 1);
+                step_.has_value() ? step_.value() : 1));
     }
     int64_t GetStart() const {
         if (start_.has_value()) {
@@ -143,28 +145,29 @@ private:
     Tensor index_tensor_;
 };
 
-TensorKey::TensorKey(const std::shared_ptr<Impl>& impl) : impl_(impl) {}
+TensorKey::TensorKey(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 
 TensorKey::TensorKeyMode TensorKey::GetMode() const { return impl_->GetMode(); }
 
 std::string TensorKey::ToString() const { return impl_->ToString(); }
 
 TensorKey TensorKey::Index(int64_t index) {
-    return TensorKey(std::make_shared<IndexImpl>(index));
+    return TensorKey(std::move(std::make_unique<IndexImpl>(index)));
 }
 
 TensorKey TensorKey::Slice(utility::optional<int64_t> start,
                            utility::optional<int64_t> stop,
                            utility::optional<int64_t> step) {
-    return TensorKey(std::make_shared<SliceImpl>(start, stop, step));
+    return TensorKey(std::move(std::make_unique<SliceImpl>(start, stop, step)));
 }
 
 TensorKey TensorKey::IndexTensor(const Tensor& index_tensor) {
-    return TensorKey(std::make_shared<IndexTensorImpl>(index_tensor));
+    return TensorKey(
+            std::move(std::make_unique<IndexTensorImpl>(index_tensor)));
 }
 
 int64_t TensorKey::GetIndex() const {
-    if (auto index_impl = std::dynamic_pointer_cast<IndexImpl>(impl_)) {
+    if (auto index_impl = dynamic_cast<IndexImpl*>(impl_.get())) {
         return index_impl->GetIndex();
     } else {
         utility::LogError("GetIndex() failed: the impl is not IndexImpl.");
@@ -172,29 +175,29 @@ int64_t TensorKey::GetIndex() const {
 }
 
 int64_t TensorKey::GetStart() const {
-    if (auto slice_impl = std::dynamic_pointer_cast<SliceImpl>(impl_)) {
+    if (auto slice_impl = dynamic_cast<SliceImpl*>(impl_.get())) {
         return slice_impl->GetStart();
     } else {
         utility::LogError("GetStart() failed: the impl is not SliceImpl.");
     }
 }
 int64_t TensorKey::GetStop() const {
-    if (auto slice_impl = std::dynamic_pointer_cast<SliceImpl>(impl_)) {
+    if (auto slice_impl = dynamic_cast<SliceImpl*>(impl_.get())) {
         return slice_impl->GetStop();
     } else {
         utility::LogError("GetStop() failed: the impl is not SliceImpl.");
     }
 }
 int64_t TensorKey::GetStep() const {
-    if (auto slice_impl = std::dynamic_pointer_cast<SliceImpl>(impl_)) {
+    if (auto slice_impl = dynamic_cast<SliceImpl*>(impl_.get())) {
         return slice_impl->GetStep();
     } else {
         utility::LogError("GetStep() failed: the impl is not SliceImpl.");
     }
 }
 TensorKey TensorKey::InstantiateDimSize(int64_t dim_size) const {
-    if (auto slice_impl = std::dynamic_pointer_cast<SliceImpl>(impl_)) {
-        return TensorKey(slice_impl->InstantiateDimSize(dim_size));
+    if (auto slice_impl = dynamic_cast<SliceImpl*>(impl_.get())) {
+        return TensorKey(std::move(slice_impl->InstantiateDimSize(dim_size)));
     } else {
         utility::LogError(
                 "InstantiateDimSize() failed: the impl is not SliceImpl.");
@@ -202,8 +205,7 @@ TensorKey TensorKey::InstantiateDimSize(int64_t dim_size) const {
 }
 
 Tensor TensorKey::GetIndexTensor() const {
-    if (auto index_tensor_impl =
-                std::dynamic_pointer_cast<IndexTensorImpl>(impl_)) {
+    if (auto index_tensor_impl = dynamic_cast<IndexTensorImpl*>(impl_.get())) {
         return index_tensor_impl->GetIndexTensor();
     } else {
         utility::LogError(
