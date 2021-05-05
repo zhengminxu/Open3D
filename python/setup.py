@@ -36,16 +36,21 @@ data_files_spec = [
 ]
 
 if "@BUILD_JUPYTER_EXTENSION@" == "ON":
-    from jupyter_packaging import (
-        create_cmdclass,
-        install_npm,
-        ensure_targets,
-        combine_commands,
-    )
+    try:
+        from jupyter_packaging import (
+            create_cmdclass,
+            install_npm,
+            ensure_targets,
+            combine_commands,
+        )
 
-    # Without these, setup.py still runs, but the javascript package will be broken.
-    import ipywidgets
-    import jupyterlab
+        # ipywidgets and jupyterlab are required to package JS code properly. They
+        # are not used in setup.py.
+        import ipywidgets
+        import jupyterlab
+    except ImportError as error:
+        print(error.__class__.__name__ + ": " + error.message)
+        print("Run `pip install jupyter_packaging ipywidgets jupyterlab`.")
 
     here = os.path.dirname(os.path.abspath(__file__))
     js_dir = os.path.join(here, 'js')
