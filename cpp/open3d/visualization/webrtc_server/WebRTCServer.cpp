@@ -118,6 +118,7 @@ void WebRTCServer::SetRedrawCallback(
 }
 
 void WebRTCServer::OnDataChannelMessage(const std::string& message) {
+    utility::LogDebug("WebRTCServer::OnDataChannelMessage: {}", message);
     try {
         Json::Value value = utility::StringToJson(message);
         gui::MouseEvent me;
@@ -126,10 +127,6 @@ void WebRTCServer::OnDataChannelMessage(const std::string& message) {
             me.FromJson(value)) {
             const std::string window_uid =
                     value.get("window_uid", "").asString();
-            utility::LogInfo(
-                    "WebRTCServer::Impl::OnDataChannelMessage: window_uid: {}, "
-                    "MouseEvent: {}",
-                    window_uid, me.ToString());
             if (impl_->mouse_event_callback_) {
                 impl_->mouse_event_callback_(window_uid, me);
             }
@@ -140,7 +137,7 @@ void WebRTCServer::OnDataChannelMessage(const std::string& message) {
             const int height = value.get("height", 0).asInt();
             const int width = value.get("width", 0).asInt();
             if (height <= 0 || width <= 0) {
-                utility::LogInfo(
+                utility::LogWarning(
                         "Invalid heigh {} or width {}, ResizeEvent ignored.",
                         height, width);
             }
@@ -154,7 +151,8 @@ void WebRTCServer::OnDataChannelMessage(const std::string& message) {
         }
     } catch (...) {
         utility::LogInfo(
-                "WebRTCServer::Impl::OnDataChannelMessage: cannot parse {}.",
+                "WebRTCServer::Impl::OnDataChannelMessage: cannot parse {}, "
+                "ignored.",
                 message);
     }
 }

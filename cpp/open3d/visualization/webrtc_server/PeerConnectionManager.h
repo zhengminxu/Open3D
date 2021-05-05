@@ -183,7 +183,8 @@ class PeerConnectionManager {
 
         // DataChannelObserver interface
         virtual void OnStateChange() {
-            utility::LogDebug(
+            // Useful to know when the data channel is established.
+            utility::LogInfo(
                     "DataChannelObserver::OnStateChange channel: {}, state: "
                     "{}.",
                     data_channel_->label(),
