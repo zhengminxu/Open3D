@@ -42,13 +42,13 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
-int LogMessage(const struct mg_connection *conn, const char *message) {
+static int LogMessage(const struct mg_connection *conn, const char *message) {
     fprintf(stderr, "%s\n", message);
     return 0;
 }
 
 static struct CivetCallbacks _callbacks;
-const struct CivetCallbacks *getCivetCallbacks() {
+static const struct CivetCallbacks *getCivetCallbacks() {
     memset(static_cast<void *>(&_callbacks), 0, sizeof(_callbacks));
     _callbacks.log_message = &LogMessage;
     return &_callbacks;
