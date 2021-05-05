@@ -27,30 +27,6 @@
 from __future__ import print_function
 from setuptools import setup, find_packages
 import os
-from os.path import join as pjoin
-from distutils import log
-
-from jupyter_packaging import (
-    create_cmdclass,
-    install_npm,
-    ensure_targets,
-    combine_commands,
-)
-
-here = os.path.dirname(os.path.abspath(__file__))
-
-log.set_verbosity(log.DEBUG)
-log.info('setup.py entered')
-log.info('$PATH=%s' % os.environ['PATH'])
-
-name = 'open3d'
-
-js_dir = pjoin(here, 'js')
-
-# Representative files that should exist after a successful build
-jstargets = [
-    pjoin(js_dir, 'dist', 'index.js'),
-]
 
 data_files_spec = [
     ('share/jupyter/nbextensions/open3d', 'open3d/nbextension', '*.*'),
@@ -59,13 +35,31 @@ data_files_spec = [
     ('etc/jupyter/nbconfig/notebook.d', '.', 'open3d.json'),
 ]
 
-cmdclass = create_cmdclass('jsdeps', data_files_spec=data_files_spec)
-cmdclass['jsdeps'] = combine_commands(
-    install_npm(js_dir, npm=['yarn'], build_cmd='build:prod'),
-    ensure_targets(jstargets),
-)
+if "@BUILD_JUPYTER_EXTENSION@" == "ON":
+    from jupyter_packaging import (
+        create_cmdclass,
+        install_npm,
+        ensure_targets,
+        combine_commands,
+    )
 
-# Force platform specific wheel
+    here = os.path.dirname(os.path.abspath(__file__))
+    js_dir = os.path.join(here, 'js')
+
+    # Representative files that should exist after a successful build.
+    js_targets = [
+        os.path.join(js_dir, 'dist', 'index.js'),
+    ]
+
+    cmdclass = create_cmdclass('jsdeps', data_files_spec=data_files_spec)
+    cmdclass['jsdeps'] = combine_commands(
+        install_npm(js_dir, npm=['yarn'], build_cmd='build:prod'),
+        ensure_targets(js_targets),
+    )
+else:
+    cmdclass = dict()
+
+# Force platform specific wheel.
 # https://stackoverflow.com/a/45150383/1255535
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -81,11 +75,11 @@ except ImportError:
     print("Warning: cannot import `wheel` to build platform-specific wheel. "
           "Run `pip install wheel` to fix this warning.")
 
-# Read requirements.txt
+# Read requirements.
 with open('requirements.txt', 'r') as f:
     install_requires = [line.strip() for line in f.readlines() if line]
 
-# Read requirements for ML
+# Read requirements for ML.
 if '@BUNDLE_OPEN3D_ML@' == 'ON':
     with open('@OPEN3D_ML_ROOT@/requirements.txt', 'r') as f:
         install_requires += [line.strip() for line in f.readlines() if line]
