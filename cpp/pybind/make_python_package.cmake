@@ -78,8 +78,6 @@ if (BUNDLE_OPEN3D_ML)
 endif()
 
 # Build Jupyter plugin.
-# TODO: currently there is no way to disable Jupyter plugin. We need to do so
-# in setup.py.
 if (BUILD_JUPYTER_EXTENSION)
     if(UNIX AND NOT APPLE)
         message(STATUS "Jupyter support is enabled, building Jupyter plugin now.")
