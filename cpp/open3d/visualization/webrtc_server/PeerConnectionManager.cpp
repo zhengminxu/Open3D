@@ -543,7 +543,7 @@ PeerConnectionManager::CreatePeerConnection(const std::string &peerid) {
         config.servers.push_back(server);
     }
 
-    // Use example From
+    // Use example From:
     // https://soru.site/questions/51578447/api-c-webrtcyi-kullanarak-peerconnection-ve-ucretsiz-baglant-noktasn-serbest-nasl
     int min_port = 0;
     int max_port = 65535;
@@ -636,14 +636,14 @@ bool PeerConnectionManager::AddStreams(
     }
 
     if (!existing_stream) {
-        // Create a new stream and add to window_uid_to_track_source_;
+        // Create a new stream and add to window_uid_to_track_source_.
         rtc::scoped_refptr<BitmapTrackSourceInterface> video_source(
                 this->CreateVideoSource(video, opts));
         std::lock_guard<std::mutex> mlock(window_uid_to_track_source_mutex_);
         window_uid_to_track_source_[window_uid] = video_source;
     }
 
-    // AddTrack and AddStream to peer_connection
+    // AddTrack and AddStream to peer_connection.
     {
         std::lock_guard<std::mutex> mlock(window_uid_to_track_source_mutex_);
         auto it = window_uid_to_track_source_.find(window_uid);
