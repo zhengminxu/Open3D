@@ -43,6 +43,10 @@ if "@BUILD_JUPYTER_EXTENSION@" == "ON":
         combine_commands,
     )
 
+    # Without these, setup.py still runs, but the javascript package will be broken.
+    import ipywidgets
+    import jupyterlab
+
     here = os.path.dirname(os.path.abspath(__file__))
     js_dir = os.path.join(here, 'js')
 
