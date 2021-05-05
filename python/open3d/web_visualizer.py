@@ -176,6 +176,7 @@ def draw(geometry=None,
          on_init=None,
          on_animation_frame=None,
          on_animation_tick=None):
+    """Draw in Jupyter Cell"""
 
     window_uid = _async_event_loop.run_sync(
         functools.partial(o3d.visualization.draw,
@@ -199,5 +200,5 @@ def draw(geometry=None,
                           on_animation_frame=on_animation_frame,
                           on_animation_tick=on_animation_tick,
                           non_blocking_and_return_uid=True))
-    visualizer = o3d.WebVisualizer(window_uid=window_uid)
+    visualizer = WebVisualizer(window_uid=window_uid)
     visualizer.show()
