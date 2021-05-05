@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 //
-// This header is private. It shall be hidden from Open3D's public API. Do not
+// This is a private header. It shall be hidden from Open3D's public API. Do not
 // put this in Open3D.h.in.
 
 #pragma once
