@@ -41,7 +41,6 @@
 #include <json/json.h>
 
 #include <functional>
-#include <list>
 #include <map>
 
 namespace open3d {
