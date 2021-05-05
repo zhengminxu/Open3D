@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-// Jupyter widget for Open3D WebRTC visualize. See web_visualizer.py for the
+// Jupyter widget for Open3D WebRTC visualizer. See web_visualizer.py for the
 // kernel counterpart to this file.
 
 let widgets = require("@jupyter-widgets/base");
