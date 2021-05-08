@@ -30,6 +30,7 @@
 #include <string>
 
 #include "open3d/visualization/gui/BitmapWindowSystem.h"
+#include "open3d/visualization/gui/WindowSystem.h"
 
 namespace open3d {
 namespace visualization {
@@ -43,6 +44,13 @@ class WebRTCWindowSystem : public gui::BitmapWindowSystem {
 public:
     static std::shared_ptr<WebRTCWindowSystem> GetInstance();
     virtual ~WebRTCWindowSystem();
+
+    OSWindow CreateOSWindow(gui::Window* o3d_window,
+                            int width,
+                            int height,
+                            const char* title,
+                            int flags) override;
+
     void SetMouseEventCallback(
             std::function<void(const std::string&, const gui::MouseEvent&)> f);
     void SetRedrawCallback(std::function<void(const std::string&)> f);

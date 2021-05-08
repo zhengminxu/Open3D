@@ -92,6 +92,18 @@ WebRTCWindowSystem::WebRTCWindowSystem()
 
 WebRTCWindowSystem::~WebRTCWindowSystem() {}
 
+WebRTCWindowSystem::OSWindow WebRTCWindowSystem::CreateOSWindow(
+        gui::Window *o3d_window,
+        int width,
+        int height,
+        const char *title,
+        int flags) {
+    // No-op if the server is already running.
+    StartWebRTCServer();
+    return BitmapWindowSystem::CreateOSWindow(o3d_window, width, height, title,
+                                              flags);
+}
+
 void WebRTCWindowSystem::SetMouseEventCallback(
         std::function<void(const std::string &, const gui::MouseEvent &)> f) {
     WebRTCServer::GetInstance().SetMouseEventCallback(f);
