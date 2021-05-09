@@ -72,7 +72,10 @@ WebRTCWindowSystem::WebRTCWindowSystem()
     // Server->client send frame.
     auto draw_callback = [this](const gui::Window *window,
                                 std::shared_ptr<core::Tensor> im) -> void {
-        WebRTCServer::GetInstance().OnFrame(window->GetUID(), im);
+        WebRTCServer::GetInstance().OnFrame(
+                WebRTCWindowSystem::GetInstance()->GetWindowUID(
+                        window->GetOSWindow()),
+                im);
     };
     SetOnWindowDraw(draw_callback);
 
@@ -80,19 +83,18 @@ WebRTCWindowSystem::WebRTCWindowSystem()
     // mouse_event_callback will be called.
     auto mouse_event_callback = [this](const std::string &window_uid,
                                        const gui::MouseEvent &me) -> void {
-        this->PostMouseEvent(gui::Application::GetInstance()
-                                     .GetWindowByUID(window_uid)
-                                     ->GetOSWindow(),
-                             me);
+        this->PostMouseEvent(
+                WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(window_uid),
+                me);
     };
     this->SetMouseEventCallback(mouse_event_callback);
 
     // redraw_callback is called when the server wants to send a frame to
     // the client without other triggering events.
     auto redraw_callback = [this](const std::string &window_uid) -> void {
-        this->PostRedrawEvent(gui::Application::GetInstance()
-                                      .GetWindowByUID(window_uid)
-                                      ->GetOSWindow());
+        this->PostRedrawEvent(
+                WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(
+                        window_uid));
     };
     this->SetRedrawCallback(redraw_callback);
 }
@@ -120,6 +122,35 @@ void WebRTCWindowSystem::DestroyWindow(OSWindow w) {
     utility::LogInfo("OS window {} to be destroyed.", window_uid);
     BitmapWindowSystem::DestroyWindow(w);
     impl_->window_to_uid_.erase(w);
+}
+
+std::vector<std::string> WebRTCWindowSystem::GetWindowUIDs() const {
+    std::vector<std::string> uids;
+    for (const auto &it : impl_->window_to_uid_) {
+        uids.push_back(it.second);
+    }
+    return uids;
+}
+
+std::string WebRTCWindowSystem::GetWindowUID(
+        WebRTCWindowSystem::OSWindow w) const {
+    if (impl_->window_to_uid_.count(w) == 0) {
+        return "window_undefined";
+    } else {
+        return impl_->window_to_uid_.at(w);
+    }
+}
+
+WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
+        const std::string &uid) const {
+    // This can be optimized by adding a bi-directional map, but it may not be
+    // worth it since we typically don't have lots of windows.
+    for (const auto &it : impl_->window_to_uid_) {
+        if (it.second == uid) {
+            return it.first;
+        };
+    }
+    return nullptr;
 }
 
 void WebRTCWindowSystem::SetMouseEventCallback(

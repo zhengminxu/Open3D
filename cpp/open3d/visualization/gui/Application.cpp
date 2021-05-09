@@ -417,7 +417,8 @@ void Application::AddWindow(std::shared_ptr<Window> window) {
                         impl_->window_system_)) {
         // A Window can be attached to multiple WebRTC streams. A Window's
         // closure shall disconnect all of its WebRTC streams.
-        const std::string window_uid = window->GetUID();
+        const std::string window_uid =
+                webrtc_window_system->GetWindowUID(window->GetOSWindow());
         auto close_window_callback = [window_uid,
                                       webrtc_window_system]() -> bool {
             webrtc_window_system->CloseWindowConnections(window_uid);
@@ -445,26 +446,6 @@ void Application::RemoveWindow(Window *window) {
     if (impl_->windows_.empty()) {
         impl_->should_quit_ = true;
     }
-}
-
-std::vector<std::string> Application::GetWindowUIDs() const {
-    std::vector<std::string> uids;
-    for (const std::shared_ptr<Window> &window : impl_->windows_) {
-        uids.push_back(window->GetUID());
-    }
-    return uids;
-}
-
-std::shared_ptr<Window> Application::GetWindowByUID(
-        const std::string &uid) const {
-    // This can be optimized by adding a map_uid_to_window, but it may not be
-    // worth it since we typically don't have lots of windows.
-    for (const std::shared_ptr<Window> &window : impl_->windows_) {
-        if (window->GetUID() == uid) {
-            return window;
-        }
-    }
-    return nullptr;
 }
 
 void Application::Quit() {

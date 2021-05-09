@@ -227,7 +227,7 @@ const int Window::FLAG_HIDDEN = (1 << 0);
 const int Window::FLAG_TOPMOST = (1 << 1);
 
 struct Window::Impl {
-    Impl() : uid_(GenerateUID()) {}
+    Impl() {}
     ~Impl() {}
 
     WindowSystem::OSWindow window_ = nullptr;
@@ -268,13 +268,6 @@ struct Window::Impl {
     bool needs_redraw_ = true;  // set by PostRedraw to defer if already drawing
     bool is_resizing_ = false;
     bool is_drawing_ = false;
-    std::string uid_ = "";
-
-private:
-    std::string GenerateUID() {
-        static std::atomic<size_t> count{0};
-        return "window_" + std::to_string(count++);
-    }
 };
 
 Window::Window(const std::string& title, int flags /*= 0*/)
@@ -456,7 +449,10 @@ void Window::DestroyWindow() {
 
 int Window::GetMouseMods() const { return impl_->mouse_mods_; }
 
-std::string Window::GetUID() const { return impl_->uid_; }
+std::string Window::GetUID() const {
+    // Todo: return valid UID on WebRTC.
+    return "window_undefined";
+}
 
 const std::vector<std::shared_ptr<Widget>>& Window::GetChildren() const {
     return impl_->children_;

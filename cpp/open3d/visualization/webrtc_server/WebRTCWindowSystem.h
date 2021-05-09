@@ -28,6 +28,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "open3d/visualization/gui/BitmapWindowSystem.h"
 #include "open3d/visualization/gui/WindowSystem.h"
@@ -51,6 +52,9 @@ public:
                             const char* title,
                             int flags) override;
     void DestroyWindow(OSWindow w) override;
+    std::vector<std::string> GetWindowUIDs() const;
+    std::string GetWindowUID(OSWindow w) const;
+    OSWindow GetOSWindowByUID(const std::string& uid) const;
 
     void SetMouseEventCallback(
             std::function<void(const std::string&, const gui::MouseEvent&)> f);

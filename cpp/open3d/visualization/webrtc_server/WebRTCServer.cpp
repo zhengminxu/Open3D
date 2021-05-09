@@ -144,9 +144,8 @@ void WebRTCServer::OnDataChannelMessage(const std::string& message) {
             utility::LogInfo("ResizeEvent {}: ({}, {})", window_uid, height,
                              width);
             webrtc_server::WebRTCWindowSystem::GetInstance()->SetWindowSize(
-                    gui::Application::GetInstance()
-                            .GetWindowByUID(window_uid)
-                            ->GetOSWindow(),
+                    WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(
+                            window_uid),
                     width, height);
         }
     } catch (...) {
@@ -179,7 +178,7 @@ void WebRTCServer::SendInitFrames(const std::string& window_uid) {
 }
 
 std::vector<std::string> WebRTCServer::GetWindowUIDs() const {
-    return gui::Application::GetInstance().GetWindowUIDs();
+    return WebRTCWindowSystem::GetInstance()->GetWindowUIDs();
 }
 
 WebRTCServer::WebRTCServer() : impl_(new WebRTCServer::Impl()) {
