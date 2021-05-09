@@ -29,6 +29,7 @@
 #include <chrono>
 #include <sstream>
 #include <thread>
+#include <unordered_map>
 
 #include "open3d/core/Tensor.h"
 #include "open3d/io/ImageIO.h"
@@ -45,6 +46,12 @@ namespace webrtc_server {
 struct WebRTCWindowSystem::Impl {
     std::thread webrtc_thread_;
     bool sever_started_ = false;
+    std::unordered_map<WebRTCWindowSystem::OSWindow, std::string>
+            window_to_uid_;
+    std::string GenerateUID() {
+        static std::atomic<size_t> count{0};
+        return "window_" + std::to_string(count++);
+    }
 };
 
 std::shared_ptr<WebRTCWindowSystem> WebRTCWindowSystem::GetInstance() {
@@ -100,8 +107,12 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::CreateOSWindow(
         int flags) {
     // No-op if the server is already running.
     StartWebRTCServer();
-    return BitmapWindowSystem::CreateOSWindow(o3d_window, width, height, title,
-                                              flags);
+    WebRTCWindowSystem::OSWindow os_window = BitmapWindowSystem::CreateOSWindow(
+            o3d_window, width, height, title, flags);
+    std::string window_uid = impl_->GenerateUID();
+    impl_->window_to_uid_.insert({os_window, window_uid});
+    utility::LogInfo("OS window {} created.", window_uid);
+    return os_window;
 }
 
 void WebRTCWindowSystem::DestroyWindow(OSWindow w) {
