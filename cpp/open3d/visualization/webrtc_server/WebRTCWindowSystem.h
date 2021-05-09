@@ -50,6 +50,7 @@ public:
                             int height,
                             const char* title,
                             int flags) override;
+    void DestroyWindow(OSWindow w) override;
 
     void SetMouseEventCallback(
             std::function<void(const std::string&, const gui::MouseEvent&)> f);

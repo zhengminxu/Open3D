@@ -104,6 +104,10 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::CreateOSWindow(
                                               flags);
 }
 
+void WebRTCWindowSystem::DestroyWindow(OSWindow w) {
+    BitmapWindowSystem::DestroyWindow(w);
+}
+
 void WebRTCWindowSystem::SetMouseEventCallback(
         std::function<void(const std::string &, const gui::MouseEvent &)> f) {
     WebRTCServer::GetInstance().SetMouseEventCallback(f);
