@@ -116,7 +116,10 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::CreateOSWindow(
 }
 
 void WebRTCWindowSystem::DestroyWindow(OSWindow w) {
+    std::string window_uid = impl_->window_to_uid_.at(w);
+    utility::LogInfo("OS window {} to be destroyed.", window_uid);
     BitmapWindowSystem::DestroyWindow(w);
+    impl_->window_to_uid_.erase(w);
 }
 
 void WebRTCWindowSystem::SetMouseEventCallback(
