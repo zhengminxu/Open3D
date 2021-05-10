@@ -30,7 +30,7 @@
 #include "open3d/utility/FileSystem.h"
 
 // TODO: edit Open3D.h.in
-#include "open3d/visualization/webrtc_server/WebRTCServer.h"
+#include "open3d/visualization/webrtc_server/WebRTCWindowSystem.h"
 
 using namespace open3d;
 
@@ -135,7 +135,8 @@ int main(int argc, char **argv) {
                 "test_dir: {}",
                 TEST_DIR);
     }
-    visualization::webrtc_server::WebRTCServer::GetInstance().EnableWebRTC();
+    visualization::webrtc_server::WebRTCWindowSystem::GetInstance()
+            ->EnableWebRTC();
 
     // Uncomment this line to see more WebRTC loggings
     // utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
