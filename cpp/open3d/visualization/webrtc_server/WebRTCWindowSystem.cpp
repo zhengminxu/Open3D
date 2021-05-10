@@ -39,9 +39,6 @@
 #include <unordered_map>
 
 #include "open3d/core/Tensor.h"
-#include "open3d/geometry/Image.h"
-#include "open3d/io/ImageIO.h"
-#include "open3d/t/geometry/Image.h"
 #include "open3d/utility/Console.h"
 #include "open3d/utility/Helper.h"
 #include "open3d/utility/IJsonConvertible.h"
@@ -49,11 +46,8 @@
 #include "open3d/visualization/gui/Events.h"
 #include "open3d/visualization/gui/Window.h"
 #include "open3d/visualization/utility/Draw.h"
-#include "open3d/visualization/webrtc_server/BitmapTrackSource.h"
 #include "open3d/visualization/webrtc_server/HttpServerRequestHandler.h"
-#include "open3d/visualization/webrtc_server/ImageCapturer.h"
 #include "open3d/visualization/webrtc_server/PeerConnectionManager.h"
-#include "open3d/visualization/webrtc_server/WebRTCWindowSystem.h"
 
 namespace open3d {
 namespace visualization {
