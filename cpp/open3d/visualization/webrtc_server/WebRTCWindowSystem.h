@@ -45,22 +45,32 @@ class WebRTCWindowSystem : public gui::BitmapWindowSystem {
 public:
     static std::shared_ptr<WebRTCWindowSystem> GetInstance();
     virtual ~WebRTCWindowSystem();
-
     OSWindow CreateOSWindow(gui::Window* o3d_window,
                             int width,
                             int height,
                             const char* title,
                             int flags) override;
     void DestroyWindow(OSWindow w) override;
+
+    /*
+     * Window UID management.
+     */
     std::vector<std::string> GetWindowUIDs() const;
     std::string GetWindowUID(OSWindow w) const;
     OSWindow GetOSWindowByUID(const std::string& uid) const;
 
+    /*
+     * Forwareded WebRTCServer functions.
+     */
     void SetMouseEventCallback(
             std::function<void(const std::string&, const gui::MouseEvent&)> f);
     void SetRedrawCallback(std::function<void(const std::string&)> f);
-    void StartWebRTCServer();
     void CloseWindowConnections(const std::string& window_uid);
+
+    /*
+     * Extra.
+     */
+    void StartWebRTCServer();
 
 private:
     WebRTCWindowSystem();
