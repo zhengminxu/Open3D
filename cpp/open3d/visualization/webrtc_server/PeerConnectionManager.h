@@ -174,9 +174,8 @@ class PeerConnectionManager {
     class DataChannelObserver : public webrtc::DataChannelObserver {
     public:
         DataChannelObserver(
-                WebRTCWindowSystem* webrtc_ws,
                 rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel)
-            : webrtc_ws_(webrtc_ws), data_channel_(data_channel) {
+            : data_channel_(data_channel) {
             data_channel_->RegisterObserver(this);
         }
         virtual ~DataChannelObserver() { data_channel_->UnregisterObserver(); }
@@ -201,24 +200,21 @@ class PeerConnectionManager {
                             buffer.data.size());
             utility::LogDebug("DataChannelObserver::OnMessage: {}, msg: {}.",
                               data_channel_->label(), msg);
-            webrtc_ws_->OnDataChannelMessage(msg);
+            WebRTCWindowSystem::GetInstance()->OnDataChannelMessage(msg);
         }
 
     protected:
-        WebRTCWindowSystem* webrtc_ws_;
         rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel_;
     };
 
     class PeerConnectionObserver : public webrtc::PeerConnectionObserver {
     public:
         PeerConnectionObserver(
-                WebRTCWindowSystem* webrtc_ws,
                 PeerConnectionManager* peer_connection_manager_,
                 const std::string& peerid,
                 const webrtc::PeerConnectionInterface::RTCConfiguration& config,
                 std::unique_ptr<cricket::PortAllocator> port_allocator)
-            : webrtc_ws_(webrtc_ws),
-              peer_connection_manager_(peer_connection_manager_),
+            : peer_connection_manager_(peer_connection_manager_),
               peerid_(peerid),
               local_channel_(nullptr),
               remote_channel_(nullptr),
@@ -232,7 +228,7 @@ class PeerConnectionManager {
             if (pc_.get()) {
                 rtc::scoped_refptr<webrtc::DataChannelInterface> channel =
                         pc_->CreateDataChannel("ServerDataChannel", nullptr);
-                local_channel_ = new DataChannelObserver(webrtc_ws_, channel);
+                local_channel_ = new DataChannelObserver(channel);
             }
 
             stats_callback_ = new rtc::RefCountedObject<
@@ -284,7 +280,7 @@ class PeerConnectionManager {
         virtual void OnDataChannel(
                 rtc::scoped_refptr<webrtc::DataChannelInterface> channel) {
             utility::LogDebug("peerid: {}", peerid_);
-            remote_channel_ = new DataChannelObserver(webrtc_ws_, channel);
+            remote_channel_ = new DataChannelObserver(channel);
         }
         virtual void OnRenegotiationNeeded() {
             utility::LogDebug("peerid: {}", peerid_);
@@ -315,7 +311,6 @@ class PeerConnectionManager {
                 webrtc::PeerConnectionInterface::IceGatheringState) {}
 
     private:
-        WebRTCWindowSystem* webrtc_ws_ = nullptr;
         PeerConnectionManager* peer_connection_manager_;
         const std::string peerid_;
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> pc_;
@@ -329,8 +324,7 @@ class PeerConnectionManager {
     };
 
 public:
-    PeerConnectionManager(WebRTCWindowSystem* webrtc_ws,
-                          const std::list<std::string>& ice_server_list,
+    PeerConnectionManager(const std::list<std::string>& ice_server_list,
                           const Json::Value& config,
                           const std::string& publish_filter,
                           const std::string& webrtc_udp_port_range);
@@ -371,7 +365,6 @@ protected:
             const std::string& peerid);
 
 protected:
-    WebRTCWindowSystem* webrtc_ws_ = nullptr;
     std::unique_ptr<webrtc::TaskQueueFactory> task_queue_factory_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
             peer_connection_factory_;
