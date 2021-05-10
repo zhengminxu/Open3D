@@ -31,7 +31,6 @@
 #include <vector>
 
 #include "open3d/visualization/gui/BitmapWindowSystem.h"
-#include "open3d/visualization/gui/WindowSystem.h"
 
 namespace open3d {
 namespace visualization {

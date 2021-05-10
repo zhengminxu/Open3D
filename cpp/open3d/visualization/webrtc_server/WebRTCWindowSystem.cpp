@@ -33,7 +33,6 @@
 #include <rtc_base/thread.h>
 
 #include <chrono>
-#include <fstream>
 #include <sstream>
 #include <thread>
 #include <unordered_map>
@@ -45,7 +44,6 @@
 #include "open3d/visualization/gui/Application.h"
 #include "open3d/visualization/gui/Events.h"
 #include "open3d/visualization/gui/Window.h"
-#include "open3d/visualization/utility/Draw.h"
 #include "open3d/visualization/webrtc_server/HttpServerRequestHandler.h"
 #include "open3d/visualization/webrtc_server/PeerConnectionManager.h"
 
