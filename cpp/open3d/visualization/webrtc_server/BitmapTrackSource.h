@@ -62,29 +62,22 @@ public:
     virtual void OnFrame(const std::shared_ptr<core::Tensor>& frame) = 0;
 };
 
-// BitmapTrackSource is a convenience base class for implementations of
-// VideoTrackSourceInterface.
 class BitmapTrackSource : public webrtc::Notifier<BitmapTrackSourceInterface> {
 public:
     explicit BitmapTrackSource(bool remote);
     void SetState(webrtc::MediaSourceInterface::SourceState new_state);
-
     webrtc::MediaSourceInterface::SourceState state() const override {
         return state_;
     }
     bool remote() const override { return remote_; }
-
     bool is_screencast() const override { return false; }
     absl::optional<bool> needs_denoising() const override {
         return absl::nullopt;
     }
-
     bool GetStats(Stats* stats) override { return false; }
-
     void AddOrUpdateSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
                          const rtc::VideoSinkWants& wants) override;
     void RemoveSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink) override;
-
     bool SupportsEncodedOutput() const override { return false; }
     void GenerateKeyFrame() override {}
     void AddEncodedSink(rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>*
