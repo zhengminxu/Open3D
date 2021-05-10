@@ -142,20 +142,19 @@ WebRTCWindowSystem::WebRTCWindowSystem()
                                        const gui::MouseEvent &me) -> void {
         PostMouseEvent(GetOSWindowByUID(window_uid), me);
     };
-    this->SetMouseEventCallback(mouse_event_callback);
+    SetMouseEventCallback(mouse_event_callback);
 
     // redraw_callback is called when the server wants to send a frame to
     // the client without other triggering events.
     auto redraw_callback = [this](const std::string &window_uid) -> void {
-        this->PostRedrawEvent(
-                WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(
-                        window_uid));
+        PostRedrawEvent(WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(
+                window_uid));
     };
-    this->SetRedrawCallback(redraw_callback);
+    SetRedrawCallback(redraw_callback);
 }
 
 WebRTCWindowSystem::~WebRTCWindowSystem() {
-    this->impl_->peer_connection_manager_ = nullptr;
+    impl_->peer_connection_manager_ = nullptr;
     rtc::Thread::Current()->Quit();
 }
 
@@ -352,7 +351,7 @@ void WebRTCWindowSystem::SendInitFrames(const std::string &window_uid) {
         static const int s_max_initial_frames = 5;
         static const int s_sleep_between_frames_ms = 100;
         for (int i = 0; i < s_max_initial_frames; ++i) {
-            this->impl_->redraw_callback_(window_uid);
+            impl_->redraw_callback_(window_uid);
             std::this_thread::sleep_for(
                     std::chrono::milliseconds(s_sleep_between_frames_ms));
             utility::LogDebug("Sent init frames #{} to {}.", i, window_uid);
