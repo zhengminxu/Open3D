@@ -50,7 +50,7 @@ class WebVisualizer(ipywidgets.DOMWidget):
         IPython.display.display(self)
 
     def _call_http_api(self, entry_point, query_string, data):
-        webrtc_server = o3d.visualization.webrtc_server.WebRTCServer.instance
+        webrtc_server = o3d.visualization.webrtc_server.WebRTCWindowSystem.instance
         result = webrtc_server.call_http_api(entry_point, query_string, data)
         # print(
         #     f"call_http_api({entry_point}, {query_string}, {query_string})"

@@ -91,7 +91,7 @@ if _build_config["BUILD_JUPYTER_EXTENSION"]:
             if shell == 'ZMQInteractiveShell':
                 print("Jupyter environment detected."
                       "Enabling Open3D WebVisualizer.")
-                _server = open3d.visualization.webrtc_server.WebRTCServer.instance
+                _server = open3d.visualization.webrtc_server.WebRTCWindowSystem.instance
                 # Set default window system.
                 _server.enable_webrtc()
                 # HTTP handshake server is needed when Open3D is serving the
