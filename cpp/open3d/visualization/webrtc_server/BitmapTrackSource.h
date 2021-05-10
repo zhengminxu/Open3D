@@ -102,11 +102,9 @@ public:
             rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink)
             override {}
 
-    // By default it does nothing (e.g. for VideoFilter).
-    // ImageTrackSource overrides this and this will be called by the
-    // BitmapWindowSystem when there's a new frame.
     virtual void OnFrame(const std::shared_ptr<core::Tensor>& frame) override {
-        utility::LogInfo("BitmapTrackSource::OnFrame called");
+        // Shall be implemented by child class.
+        utility::LogError("BitmapTrackSource::OnFrame called");
     }
 
 protected:
