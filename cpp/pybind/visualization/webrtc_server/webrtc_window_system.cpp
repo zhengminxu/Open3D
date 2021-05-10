@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "pybind/visualization/webrtc_server/webrtc_server.h"
+#include "pybind/visualization/webrtc_server/webrtc_window_system.h"
 
 #include "open3d/visualization/webrtc_server/WebRTCServer.h"
 
