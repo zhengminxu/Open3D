@@ -105,6 +105,8 @@ struct WebRTCServer::Impl {
             return resource_path + "/html";
         }
     }
+    std::thread webrtc_thread_;
+    bool sever_started_ = false;
 };
 
 void WebRTCServer::SetMouseEventCallback(
@@ -200,71 +202,83 @@ WebRTCServer& WebRTCServer::GetInstance() {
 }
 
 void WebRTCServer::StartWebRTCServer() {
-    // Ensure Application::Initialize() is called before this.
-    impl_->web_root_ = Impl::GetEnvWebRTCWebRoot();
+    if (!impl_->sever_started_) {
+        auto start_webrtc_thread = [this]() {
+            // Ensure Application::Initialize() is called before this.
+            impl_->web_root_ = Impl::GetEnvWebRTCWebRoot();
 
-    // Logging settings.
-    // src/rtc_base/logging.h: LS_VERBOSE, LS_ERROR
-    rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_ERROR);
+            // Logging settings.
+            // src/rtc_base/logging.h: LS_VERBOSE, LS_ERROR
+            rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_ERROR);
 
-    rtc::LogMessage::LogTimestamps();
-    rtc::LogMessage::LogThreads();
+            rtc::LogMessage::LogTimestamps();
+            rtc::LogMessage::LogThreads();
 
-    // PeerConnectionManager manages all WebRTC connections.
-    rtc::Thread* thread = rtc::Thread::Current();
-    rtc::InitializeSSL();
-    std::list<std::string> ice_servers{"stun:stun.l.google.com:19302"};
-    Json::Value config;
-    impl_->peer_connection_manager_ = std::make_unique<PeerConnectionManager>(
-            this, ice_servers, config["urls"], ".*", "");
-    if (!impl_->peer_connection_manager_->InitializePeerConnection()) {
-        utility::LogError("InitializePeerConnection() failed.");
+            // PeerConnectionManager manages all WebRTC connections.
+            rtc::Thread* thread = rtc::Thread::Current();
+            rtc::InitializeSSL();
+            std::list<std::string> ice_servers{"stun:stun.l.google.com:19302"};
+            Json::Value config;
+            impl_->peer_connection_manager_ =
+                    std::make_unique<PeerConnectionManager>(
+                            this, ice_servers, config["urls"], ".*", "");
+            if (!impl_->peer_connection_manager_->InitializePeerConnection()) {
+                utility::LogError("InitializePeerConnection() failed.");
+            }
+
+            // CivetWeb server is used for WebRTC handshake. This is enabled
+            // when running as a standalone application, and is disabled when
+            // running in Jupyter.
+            if (impl_->http_handshake_enabled_) {
+                utility::LogInfo("WebRTC HTTP server handshake mode enabled.");
+                std::vector<std::string> options;
+                options.push_back("document_root");
+                options.push_back(impl_->web_root_);
+                options.push_back("enable_directory_listing");
+                options.push_back("no");
+                options.push_back("additional_header");
+                options.push_back("X-Frame-Options: SAMEORIGIN");
+                options.push_back("access_control_allow_origin");
+                options.push_back("*");
+                options.push_back("listening_ports");
+                options.push_back(impl_->http_address_);
+                options.push_back("enable_keep_alive");
+                options.push_back("yes");
+                options.push_back("keep_alive_timeout_ms");
+                options.push_back("1000");
+                options.push_back("decode_url");
+                options.push_back("no");
+                try {
+                    // PeerConnectionManager provides callbacks for the Civet
+                    // server.
+                    std::map<std::string,
+                             HttpServerRequestHandler::HttpFunction>
+                            func = impl_->peer_connection_manager_
+                                           ->GetHttpApi();
+
+                    // Main loop for Civet server.
+                    utility::LogInfo("Open3D WebVisualizer is serving at {}.",
+                                     impl_->http_address_);
+                    utility::LogInfo(
+                            "Set WEBRTC_IP and WEBRTC_PORT environment "
+                            "variable to "
+                            "customize server address.",
+                            impl_->http_address_);
+                    HttpServerRequestHandler civet_server(func, options);
+                    thread->Run();
+                } catch (const CivetException& ex) {
+                    utility::LogError("Cannot start Civet server: {}",
+                                      ex.what());
+                }
+            } else {
+                utility::LogInfo("WebRTC Jupyter handshake mode enabled.");
+                thread->Run();
+            }
+            rtc::CleanupSSL();
+        };
+        impl_->webrtc_thread_ = std::thread(start_webrtc_thread);
+        impl_->sever_started_ = true;
     }
-
-    // CivetWeb server is used for WebRTC handshake. This is enabled when
-    // running as a standalone application, and is disabled when running in
-    // Jupyter.
-    if (impl_->http_handshake_enabled_) {
-        utility::LogInfo("WebRTC HTTP server handshake mode enabled.");
-        std::vector<std::string> options;
-        options.push_back("document_root");
-        options.push_back(impl_->web_root_);
-        options.push_back("enable_directory_listing");
-        options.push_back("no");
-        options.push_back("additional_header");
-        options.push_back("X-Frame-Options: SAMEORIGIN");
-        options.push_back("access_control_allow_origin");
-        options.push_back("*");
-        options.push_back("listening_ports");
-        options.push_back(impl_->http_address_);
-        options.push_back("enable_keep_alive");
-        options.push_back("yes");
-        options.push_back("keep_alive_timeout_ms");
-        options.push_back("1000");
-        options.push_back("decode_url");
-        options.push_back("no");
-        try {
-            // PeerConnectionManager provides callbacks for the Civet server.
-            std::map<std::string, HttpServerRequestHandler::HttpFunction> func =
-                    impl_->peer_connection_manager_->GetHttpApi();
-
-            // Main loop for Civet server.
-            utility::LogInfo("Open3D WebVisualizer is serving at {}.",
-                             impl_->http_address_);
-            utility::LogInfo(
-                    "Set WEBRTC_IP and WEBRTC_PORT environment variable to "
-                    "customize server address.",
-                    impl_->http_address_);
-            HttpServerRequestHandler civet_server(func, options);
-            thread->Run();
-        } catch (const CivetException& ex) {
-            utility::LogError("Cannot start Civet server: {}", ex.what());
-        }
-    } else {
-        utility::LogInfo("WebRTC Jupyter handshake mode enabled.");
-        thread->Run();
-    }
-    rtc::CleanupSSL();
 }
 
 std::string WebRTCServer::CallHttpAPI(const std::string& entry_point,

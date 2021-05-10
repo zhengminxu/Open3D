@@ -44,8 +44,6 @@ namespace visualization {
 namespace webrtc_server {
 
 struct WebRTCWindowSystem::Impl {
-    std::thread webrtc_thread_;
-    bool sever_started_ = false;
     std::unordered_map<WebRTCWindowSystem::OSWindow, std::string>
             os_window_to_uid_;
     std::string GenerateUID() {
@@ -165,13 +163,7 @@ void WebRTCWindowSystem::SetRedrawCallback(
 }
 
 void WebRTCWindowSystem::StartWebRTCServer() {
-    if (!impl_->sever_started_) {
-        auto start_webrtc_thread = [this]() {
-            WebRTCServer::GetInstance().StartWebRTCServer();
-        };
-        impl_->webrtc_thread_ = std::thread(start_webrtc_thread);
-        impl_->sever_started_ = true;
-    }
+    WebRTCServer::GetInstance().StartWebRTCServer();
 }
 
 void WebRTCWindowSystem::CloseWindowConnections(const std::string &window_uid) {
