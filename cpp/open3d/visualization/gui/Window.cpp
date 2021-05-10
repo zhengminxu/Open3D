@@ -449,7 +449,7 @@ void Window::DestroyWindow() {
 
 int Window::GetMouseMods() const { return impl_->mouse_mods_; }
 
-std::string Window::GetUID() const {
+std::string Window::GetWebRTCUID() const {
     // Todo: return valid UID on WebRTC.
     return "window_undefined";
 }

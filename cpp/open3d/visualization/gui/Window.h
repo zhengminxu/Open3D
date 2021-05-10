@@ -171,9 +171,10 @@ public:
 
     int GetMouseMods() const;  // internal, for WindowSystem
 
-    /// Returns the WebRTC unique identifier of the window. Returns
-    /// "window_undefined" if the window system is not WebRTCWindowSystem.
-    std::string GetUID() const;
+    /// Returns the window's unique identifier when WebRTCWindowSystem is in
+    /// use. Returns "window_undefined" if the window system is not
+    /// WebRTCWindowSystem.
+    std::string GetWebRTCUID() const;
 
 protected:
     /// Returns the preferred size of the window. The window is not
