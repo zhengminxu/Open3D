@@ -51,6 +51,30 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
+static std::string GetEnvWebRTCIP() {
+    if (const char *env_p = std::getenv("WEBRTC_IP")) {
+        return std::string(env_p);
+    } else {
+        return "localhost";
+    }
+}
+static std::string GetEnvWebRTCPort() {
+    if (const char *env_p = std::getenv("WEBRTC_PORT")) {
+        return std::string(env_p);
+    } else {
+        return "8888";
+    }
+}
+static std::string GetEnvWebRTCWebRoot() {
+    if (const char *env_p = std::getenv("WEBRTC_WEB_ROOT")) {
+        return std::string(env_p);
+    } else {
+        std::string resource_path(
+                gui::Application::GetInstance().GetResourcePath());
+        return resource_path + "/html";
+    }
+}
+
 struct WebRTCWindowSystem::Impl {
     std::unordered_map<WebRTCWindowSystem::OSWindow, std::string>
             os_window_to_uid_;
@@ -59,7 +83,6 @@ struct WebRTCWindowSystem::Impl {
         return "window_" + std::to_string(count++);
     }
 
-    /////////////////////// Migrated ///////////////////////////
     // HTTP handshake server settings.
     bool http_handshake_enabled_ = true;
     std::string http_address_;  // Used when http_handshake_enabled_ == true.
@@ -80,30 +103,6 @@ struct WebRTCWindowSystem::Impl {
     // call entry points.
     std::unique_ptr<PeerConnectionManager> peer_connection_manager_ = nullptr;
 
-    // Utilities.
-    static std::string GetEnvWebRTCIP() {
-        if (const char *env_p = std::getenv("WEBRTC_IP")) {
-            return std::string(env_p);
-        } else {
-            return "localhost";
-        }
-    }
-    static std::string GetEnvWebRTCPort() {
-        if (const char *env_p = std::getenv("WEBRTC_PORT")) {
-            return std::string(env_p);
-        } else {
-            return "8888";
-        }
-    }
-    static std::string GetEnvWebRTCWebRoot() {
-        if (const char *env_p = std::getenv("WEBRTC_WEB_ROOT")) {
-            return std::string(env_p);
-        } else {
-            std::string resource_path(
-                    gui::Application::GetInstance().GetResourcePath());
-            return resource_path + "/html";
-        }
-    }
     std::thread webrtc_thread_;
     bool sever_started_ = false;
 };
@@ -126,8 +125,7 @@ WebRTCWindowSystem::WebRTCWindowSystem()
     // impl_->web_root_ is filled at StartWebRTCServer. It relies on
     // GetResourcePath(), which happens after Application::Initialize().
     impl_->http_handshake_enabled_ = true;
-    impl_->http_address_ =
-            Impl::GetEnvWebRTCIP() + ":" + Impl::GetEnvWebRTCPort();
+    impl_->http_address_ = GetEnvWebRTCIP() + ":" + GetEnvWebRTCPort();
 
     // Server->client send frame.
     auto draw_callback = [this](const gui::Window *window,
@@ -214,7 +212,7 @@ void WebRTCWindowSystem::StartWebRTCServer() {
     if (!impl_->sever_started_) {
         auto start_webrtc_thread = [this]() {
             // Ensure Application::Initialize() is called before this.
-            impl_->web_root_ = Impl::GetEnvWebRTCWebRoot();
+            impl_->web_root_ = GetEnvWebRTCWebRoot();
 
             // Logging settings.
             // src/rtc_base/logging.h: LS_VERBOSE, LS_ERROR
