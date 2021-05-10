@@ -199,7 +199,7 @@ WebRTCServer& WebRTCServer::GetInstance() {
     return webrtc_server;
 }
 
-void WebRTCServer::Run() {
+void WebRTCServer::StartWebRTCServer() {
     // Ensure Application::Initialize() is called before this.
     impl_->web_root_ = Impl::GetEnvWebRTCWebRoot();
 

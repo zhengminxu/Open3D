@@ -51,7 +51,7 @@ class WebRTCServer {
 public:
     static WebRTCServer& GetInstance();
 
-    void Run();
+    void StartWebRTCServer();
 
     /// Client -> server message.
     void OnDataChannelMessage(const std::string& message);
