@@ -221,7 +221,8 @@ void WebRTCServer::StartWebRTCServer() {
             Json::Value config;
             impl_->peer_connection_manager_ =
                     std::make_unique<PeerConnectionManager>(
-                            this, ice_servers, config["urls"], ".*", "");
+                            WebRTCWindowSystem::GetInstance().get(),
+                            ice_servers, config["urls"], ".*", "");
             if (!impl_->peer_connection_manager_->InitializePeerConnection()) {
                 utility::LogError("InitializePeerConnection() failed.");
             }

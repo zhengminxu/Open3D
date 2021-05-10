@@ -143,12 +143,12 @@ CreatePeerConnectionFactoryDependencies() {
 }
 
 PeerConnectionManager::PeerConnectionManager(
-        WebRTCServer *webrtc_server,
+        WebRTCWindowSystem *webrtc_ws,
         const std::list<std::string> &ice_server_list,
         const Json::Value &config,
         const std::string &publish_filter,
         const std::string &webrtc_udp_port_range)
-    : webrtc_server_(webrtc_server),
+    : webrtc_ws_(webrtc_ws),
       task_queue_factory_(webrtc::CreateDefaultTaskQueueFactory()),
       peer_connection_factory_(webrtc::CreateModularPeerConnectionFactory(
               CreatePeerConnectionFactoryDependencies())),
@@ -224,7 +224,7 @@ PeerConnectionManager::~PeerConnectionManager() {}
 const Json::Value PeerConnectionManager::GetMediaList() {
     Json::Value value(Json::arrayValue);
 
-    for (const std::string &window_uid : webrtc_server_->GetWindowUIDs()) {
+    for (const std::string &window_uid : webrtc_ws_->GetWindowUIDs()) {
         Json::Value media;
         media["video"] = window_uid;
         value.append(media);
@@ -419,7 +419,7 @@ const Json::Value PeerConnectionManager::Call(const std::string &peerid,
             // SendInitFrames after the video stream is fully established. Send
             //
             // window_uid is window_uid.
-            webrtc_server_->SendInitFrames(window_uid);
+            webrtc_ws_->SendInitFrames(window_uid);
         }
     }
     return answer;
@@ -561,9 +561,8 @@ PeerConnectionManager::CreatePeerConnection(const std::string &peerid) {
     utility::LogDebug("CreatePeerConnection webrtcPortRange: {}:{}.", min_port,
                       max_port);
     utility::LogDebug("CreatePeerConnection peerid: {}.", peerid);
-    PeerConnectionObserver *obs =
-            new PeerConnectionObserver(this->webrtc_server_, this, peerid,
-                                       config, std::move(port_allocator));
+    PeerConnectionObserver *obs = new PeerConnectionObserver(
+            this->webrtc_ws_, this, peerid, config, std::move(port_allocator));
     if (!obs) {
         utility::LogError("CreatePeerConnection failed.");
     }
