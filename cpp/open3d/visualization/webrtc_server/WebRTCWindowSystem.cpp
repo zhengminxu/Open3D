@@ -147,8 +147,7 @@ WebRTCWindowSystem::WebRTCWindowSystem()
     // redraw_callback is called when the server wants to send a frame to
     // the client without other triggering events.
     auto redraw_callback = [this](const std::string &window_uid) -> void {
-        PostRedrawEvent(WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(
-                window_uid));
+        PostRedrawEvent(GetOSWindowByUID(window_uid));
     };
     SetRedrawCallback(redraw_callback);
 }
@@ -317,10 +316,7 @@ void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
             }
             utility::LogInfo("ResizeEvent {}: ({}, {})", window_uid, height,
                              width);
-            webrtc_server::WebRTCWindowSystem::GetInstance()->SetWindowSize(
-                    WebRTCWindowSystem::GetInstance()->GetOSWindowByUID(
-                            window_uid),
-                    width, height);
+            SetWindowSize(GetOSWindowByUID(window_uid), width, height);
         }
     } catch (...) {
         utility::LogInfo(
@@ -429,8 +425,7 @@ std::string WebRTCWindowSystem::CallHttpAPI(const std::string &entry_point,
 
 void WebRTCWindowSystem::EnableWebRTC() {
     utility::LogInfo("WebRTC GUI backend enabled.");
-    gui::Application::GetInstance().SetWindowSystem(
-            webrtc_server::WebRTCWindowSystem::GetInstance());
+    gui::Application::GetInstance().SetWindowSystem(GetInstance());
 }
 
 void WebRTCWindowSystem::DisableHttpHandshake() {
