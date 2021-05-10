@@ -51,6 +51,7 @@ class WebRTCServer {
 public:
     static WebRTCServer& GetInstance();
 
+    /// TODO (yixing): rename me.
     void StartWebRTCServer();
 
     /// Client -> server message.

@@ -66,10 +66,6 @@ public:
             std::function<void(const std::string&, const gui::MouseEvent&)> f);
     void SetRedrawCallback(std::function<void(const std::string&)> f);
     void CloseWindowConnections(const std::string& window_uid);
-
-    /*
-     * Extra.
-     */
     void StartWebRTCServer();
 
 private:
