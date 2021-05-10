@@ -35,10 +35,6 @@
 
 namespace open3d {
 
-namespace geometry {
-class Image;
-}
-
 namespace core {
 class Tensor;
 }
