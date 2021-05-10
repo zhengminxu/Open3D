@@ -58,16 +58,6 @@ public:
     /// Client -> server message.
     void OnDataChannelMessage(const std::string& message);
 
-    /// Set MouseEvent callback function. If a client -> server message is of
-    /// MouseEvent type, the callback function will be triggered. The client
-    /// message shall also contain the corresponding window_uid.
-    void SetMouseEventCallback(
-            std::function<void(const std::string&, const gui::MouseEvent&)> f);
-
-    /// Set redraw callback function. Server can force a redraw. Then redraw
-    /// then triggers OnFrame(), where a server -> client frame will be sent.
-    void SetRedrawCallback(std::function<void(const std::string&)> f);
-
     /// Server -> client frame.
     void OnFrame(const std::string& window_uid,
                  const std::shared_ptr<core::Tensor>& im);

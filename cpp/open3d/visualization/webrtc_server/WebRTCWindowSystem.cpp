@@ -88,17 +88,6 @@ struct WebRTCWindowSystem::Impl {
     std::string http_address_;  // Used when http_handshake_enabled_ == true.
     std::string web_root_;      // Used when http_handshake_enabled_ == true.
 
-    // Callback functions.
-    std::function<void(int, double, double, int)> mouse_button_callback_ =
-            nullptr;
-    std::function<void(int, double, double, int)> mouse_move_callback_ =
-            nullptr;
-    std::function<void(double, double, int, double, double)>
-            mouse_wheel_callback_ = nullptr;
-    std::function<void(const std::string &, const gui::MouseEvent &)>
-            mouse_event_callback_ = nullptr;
-    std::function<void(const std::string &)> redraw_callback_ = nullptr;
-
     // PeerConnectionManager is used for setting up connections and managing API
     // call entry points.
     std::unique_ptr<PeerConnectionManager> peer_connection_manager_ = nullptr;
@@ -133,21 +122,6 @@ WebRTCWindowSystem::WebRTCWindowSystem()
         OnFrame(GetWindowUID(window->GetOSWindow()), im);
     };
     SetOnWindowDraw(draw_callback);
-
-    // Client -> server message can trigger a mouse event and
-    // mouse_event_callback will be called.
-    auto mouse_event_callback = [this](const std::string &window_uid,
-                                       const gui::MouseEvent &me) -> void {
-        PostMouseEvent(GetOSWindowByUID(window_uid), me);
-    };
-    SetMouseEventCallback(mouse_event_callback);
-
-    // redraw_callback is called when the server wants to send a frame to
-    // the client without other triggering events.
-    auto redraw_callback = [this](const std::string &window_uid) -> void {
-        PostRedrawEvent(GetOSWindowByUID(window_uid));
-    };
-    SetRedrawCallback(redraw_callback);
 }
 
 WebRTCWindowSystem::~WebRTCWindowSystem() {
@@ -298,9 +272,7 @@ void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
             me.FromJson(value)) {
             const std::string window_uid =
                     value.get("window_uid", "").asString();
-            if (impl_->mouse_event_callback_) {
-                impl_->mouse_event_callback_(window_uid, me);
-            }
+            PostMouseEvent(GetOSWindowByUID(window_uid), me);
         } else if (value.get("class_name", "").asString() == "ResizeEvent" &&
                    value.get("window_uid", "").asString() != "") {
             const std::string window_uid =
@@ -324,16 +296,6 @@ void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
     }
 }
 
-void WebRTCWindowSystem::SetMouseEventCallback(
-        std::function<void(const std::string &, const gui::MouseEvent &)> f) {
-    impl_->mouse_event_callback_ = f;
-}
-
-void WebRTCWindowSystem::SetRedrawCallback(
-        std::function<void(const std::string &)> f) {
-    impl_->redraw_callback_ = f;
-}
-
 void WebRTCWindowSystem::OnFrame(const std::string &window_uid,
                                  const std::shared_ptr<core::Tensor> &im) {
     impl_->peer_connection_manager_->OnFrame(window_uid, im);
@@ -345,7 +307,7 @@ void WebRTCWindowSystem::SendInitFrames(const std::string &window_uid) {
         static const int s_max_initial_frames = 5;
         static const int s_sleep_between_frames_ms = 100;
         for (int i = 0; i < s_max_initial_frames; ++i) {
-            impl_->redraw_callback_(window_uid);
+            PostRedrawEvent(GetOSWindowByUID(window_uid));
             std::this_thread::sleep_for(
                     std::chrono::milliseconds(s_sleep_between_frames_ms));
             utility::LogDebug("Sent init frames #{} to {}.", i, window_uid);
