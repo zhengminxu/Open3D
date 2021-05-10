@@ -57,6 +57,22 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
+/// [Related classes]
+/// - VideoTrackSourceInterface: WebRTC expects a custom implementation
+///   of this class.
+/// - BitmapTrackSourceInterface: Used as the primary interface in
+///   PeerConnectionManager. It is almost the same as VideoTrackSourceInterface
+///   with an additional OnFrame function for triggering frame handlers.
+/// - BitmapTrackSource: Abstract class for bit map tracks.
+/// - ImageTrackSource: Captures frames from Open3D visualizer.
+/// - VideoFilter: Video frame processing, e.g. scaling.
+///
+/// [Class hierarchy]
+/// BitmapTrackSourceInterface --inherits--> webrtc::VideoTrackSourceInterface
+/// BitmapTrackSource --inherits--> webrtc::Notifier<BitmapTrackSourceInterface>
+/// ImageTrackSource  --inherits--> BitmapTrackSource
+/// ImageCapturer     --owned by--> ImageTrackSource
+/// VideoFilter       --inherits--> BitmapTrackSource
 class BitmapTrackSourceInterface : public webrtc::VideoTrackSourceInterface {
 public:
     virtual void OnFrame(const std::shared_ptr<core::Tensor>& frame) = 0;
