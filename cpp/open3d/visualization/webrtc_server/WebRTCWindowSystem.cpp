@@ -131,8 +131,8 @@ WebRTCWindowSystem::WebRTCWindowSystem()
               ),
       impl_(new WebRTCWindowSystem::Impl()) {
 
-    // impl_->web_root_ is filled at WebRTCServer::Run(), since it relies on
-    // the GetResourcePath(), which happens after Application::Initialize().
+    // impl_->web_root_ is filled at StartWebRTCServer. It relies on
+    // GetResourcePath(), which happens after Application::Initialize().
     impl_->http_handshake_enabled_ = true;
     impl_->http_address_ =
             Impl::GetEnvWebRTCIP() + ":" + Impl::GetEnvWebRTCPort();
@@ -301,7 +301,7 @@ void WebRTCWindowSystem::StartWebRTCServer() {
 }
 
 void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
-    utility::LogDebug("WebRTCServer::OnDataChannelMessage: {}", message);
+    utility::LogDebug("WebRTCWindowSystem::OnDataChannelMessage: {}", message);
     try {
         Json::Value value = utility::StringToJson(message);
         gui::MouseEvent me;
@@ -333,7 +333,7 @@ void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
         }
     } catch (...) {
         utility::LogInfo(
-                "WebRTCServer::Impl::OnDataChannelMessage: cannot parse {}, "
+                "WebRTCWindowSystem::OnDataChannelMessage: cannot parse {}, "
                 "ignored.",
                 message);
     }
@@ -443,16 +443,12 @@ void WebRTCWindowSystem::EnableWebRTC() {
 }
 
 void WebRTCWindowSystem::DisableHttpHandshake() {
-    utility::LogInfo("WebRTCServer: HTTP handshake server disabled.");
+    utility::LogInfo("WebRTCWindowSystem: HTTP handshake server disabled.");
     impl_->http_handshake_enabled_ = false;
 }
 
 void WebRTCWindowSystem::CloseWindowConnections(const std::string &window_uid) {
-    utility::LogInfo("Calling WebRTCServer::CloseWindowConnections: {}",
-                     window_uid);
     impl_->peer_connection_manager_->CloseWindowConnections(window_uid);
-    utility::LogInfo("Done WebRTCServer::CloseWindowConnections: {}",
-                     window_uid);
 }
 
 }  // namespace webrtc_server

@@ -37,10 +37,6 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
-class WebRTCServer;
-
-// TODO (Yixing): Merged this class with WebRTCServer. The are all global
-// singletons. Merging them can simplify some APIs.
 class WebRTCWindowSystem : public gui::BitmapWindowSystem {
 public:
     static std::shared_ptr<WebRTCWindowSystem> GetInstance();
@@ -52,18 +48,12 @@ public:
                             int flags) override;
     void DestroyWindow(OSWindow w) override;
 
-    /*
-     * Window UID management.
-     */
     /// List available windows.
     std::vector<std::string> GetWindowUIDs() const;
     std::string GetWindowUID(OSWindow w) const;
     OSWindow GetOSWindowByUID(const std::string& uid) const;
 
-    /*
-     * Forwareded WebRTCServer functions.
-     */
-    /// TODO (yixing): rename me.
+    /// Start WebRTC server in a background thread.
     void StartWebRTCServer();
 
     /// Client -> server message.
@@ -113,10 +103,8 @@ public:
     /// rendered to a WebRTC video stream.
     void EnableWebRTC();
 
-    /// HTTP handshake server is enabled by default. Call DisableHttpServer() to
-    /// disable the HTTP server. This must be called before WebRTCServer::Run(),
-    /// i.e. before WebRTCWindowSystem::StartWebRTCServer() or
-    /// Application::AddWindow().
+    /// HTTP handshake server is enabled by default. In Jupyter environment,
+    /// call DisableHttpHandshake() before StartWebRTCServer().
     void DisableHttpHandshake();
 
     /// Close all WebRTC connections that correspond to a Window.
