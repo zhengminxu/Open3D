@@ -152,6 +152,14 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
     return nullptr;
 }
 
+void WebRTCWindowSystem::StartWebRTCServer() {
+    WebRTCServer::GetInstance().StartWebRTCServer();
+}
+
+void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
+    WebRTCServer::GetInstance().OnDataChannelMessage(message);
+}
+
 void WebRTCWindowSystem::SetMouseEventCallback(
         std::function<void(const std::string &, const gui::MouseEvent &)> f) {
     WebRTCServer::GetInstance().SetMouseEventCallback(f);
@@ -162,8 +170,28 @@ void WebRTCWindowSystem::SetRedrawCallback(
     WebRTCServer::GetInstance().SetRedrawCallback(f);
 }
 
-void WebRTCWindowSystem::StartWebRTCServer() {
-    WebRTCServer::GetInstance().StartWebRTCServer();
+void WebRTCWindowSystem::OnFrame(const std::string &window_uid,
+                                 const std::shared_ptr<core::Tensor> &im) {
+    WebRTCServer::GetInstance().OnFrame(window_uid, im);
+}
+
+void WebRTCWindowSystem::SendInitFrames(const std::string &window_uid) {
+    WebRTCServer::GetInstance().SendInitFrames(window_uid);
+}
+
+std::string WebRTCWindowSystem::CallHttpAPI(const std::string &entry_point,
+                                            const std::string &query_string,
+                                            const std::string &data) const {
+    return WebRTCServer::GetInstance().CallHttpAPI(entry_point, query_string,
+                                                   data);
+}
+
+void WebRTCWindowSystem::EnableWebRTC() {
+    WebRTCServer::GetInstance().EnableWebRTC();
+}
+
+void WebRTCWindowSystem::DisableHttpHandshake() {
+    WebRTCServer::GetInstance().DisableHttpHandshake();
 }
 
 void WebRTCWindowSystem::CloseWindowConnections(const std::string &window_uid) {
