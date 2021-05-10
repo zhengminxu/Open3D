@@ -113,15 +113,16 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::CreateOSWindow(
             o3d_window, width, height, title, flags);
     std::string window_uid = impl_->GenerateUID();
     impl_->os_window_to_uid_.insert({os_window, window_uid});
-    utility::LogInfo("OS window {} created.", window_uid);
+    utility::LogInfo("Window {} created.", window_uid);
     return os_window;
 }
 
 void WebRTCWindowSystem::DestroyWindow(OSWindow w) {
     std::string window_uid = impl_->os_window_to_uid_.at(w);
-    utility::LogInfo("OS window {} to be destroyed.", window_uid);
-    BitmapWindowSystem::DestroyWindow(w);
+    CloseWindowConnections(window_uid);
     impl_->os_window_to_uid_.erase(w);
+    BitmapWindowSystem::DestroyWindow(w);
+    utility::LogInfo("Window {} destroyed.", window_uid);
 }
 
 std::vector<std::string> WebRTCWindowSystem::GetWindowUIDs() const {
