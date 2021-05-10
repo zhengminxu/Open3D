@@ -47,7 +47,7 @@ struct WebRTCWindowSystem::Impl {
     std::thread webrtc_thread_;
     bool sever_started_ = false;
     std::unordered_map<WebRTCWindowSystem::OSWindow, std::string>
-            window_to_uid_;
+            os_window_to_uid_;
     std::string GenerateUID() {
         static std::atomic<size_t> count{0};
         return "window_" + std::to_string(count++);
@@ -112,21 +112,21 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::CreateOSWindow(
     WebRTCWindowSystem::OSWindow os_window = BitmapWindowSystem::CreateOSWindow(
             o3d_window, width, height, title, flags);
     std::string window_uid = impl_->GenerateUID();
-    impl_->window_to_uid_.insert({os_window, window_uid});
+    impl_->os_window_to_uid_.insert({os_window, window_uid});
     utility::LogInfo("OS window {} created.", window_uid);
     return os_window;
 }
 
 void WebRTCWindowSystem::DestroyWindow(OSWindow w) {
-    std::string window_uid = impl_->window_to_uid_.at(w);
+    std::string window_uid = impl_->os_window_to_uid_.at(w);
     utility::LogInfo("OS window {} to be destroyed.", window_uid);
     BitmapWindowSystem::DestroyWindow(w);
-    impl_->window_to_uid_.erase(w);
+    impl_->os_window_to_uid_.erase(w);
 }
 
 std::vector<std::string> WebRTCWindowSystem::GetWindowUIDs() const {
     std::vector<std::string> uids;
-    for (const auto &it : impl_->window_to_uid_) {
+    for (const auto &it : impl_->os_window_to_uid_) {
         uids.push_back(it.second);
     }
     return uids;
@@ -134,10 +134,10 @@ std::vector<std::string> WebRTCWindowSystem::GetWindowUIDs() const {
 
 std::string WebRTCWindowSystem::GetWindowUID(
         WebRTCWindowSystem::OSWindow w) const {
-    if (impl_->window_to_uid_.count(w) == 0) {
+    if (impl_->os_window_to_uid_.count(w) == 0) {
         return "window_undefined";
     } else {
-        return impl_->window_to_uid_.at(w);
+        return impl_->os_window_to_uid_.at(w);
     }
 }
 
@@ -145,7 +145,7 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
         const std::string &uid) const {
     // This can be optimized by adding a bi-directional map, but it may not be
     // worth it since we typically don't have lots of windows.
-    for (const auto &it : impl_->window_to_uid_) {
+    for (const auto &it : impl_->os_window_to_uid_) {
         if (it.second == uid) {
             return it.first;
         };
