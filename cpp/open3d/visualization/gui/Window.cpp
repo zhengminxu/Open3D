@@ -51,6 +51,10 @@
 #include "open3d/visualization/gui/WindowSystem.h"
 #include "open3d/visualization/rendering/filament/FilamentRenderer.h"
 
+#ifdef BUILD_WEBRTC
+#include "open3d/visualization/webrtc_server/WebRTCWindowSystem.h"
+#endif
+
 // ----------------------------------------------------------------------------
 namespace open3d {
 namespace visualization {
@@ -450,8 +454,16 @@ void Window::DestroyWindow() {
 int Window::GetMouseMods() const { return impl_->mouse_mods_; }
 
 std::string Window::GetWebRTCUID() const {
-    // Todo: return valid UID on WebRTC.
+#ifdef BUILD_WEBRTC
+    if (auto* webrtc_ws = dynamic_cast<webrtc_server::WebRTCWindowSystem*>(
+                &Application::GetInstance().GetWindowSystem())) {
+        return webrtc_ws->GetWindowUID(impl_->window_);
+    } else {
+        return "window_undefined";
+    }
+#else
     return "window_undefined";
+#endif
 }
 
 const std::vector<std::shared_ptr<Widget>>& Window::GetChildren() const {
