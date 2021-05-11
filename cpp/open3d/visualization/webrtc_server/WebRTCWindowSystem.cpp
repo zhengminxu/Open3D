@@ -264,18 +264,16 @@ void WebRTCWindowSystem::StartWebRTCServer() {
 void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
     utility::LogDebug("WebRTCWindowSystem::OnDataChannelMessage: {}", message);
     try {
-        Json::Value value = utility::StringToJson(message);
-        gui::MouseEvent me;
+        const Json::Value value = utility::StringToJson(message);
+        const std::string window_uid = value.get("window_uid", "").asString();
         if (value.get("class_name", "").asString() == "MouseEvent" &&
-            value.get("window_uid", "").asString() != "" &&
-            me.FromJson(value)) {
-            const std::string window_uid =
-                    value.get("window_uid", "").asString();
-            PostMouseEvent(GetOSWindowByUID(window_uid), me);
+            window_uid != "") {
+            gui::MouseEvent me;
+            if (me.FromJson(value)) {
+                PostMouseEvent(GetOSWindowByUID(window_uid), me);
+            }
         } else if (value.get("class_name", "").asString() == "ResizeEvent" &&
-                   value.get("window_uid", "").asString() != "") {
-            const std::string window_uid =
-                    value.get("window_uid", "").asString();
+                   window_uid != "") {
             const int height = value.get("height", 0).asInt();
             const int width = value.get("width", 0).asInt();
             if (height <= 0 || width <= 0) {
