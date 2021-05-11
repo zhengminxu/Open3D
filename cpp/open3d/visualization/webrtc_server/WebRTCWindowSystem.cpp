@@ -281,14 +281,14 @@ void WebRTCWindowSystem::OnDataChannelMessage(const std::string &message) {
                         "Invalid heigh {} or width {}, ResizeEvent ignored.",
                         height, width);
             }
-            utility::LogInfo("ResizeEvent {}: ({}, {})", window_uid, height,
-                             width);
+            utility::LogDebug("ResizeEvent {}: ({}, {})", window_uid, height,
+                              width);
             SetWindowSize(GetOSWindowByUID(window_uid), width, height);
         }
     } catch (...) {
         utility::LogInfo(
-                "WebRTCWindowSystem::OnDataChannelMessage: cannot parse {}, "
-                "ignored.",
+                "OnDataChannelMessage: {}. Message cannot be parsed, or "
+                "the target GUI event failed to execute.",
                 message);
     }
 }
