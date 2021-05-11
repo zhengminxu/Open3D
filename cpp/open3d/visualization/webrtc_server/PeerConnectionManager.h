@@ -64,12 +64,12 @@ namespace webrtc_server {
 /// for more information. In PeerConnectionManager, a WebRTC client (e.g.
 /// JavaScript video player) calls the following HTTP APIs:
 /// - /api/getMediaList: Returns a list of active Open3D visualizer windows.
-/// - /api/getIceServers: Returns a list of STUN servers. The STUN server is
-///   used to forward requests through the remote peer's NAT layer. We use
-///   publicly availble STUN servers. In certain network configurations
-///   (e.g. if the peers are behind certain type of firewalls), STUN server
-///   may fail to resolve for the peers. In this case, we'll need to
-///   implement and host separate TURN server which we're not doing here.
+/// - /api/getIceServers: Returns a list of ICE (STUN/TURN) servers. The ICE
+///   server is used to forward requests through the remote peer's NAT layer. We
+///   use publicly availble STUN servers. In certain network configurations
+///   (e.g. if the peers are behind certain type of firewalls), STUN server may
+///   fail to resolve and in this case, we'll need to implement and host a
+///   separate TURN server.
 /// - /api/call: Connect to a specific media (Open3D visualizer window).
 /// - /api/addIceCandidate (multiple calls): Client sends ICE candidate
 ///   proposals.
