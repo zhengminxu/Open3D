@@ -65,15 +65,6 @@ static std::string GetEnvWebRTCPort() {
         return "8888";
     }
 }
-static std::string GetEnvWebRTCWebRoot() {
-    if (const char *env_p = std::getenv("WEBRTC_WEB_ROOT")) {
-        return std::string(env_p);
-    } else {
-        std::string resource_path(
-                gui::Application::GetInstance().GetResourcePath());
-        return resource_path + "/html";
-    }
-}
 
 struct WebRTCWindowSystem::Impl {
     std::unordered_map<WebRTCWindowSystem::OSWindow, std::string>
@@ -186,7 +177,9 @@ void WebRTCWindowSystem::StartWebRTCServer() {
     if (!impl_->sever_started_) {
         auto start_webrtc_thread = [this]() {
             // Ensure Application::Initialize() is called before this.
-            impl_->web_root_ = GetEnvWebRTCWebRoot();
+            std::string resource_path(
+                    gui::Application::GetInstance().GetResourcePath());
+            impl_->web_root_ = resource_path + "/html";
 
             // Logging settings.
             // src/rtc_base/logging.h: LS_VERBOSE, LS_ERROR
