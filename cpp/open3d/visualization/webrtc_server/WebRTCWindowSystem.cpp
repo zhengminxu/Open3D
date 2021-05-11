@@ -212,23 +212,22 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             // running in Jupyter.
             if (impl_->http_handshake_enabled_) {
                 utility::LogInfo("WebRTC HTTP server handshake mode enabled.");
-                std::vector<std::string> options;
-                options.push_back("document_root");
-                options.push_back(impl_->web_root_);
-                options.push_back("enable_directory_listing");
-                options.push_back("no");
-                options.push_back("additional_header");
-                options.push_back("X-Frame-Options: SAMEORIGIN");
-                options.push_back("access_control_allow_origin");
-                options.push_back("*");
-                options.push_back("listening_ports");
-                options.push_back(impl_->http_address_);
-                options.push_back("enable_keep_alive");
-                options.push_back("yes");
-                options.push_back("keep_alive_timeout_ms");
-                options.push_back("1000");
-                options.push_back("decode_url");
-                options.push_back("no");
+                std::vector<std::string> options{"document_root",
+                                                 impl_->web_root_,
+                                                 "enable_directory_listing",
+                                                 "no",
+                                                 "additional_header",
+                                                 "X-Frame-Options: SAMEORIGIN",
+                                                 "access_control_allow_origin",
+                                                 "*",
+                                                 "listening_ports",
+                                                 impl_->http_address_,
+                                                 "enable_keep_alive",
+                                                 "yes",
+                                                 "keep_alive_timeout_ms",
+                                                 "1000",
+                                                 "decode_url",
+                                                 "no"};
                 try {
                     // PeerConnectionManager provides callbacks for the Civet
                     // server.
