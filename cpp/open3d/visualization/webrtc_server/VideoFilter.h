@@ -45,10 +45,11 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
-/// VideoFilter is a templated class used to perform video frame processing.
+/// \brief VideoFilter is a templated class for video frame processing.
+///
 /// VideoFilter is a BitmapTrackSource and it takes another BitmapTrackSource
-/// as source. The templated argument implements the actual processing
-/// algorithm, e.g. VideoFilter<VideoScaler>().
+/// as source and performs the video frame processing. The templated argument
+/// implements the actual processing algorithm, e.g. VideoFilter<VideoScaler>.
 template <class T>
 class VideoFilter : public BitmapTrackSource {
 public:
