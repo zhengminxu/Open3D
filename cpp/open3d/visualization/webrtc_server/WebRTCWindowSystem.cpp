@@ -299,19 +299,15 @@ void WebRTCWindowSystem::OnFrame(const std::string &window_uid,
 }
 
 void WebRTCWindowSystem::SendInitFrames(const std::string &window_uid) {
-    auto sender = [this, &window_uid]() {
-        utility::LogInfo("Sending init frames to {}.", window_uid);
-        static const int s_max_initial_frames = 5;
-        static const int s_sleep_between_frames_ms = 100;
-        for (int i = 0; i < s_max_initial_frames; ++i) {
-            PostRedrawEvent(GetOSWindowByUID(window_uid));
-            std::this_thread::sleep_for(
-                    std::chrono::milliseconds(s_sleep_between_frames_ms));
-            utility::LogDebug("Sent init frames #{} to {}.", i, window_uid);
-        }
-    };
-    std::thread thread(sender);
-    thread.join();
+    utility::LogInfo("Sending init frames to {}.", window_uid);
+    static const int s_max_initial_frames = 5;
+    static const int s_sleep_between_frames_ms = 100;
+    for (int i = 0; i < s_max_initial_frames; ++i) {
+        PostRedrawEvent(GetOSWindowByUID(window_uid));
+        std::this_thread::sleep_for(
+                std::chrono::milliseconds(s_sleep_between_frames_ms));
+        utility::LogDebug("Sent init frames #{} to {}.", i, window_uid);
+    }
 }
 
 std::string WebRTCWindowSystem::CallHttpAPI(const std::string &entry_point,
