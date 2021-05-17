@@ -51,15 +51,16 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
-// List of ICE servers. We only use publicly available STUN servers, which works
-// for most users. In certain network configurations (e.g. if the peers are
-// behind certain type of firewalls), STUN server may fail to resolve and in
-// this case, we'll need to implement and host a separate TURN server. If our
-// default list fails to connect, you may replace this with other STUN servers.
-static const std::list<std::string> ice_servers{"stun:stun.l.google.com:19302"};
-
 static std::string GetEnvWebRTCIP() {
     if (const char *env_p = std::getenv("WEBRTC_IP")) {
+        return std::string(env_p);
+    } else {
+        return "localhost";
+    }
+}
+
+static std::string GetEnvWebRTCPublicIP() {
+    if (const char *env_p = std::getenv("WEBRTC_PUBLIC_IP")) {
         return std::string(env_p);
     } else {
         return "localhost";
@@ -182,6 +183,7 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
 }
 
 void WebRTCWindowSystem::StartWebRTCServer() {
+    utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
     if (!impl_->sever_started_) {
         auto start_webrtc_thread = [this]() {
             // Ensure Application::Initialize() is called before this.
@@ -191,10 +193,25 @@ void WebRTCWindowSystem::StartWebRTCServer() {
 
             // Logging settings.
             // src/rtc_base/logging.h: LS_VERBOSE, LS_ERROR
-            rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_ERROR);
+            rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_VERBOSE);
 
             rtc::LogMessage::LogTimestamps();
             rtc::LogMessage::LogThreads();
+
+            // List of ICE servers. We only use publicly available STUN servers,
+            // which works
+            // for most users. In certain network configurations (e.g. if the
+            // peers are behind certain type of firewalls), STUN server may fail
+            // to resolve and in this case, we'll need to implement and host a
+            // separate TURN server. If our default list fails to connect, you
+            // may replace this with other STUN servers.
+            //
+            // std::list<std::string>
+            // ice_servers{"stun:stun.l.google.com:19302"};
+            std::string stun_url = "stun:" + GetEnvWebRTCPublicIP() + ":3478";
+            std::string turn_url =
+                    "turn:turn:turn@" + GetEnvWebRTCPublicIP() + ":3479";
+            std::list<std::string> ice_servers{stun_url, turn_url};
 
             // PeerConnectionManager manages all WebRTC connections.
             rtc::Thread *thread = rtc::Thread::Current();
@@ -235,6 +252,72 @@ void WebRTCWindowSystem::StartWebRTCServer() {
                              HttpServerRequestHandler::HttpFunction>
                             func = impl_->peer_connection_manager_
                                            ->GetHttpApi();
+
+                    // Start STUN server if needed
+                    std::unique_ptr<cricket::StunServer> stunserver;
+                    std::string localstunurl = "192.168.86.121:3478";
+                    if (!localstunurl.empty()) {
+                        rtc::SocketAddress server_addr;
+                        server_addr.FromString(localstunurl);
+                        rtc::AsyncUDPSocket *server_socket =
+                                rtc::AsyncUDPSocket::Create(
+                                        thread->socketserver(), server_addr);
+                        if (server_socket) {
+                            stunserver.reset(
+                                    new cricket::StunServer(server_socket));
+                            std::cout << "STUN Listening at "
+                                      << server_addr.ToString() << std::endl;
+                        }
+                    }
+
+                    // Start TRUN server if needed
+                    std::unique_ptr<cricket::TurnServer> turnserver;
+                    std::string localturnurl = "turn:turn@192.168.86.121:3479";
+                    if (!localturnurl.empty()) {
+                        std::istringstream is(localturnurl);
+                        std::string addr;
+                        std::getline(is, addr, '@');
+                        std::getline(is, addr, '@');
+                        rtc::SocketAddress server_addr;
+                        server_addr.FromString(addr);
+                        turnserver.reset(new cricket::TurnServer(
+                                rtc::Thread::Current()));
+
+                        rtc::AsyncUDPSocket *server_socket =
+                                rtc::AsyncUDPSocket::Create(
+                                        thread->socketserver(), server_addr);
+                        if (server_socket) {
+                            std::cout << "TURN Listening UDP at "
+                                      << server_addr.ToString() << std::endl;
+                            turnserver->AddInternalSocket(server_socket,
+                                                          cricket::PROTO_UDP);
+                        }
+                        rtc::AsyncSocket *tcp_server_socket =
+                                thread->socketserver()->CreateAsyncSocket(
+                                        AF_INET, SOCK_STREAM);
+                        if (tcp_server_socket) {
+                            std::cout << "TURN Listening TCP at "
+                                      << server_addr.ToString() << std::endl;
+                            tcp_server_socket->Bind(server_addr);
+                            tcp_server_socket->Listen(5);
+                            turnserver->AddInternalServerSocket(
+                                    tcp_server_socket, cricket::PROTO_TCP);
+                        }
+
+                        is.str(turn_url);
+                        is.clear();
+                        std::getline(is, addr, '@');
+                        std::getline(is, addr, '@');
+                        rtc::SocketAddress external_server_addr;
+                        external_server_addr.FromString(addr);
+                        std::cout << "TURN external addr:"
+                                  << external_server_addr.ToString()
+                                  << std::endl;
+                        turnserver->SetExternalSocketFactory(
+                                new rtc::BasicPacketSocketFactory(),
+                                rtc::SocketAddress(
+                                        external_server_addr.ipaddr(), 0));
+                    }
 
                     // Main loop for Civet server.
                     utility::LogInfo("Open3D WebVisualizer is serving at {}.",
