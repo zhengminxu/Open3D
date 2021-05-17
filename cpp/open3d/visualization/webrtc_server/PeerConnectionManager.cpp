@@ -286,7 +286,8 @@ const Json::Value PeerConnectionManager::AddIceCandidate(
                 webrtc::CreateIceCandidate(sdp_mid, sdp_mlineindex, sdp,
                                            nullptr));
         if (!candidate.get()) {
-            utility::LogWarning("Can't parse received candidate message.");
+            utility::LogWarning("Can't parse received candidate message: {}",
+                                utility::JsonToString(json_message));
         } else {
             std::lock_guard<std::mutex> mutex_lock(peerid_to_connection_mutex_);
             rtc::scoped_refptr<webrtc::PeerConnectionInterface>
