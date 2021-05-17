@@ -544,9 +544,7 @@ var WebRtcStreamer = (function () {
       bind.onAddStream.call(bind, evt);
     };
     pc.oniceconnectionstatechange = function (evt) {
-      console.log(
-        "oniceconnectionstatechange  state: " + pc.iceConnectionState
-      );
+      console.log("oniceconnectionstatechange state: " + pc.iceConnectionState);
       if (bind.videoElt) {
         if (pc.iceConnectionState === "connected") {
           bind.videoElt.style.opacity = "1.0";
@@ -558,6 +556,7 @@ var WebRtcStreamer = (function () {
         ) {
           bind.videoElt.style.opacity = "0.5";
         } else if (pc.iceConnectionState === "new") {
+          console.log("Call getIceCandidate by oniceconnectionstatechange");
           bind.getIceCandidate.call(bind);
         }
       }
@@ -573,6 +572,7 @@ var WebRtcStreamer = (function () {
       };
     };
     pc.onicegatheringstatechange = function () {
+      console.log("onicegatheringstatechange state: " + pc.iceGatheringState);
       if (pc.iceGatheringState === "complete") {
         const recvs = pc.getReceivers();
 
@@ -676,7 +676,7 @@ var WebRtcStreamer = (function () {
           var candidate = bind.earlyCandidates.shift();
           bind.addIceCandidate.call(bind, bind.pc.peerid, candidate);
         }
-
+        console.log("Call getIceCandidate by onReceiveCall");
         bind.getIceCandidate.call(bind);
       },
       function (error) {
