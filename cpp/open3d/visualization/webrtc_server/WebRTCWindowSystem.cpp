@@ -255,7 +255,7 @@ void WebRTCWindowSystem::StartWebRTCServer() {
 
                     // Start STUN server if needed
                     std::unique_ptr<cricket::StunServer> stunserver;
-                    std::string localstunurl = "192.168.86.121:3478";
+                    std::string localstunurl = GetEnvWebRTCIP() + ":3478";
                     if (!localstunurl.empty()) {
                         rtc::SocketAddress server_addr;
                         server_addr.FromString(localstunurl);
@@ -272,7 +272,8 @@ void WebRTCWindowSystem::StartWebRTCServer() {
 
                     // Start TRUN server if needed
                     std::unique_ptr<cricket::TurnServer> turnserver;
-                    std::string localturnurl = "turn:turn@192.168.86.121:3479";
+                    std::string localturnurl =
+                            "turn:turn@" + GetEnvWebRTCIP() + ":3479";
                     if (!localturnurl.empty()) {
                         std::istringstream is(localturnurl);
                         std::string addr;
