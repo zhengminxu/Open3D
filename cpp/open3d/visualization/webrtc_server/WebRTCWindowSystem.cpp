@@ -208,10 +208,12 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             //
             // std::list<std::string>
             // ice_servers{"stun:stun.l.google.com:19302"};
-            std::string stun_url = "stun:" + GetEnvWebRTCPublicIP() + ":3478";
+            // std::string stun_url = "stun:" + GetEnvWebRTCPublicIP() +
+            // ":3478";
+            (void)GetEnvWebRTCPublicIP();
             std::string turn_url =
-                    "turn:turn:turn@" + GetEnvWebRTCPublicIP() + ":3479";
-            std::list<std::string> ice_servers{stun_url, turn_url};
+                    "turn:webrtc:live.com:muazkh@numb.viagenie.ca:3478";
+            std::list<std::string> ice_servers{turn_url};
 
             // PeerConnectionManager manages all WebRTC connections.
             rtc::Thread *thread = rtc::Thread::Current();
@@ -253,72 +255,72 @@ void WebRTCWindowSystem::StartWebRTCServer() {
                             func = impl_->peer_connection_manager_
                                            ->GetHttpApi();
 
-                    // Start STUN server if needed
-                    std::unique_ptr<cricket::StunServer> stunserver;
-                    std::string localstunurl = GetEnvWebRTCIP() + ":3478";
-                    if (!localstunurl.empty()) {
-                        rtc::SocketAddress server_addr;
-                        server_addr.FromString(localstunurl);
-                        rtc::AsyncUDPSocket *server_socket =
-                                rtc::AsyncUDPSocket::Create(
-                                        thread->socketserver(), server_addr);
-                        if (server_socket) {
-                            stunserver.reset(
-                                    new cricket::StunServer(server_socket));
-                            std::cout << "STUN Listening at "
-                                      << server_addr.ToString() << std::endl;
-                        }
-                    }
+                    // // Start STUN server if needed
+                    // std::unique_ptr<cricket::StunServer> stunserver;
+                    // std::string localstunurl = GetEnvWebRTCIP() + ":3478";
+                    // if (!localstunurl.empty()) {
+                    //     rtc::SocketAddress server_addr;
+                    //     server_addr.FromString(localstunurl);
+                    //     rtc::AsyncUDPSocket *server_socket =
+                    //             rtc::AsyncUDPSocket::Create(
+                    //                     thread->socketserver(), server_addr);
+                    //     if (server_socket) {
+                    //         stunserver.reset(
+                    //                 new cricket::StunServer(server_socket));
+                    //         std::cout << "STUN Listening at "
+                    //                   << server_addr.ToString() << std::endl;
+                    //     }
+                    // }
 
-                    // Start TRUN server if needed
-                    std::unique_ptr<cricket::TurnServer> turnserver;
-                    std::string localturnurl =
-                            "turn:turn@" + GetEnvWebRTCIP() + ":3479";
-                    if (!localturnurl.empty()) {
-                        std::istringstream is(localturnurl);
-                        std::string addr;
-                        std::getline(is, addr, '@');
-                        std::getline(is, addr, '@');
-                        rtc::SocketAddress server_addr;
-                        server_addr.FromString(addr);
-                        turnserver.reset(new cricket::TurnServer(
-                                rtc::Thread::Current()));
+                    // // Start TRUN server if needed
+                    // std::unique_ptr<cricket::TurnServer> turnserver;
+                    // std::string localturnurl =
+                    //         "turn:turn@" + GetEnvWebRTCIP() + ":3479";
+                    // if (!localturnurl.empty()) {
+                    //     std::istringstream is(localturnurl);
+                    //     std::string addr;
+                    //     std::getline(is, addr, '@');
+                    //     std::getline(is, addr, '@');
+                    //     rtc::SocketAddress server_addr;
+                    //     server_addr.FromString(addr);
+                    //     turnserver.reset(new cricket::TurnServer(
+                    //             rtc::Thread::Current()));
 
-                        rtc::AsyncUDPSocket *server_socket =
-                                rtc::AsyncUDPSocket::Create(
-                                        thread->socketserver(), server_addr);
-                        if (server_socket) {
-                            std::cout << "TURN Listening UDP at "
-                                      << server_addr.ToString() << std::endl;
-                            turnserver->AddInternalSocket(server_socket,
-                                                          cricket::PROTO_UDP);
-                        }
-                        rtc::AsyncSocket *tcp_server_socket =
-                                thread->socketserver()->CreateAsyncSocket(
-                                        AF_INET, SOCK_STREAM);
-                        if (tcp_server_socket) {
-                            std::cout << "TURN Listening TCP at "
-                                      << server_addr.ToString() << std::endl;
-                            tcp_server_socket->Bind(server_addr);
-                            tcp_server_socket->Listen(5);
-                            turnserver->AddInternalServerSocket(
-                                    tcp_server_socket, cricket::PROTO_TCP);
-                        }
+                    //     rtc::AsyncUDPSocket *server_socket =
+                    //             rtc::AsyncUDPSocket::Create(
+                    //                     thread->socketserver(), server_addr);
+                    //     if (server_socket) {
+                    //         std::cout << "TURN Listening UDP at "
+                    //                   << server_addr.ToString() << std::endl;
+                    //         turnserver->AddInternalSocket(server_socket,
+                    //                                       cricket::PROTO_UDP);
+                    //     }
+                    //     rtc::AsyncSocket *tcp_server_socket =
+                    //             thread->socketserver()->CreateAsyncSocket(
+                    //                     AF_INET, SOCK_STREAM);
+                    //     if (tcp_server_socket) {
+                    //         std::cout << "TURN Listening TCP at "
+                    //                   << server_addr.ToString() << std::endl;
+                    //         tcp_server_socket->Bind(server_addr);
+                    //         tcp_server_socket->Listen(5);
+                    //         turnserver->AddInternalServerSocket(
+                    //                 tcp_server_socket, cricket::PROTO_TCP);
+                    //     }
 
-                        is.str(turn_url);
-                        is.clear();
-                        std::getline(is, addr, '@');
-                        std::getline(is, addr, '@');
-                        rtc::SocketAddress external_server_addr;
-                        external_server_addr.FromString(addr);
-                        std::cout << "TURN external addr:"
-                                  << external_server_addr.ToString()
-                                  << std::endl;
-                        turnserver->SetExternalSocketFactory(
-                                new rtc::BasicPacketSocketFactory(),
-                                rtc::SocketAddress(
-                                        external_server_addr.ipaddr(), 0));
-                    }
+                    //     is.str(turn_url);
+                    //     is.clear();
+                    //     std::getline(is, addr, '@');
+                    //     std::getline(is, addr, '@');
+                    //     rtc::SocketAddress external_server_addr;
+                    //     external_server_addr.FromString(addr);
+                    //     std::cout << "TURN external addr:"
+                    //               << external_server_addr.ToString()
+                    //               << std::endl;
+                    //     turnserver->SetExternalSocketFactory(
+                    //             new rtc::BasicPacketSocketFactory(),
+                    //             rtc::SocketAddress(
+                    //                     external_server_addr.ipaddr(), 0));
+                    // }
 
                     // Main loop for Civet server.
                     utility::LogInfo("Open3D WebVisualizer is serving at {}.",
