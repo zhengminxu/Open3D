@@ -184,6 +184,19 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
 void WebRTCWindowSystem::StartWebRTCServer() {
     if (!impl_->sever_started_) {
         auto start_webrtc_thread = [this]() {
+            utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
+
+            // List of ICE servers. We only use publicly available STUN servers,
+            // which works
+            // for most users. In certain network configurations (e.g. if the
+            // peers are behind certain type of firewalls), STUN server may fail
+            // to resolve and in this case, we'll need to implement and host a
+            // separate TURN server. If our default list fails to connect, you
+            // may replace this with other STUN servers.
+            static const std::list<std::string> ice_servers{
+                    "stun:stun.l.google.com:19302",
+                    "turn:username:password@35.225.47.175:3478"};
+
             // Ensure Application::Initialize() is called before this.
             std::string resource_path(
                     gui::Application::GetInstance().GetResourcePath());
