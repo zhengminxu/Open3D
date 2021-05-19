@@ -177,6 +177,8 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
 void WebRTCWindowSystem::StartWebRTCServer() {
     if (!impl_->sever_started_) {
         auto start_webrtc_thread = [this]() {
+            utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
+
             // List of ICE servers. We only use publicly available STUN servers,
             // which works
             // for most users. In certain network configurations (e.g. if the
