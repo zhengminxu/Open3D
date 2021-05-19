@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     // Uncomment this line to see more WebRTC loggings
     // utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
-    EmptyBox();
+    // EmptyBox();
     BoxWithObjects();
     visualization::gui::Application::GetInstance().Run();
 }

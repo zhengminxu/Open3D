@@ -51,13 +51,6 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
-// List of ICE servers. We only use publicly available STUN servers, which works
-// for most users. In certain network configurations (e.g. if the peers are
-// behind certain type of firewalls), STUN server may fail to resolve and in
-// this case, we'll need to implement and host a separate TURN server. If our
-// default list fails to connect, you may replace this with other STUN servers.
-static const std::list<std::string> ice_servers{"stun:stun.l.google.com:19302"};
-
 static std::string GetEnvWebRTCIP() {
     if (const char *env_p = std::getenv("WEBRTC_IP")) {
         return std::string(env_p);
@@ -184,6 +177,16 @@ WebRTCWindowSystem::OSWindow WebRTCWindowSystem::GetOSWindowByUID(
 void WebRTCWindowSystem::StartWebRTCServer() {
     if (!impl_->sever_started_) {
         auto start_webrtc_thread = [this]() {
+            // List of ICE servers. We only use publicly available STUN servers,
+            // which works
+            // for most users. In certain network configurations (e.g. if the
+            // peers are behind certain type of firewalls), STUN server may fail
+            // to resolve and in this case, we'll need to implement and host a
+            // separate TURN server. If our default list fails to connect, you
+            // may replace this with other STUN servers.
+            static const std::list<std::string> ice_servers{
+                    "stun:stun.l.google.com:19302"};
+
             // Ensure Application::Initialize() is called before this.
             std::string resource_path(
                     gui::Application::GetInstance().GetResourcePath());
