@@ -195,7 +195,10 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             // may replace this with other STUN servers.
             static const std::list<std::string> ice_servers{
                     "stun:stun.l.google.com:19302",
-                    "turn:username:password@35.225.47.175:3478"};
+                    // "turn:username:password@35.225.47.175:3478",
+                    "turn:username:password@35.225.47.175:3478?transport=tcp",
+                    // "turn:username:password@35.225.47.175:5349",
+            };
 
             // Ensure Application::Initialize() is called before this.
             std::string resource_path(
