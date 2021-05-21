@@ -85,18 +85,18 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
 
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/socket_address_pair.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_key_pair.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_digest.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/http_common.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/network.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/network_route.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/helpers.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/message_digest.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/net_helper.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/file_rotating_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_udp_socket.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crypt_string.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/socket_address_pair.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_key_pair.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_digest.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/http_common.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/network.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/network_route.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/helpers.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/message_digest.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/net_helper.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/file_rotating_stream.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_udp_socket.o
+    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crypt_string.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/data_rate_limiter.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_invoker.o
