@@ -100,28 +100,58 @@ int main(int argc, char* argv[]) {
     }
 
     rtc::Thread* main = rtc::Thread::Current();
-    rtc::AsyncUDPSocket* int_socket =
+
+    //////////////// Google Example
+    // rtc::AsyncUDPSocket* int_socket =
+    //         rtc::AsyncUDPSocket::Create(main->socketserver(), int_addr);
+    // if (!int_socket) {
+    //     std::cerr << "Failed to create a UDP socket bound at"
+    //               << int_addr.ToString() << std::endl;
+    //     return 1;
+    // }
+
+    // cricket::TurnServer server(main);
+    // // std::fstream auth_file(argv[4], std::fstream::in);
+    // // TurnFileAuth auth(auth_file.is_open()
+    // //                           ? webrtc_examples::ReadAuthFile(&auth_file)
+    // //                           : std::map<std::string, std::string>());
+    // AlwaysTrueAuth auth;
+    // server.set_realm(argv[3]);
+    // server.set_software(kSoftware);
+    // server.set_auth_hook(&auth);
+    // server.AddInternalSocket(int_socket, cricket::PROTO_UDP);
+    // server.SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
+    //                                 rtc::SocketAddress(ext_addr, 0));
+    /////////////////
+
+    ///////// webrtc-streamer example
+    std::unique_ptr<cricket::TurnServer> turnserver;
+    turnserver.reset(new cricket::TurnServer(main));
+
+    rtc::AsyncUDPSocket* server_socket =
             rtc::AsyncUDPSocket::Create(main->socketserver(), int_addr);
-    if (!int_socket) {
-        std::cerr << "Failed to create a UDP socket bound at"
-                  << int_addr.ToString() << std::endl;
-        return 1;
+    if (server_socket) {
+        std::cout << "TURN Listening UDP at " << int_addr.ToString()
+                  << std::endl;
+        turnserver->AddInternalSocket(server_socket, cricket::PROTO_UDP);
+    }
+    rtc::AsyncSocket* tcp_server_socket =
+            main->socketserver()->CreateAsyncSocket(AF_INET, SOCK_STREAM);
+    if (tcp_server_socket) {
+        std::cout << "TURN Listening TCP at " << int_addr.ToString()
+                  << std::endl;
+        tcp_server_socket->Bind(int_addr);
+        tcp_server_socket->Listen(5);
+        turnserver->AddInternalServerSocket(tcp_server_socket,
+                                            cricket::PROTO_TCP);
     }
 
-    cricket::TurnServer server(main);
-    // std::fstream auth_file(argv[4], std::fstream::in);
-    // TurnFileAuth auth(auth_file.is_open()
-    //                           ? webrtc_examples::ReadAuthFile(&auth_file)
-    //                           : std::map<std::string, std::string>());
-    AlwaysTrueAuth auth;
-    server.set_realm(argv[3]);
-    server.set_software(kSoftware);
-    server.set_auth_hook(&auth);
-    server.AddInternalSocket(int_socket, cricket::PROTO_UDP);
-    server.SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
-                                    rtc::SocketAddress(ext_addr, 0));
+    std::cout << "TURN external addr:" << ext_addr.ToString() << std::endl;
+    turnserver->SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
+                                         rtc::SocketAddress(ext_addr, 0));
 
     std::cout << "Listening internally at " << int_addr.ToString() << std::endl;
+    /////////////////
 
     main->Run();
     return 0;
