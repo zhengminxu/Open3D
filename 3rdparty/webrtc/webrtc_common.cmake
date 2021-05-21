@@ -85,38 +85,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
 
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/p2p_server_utils/turn_server.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/p2p_server_utils/stun_server.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/libstunprober/stun_prober.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/default_ice_transport_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/regathering_controller.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/port_allocator.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/pseudo_tcp.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/port_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/port.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/transport_description_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/packet_transport_internal.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/basic_port_allocator.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/turn_port.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/connection_info.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/transport_description.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/connection.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/ice_controller_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/mdns_message.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/dtls_transport_internal.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/ice_transport_internal.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/ice_credentials_iterator.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/dtls_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/basic_async_resolver_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/stun_request.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/turn_port_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/p2p_transport_channel.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/tcp_port.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/stun_port.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/p2p_constants.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/async_stun_tcp_socket.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/basic_ice_controller.o
-    ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/basic_packet_socket_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtc_stats_report.o
     ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtc_stats.o
     ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtcstats_objects.o
