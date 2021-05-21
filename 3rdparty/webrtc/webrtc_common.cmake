@@ -85,38 +85,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
 
-    ${WEBRTC_NINJA_ROOT}/obj/call/simulated_network/simulated_network.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/version/version.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_interfaces/rtp_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/flexfec_receive_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/call_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/syncable.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/fake_network/fake_network_pipe.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_receiver/rtx_receive_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_receiver/rtp_demuxer.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_receiver/rtp_stream_receiver_controller.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_sender/rtp_transport_controller_send.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_sender/rtp_payload_params.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/rtp_sender/rtp_video_sender.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call/call.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call/call_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call/degraded_call.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call/receive_time_calculator.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call/flexfec_receive_stream_impl.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/bitrate_configurator/rtp_bitrate_configurator.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/bitrate_allocator/bitrate_allocator.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/video_stream_api/video_receive_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/video_stream_api/video_send_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/resource_adaptation_processor.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/video_stream_adapter.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/degradation_preference_provider.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/video_stream_input_state_provider.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/video_stream_input_state.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/video_source_restrictions.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/resource_adaptation_processor_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/encoder_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/broadcast_resource_listener.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/adaptation/resource_adaptation/adaptation_constraint.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/video_rtp_track_source/video_rtp_track_source.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_transceiver/rtp_transceiver.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_sender/rtp_sender.o
@@ -174,11 +142,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/data_channel_utils.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/track_media_info_map.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/stats_collector.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_simulcast_encoder_adapter/simulcast_encoder_adapter.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_vp9_profile/vp9_profile.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_data/sctp_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_encoder_simulcast_proxy/encoder_simulcast_proxy.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_h264_profile_id/h264_profile_level_id.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/weak_ptr/weak_ptr.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/stringutils/string_format.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/stringutils/string_builder.o
