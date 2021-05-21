@@ -85,18 +85,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
 
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/socket_address_pair.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_key_pair.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_digest.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/http_common.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/network.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/network_route.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/helpers.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/message_digest.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/net_helper.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/file_rotating_stream.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_udp_socket.o
-    # ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crypt_string.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/data_rate_limiter.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_invoker.o
@@ -105,14 +93,7 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/task_utils/pending_task_safety_flag/pending_task_safety_flag.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/task_utils/repeating_task/repeating_task.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/memory/fifo_buffer/fifo_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/memory/aligned_malloc/aligned_malloc.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/synchronization/sequence_checker_internal/sequence_checker_internal.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/synchronization/mutex/mutex.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/synchronization/yield_policy/yield_policy.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/synchronization/yield/yield.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/network/sent_packet/sent_packet.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/third_party/sigslot/sigslot/sigslot.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/third_party/base64/base64/base64.o
+
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/time/timestamp_extrapolator/timestamp_extrapolator.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/system/file_wrapper/file_wrapper.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport_api/transport.o
