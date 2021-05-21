@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
     // External address.
     std::cout << "TURN external addr: " << ext_addr.ToString() << std::endl;
     turn_server->SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
-                                          rtc::SocketAddress(ext_addr, 3478));
+                                          rtc::SocketAddress(ext_addr, 0));
     /////////////////
 
     thread->Run();

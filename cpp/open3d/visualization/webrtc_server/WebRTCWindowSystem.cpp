@@ -285,7 +285,7 @@ void WebRTCWindowSystem::StartWebRTCServer() {
                                            ->GetHttpApi();
 
                     // Embedded TURN server.
-                    if (false) {
+                    if (true) {
                         // Internal address.
                         std::unique_ptr<cricket::TurnServer> turn_server;
                         rtc::SocketAddress int_addr;
