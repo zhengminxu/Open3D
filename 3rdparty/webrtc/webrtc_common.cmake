@@ -151,16 +151,9 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_bwe_update_loss_based.o
     ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_probe_result_failure.o
     ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_bwe_update_delay_based.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_receive_stream_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_network_adaptation.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_playout.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_send_stream_config.o
     ${WEBRTC_NINJA_ROOT}/obj/call/simulated_network/simulated_network.o
     ${WEBRTC_NINJA_ROOT}/obj/call/version/version.o
     ${WEBRTC_NINJA_ROOT}/obj/call/rtp_interfaces/rtp_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/audio_send_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/audio_receive_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/audio_state.o
     ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/flexfec_receive_stream.o
     ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/call_config.o
     ${WEBRTC_NINJA_ROOT}/obj/call/call_interfaces/syncable.o
@@ -199,17 +192,14 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/pc/video_track_source/video_track_source.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/video_rtp_receiver/video_rtp_receiver.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peer_connection_message_handler/peer_connection_message_handler.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/remote_audio_source/remote_audio_source.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_receiver/rtp_receiver.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/usage_pattern/usage_pattern.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/media_stream/media_stream.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/jitter_buffer_delay/jitter_buffer_delay.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/audio_rtp_receiver/audio_rtp_receiver.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/media_protocol_names/media_protocol_names.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/transceiver_list/transceiver_list.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/connection_context/connection_context.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/dtmf_sender/dtmf_sender.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/audio_track/audio_track.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/channel_manager.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/jsep_transport.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/dtls_transport.o
@@ -235,7 +225,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/sdp_utils.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/data_channel_controller.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/peer_connection.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/local_audio_source.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/media_stream_observer.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/jsep_ice_candidate.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/webrtc_sdp.o
@@ -359,7 +348,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_tcp_socket.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_packet_socket.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rate_limiter/rate_limiter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/audio_format_to_string/audio_format_to_string.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/stable_target_rate_experiment/stable_target_rate_experiment.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/rate_control_settings/rate_control_settings.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/quality_scaler_settings/quality_scaler_settings.o
@@ -413,7 +401,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/api/create_peerconnection_factory/create_peerconnection_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/rtp_parameters.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/media_types.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_options_api/audio_options.o
     ${WEBRTC_NINJA_ROOT}/obj/api/neteq/tick_timer/tick_timer.o
     ${WEBRTC_NINJA_ROOT}/obj/api/neteq/default_neteq_controller_factory/default_neteq_controller_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/neteq/neteq_api/neteq.o
@@ -436,8 +423,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/field_trial_based_config/field_trial_based_config.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/bitrate_settings/bitrate_settings.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/rtp/dependency_descriptor/dependency_descriptor.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio/aec3_config/echo_canceller3_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio/aec3_factory/echo_canceller3_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_frame_i010/i010_buffer.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_bitrate_allocator/video_bitrate_allocator.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_bitrate_allocation/video_bitrate_allocation.o
@@ -487,7 +472,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/fec_private_tables_bursty.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/time_util.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/ulpfec_generator.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/rtp_sender_audio.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/rtp_utility.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/rtp_sender.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/rtp_sender_video_frame_transformer_delegate.o
@@ -545,10 +529,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp_format/rtp_packet_received.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp_format/report_block_data.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp_format/rtp_rtcp_defines.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_mixer/audio_frame_manipulator/audio_frame_manipulator.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_mixer/audio_mixer_impl/default_output_rate_calculator.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_mixer/audio_mixer_impl/frame_combiner.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_mixer/audio_mixer_impl/audio_mixer_impl.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/utility/utility/process_thread_impl.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/pacing/interval_budget/interval_budget.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/pacing/pacing/task_queue_paced_sender.o
