@@ -88,17 +88,7 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
 
 
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/media_types.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/neteq/tick_timer/tick_timer.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/neteq/default_neteq_controller_factory/default_neteq_controller_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/neteq/neteq_api/neteq.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/adaptation/resource_adaptation_api/resource.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/numerics/numerics/samples_stats_counter.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/units/data_rate/data_rate.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/units/frequency/frequency.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/units/timestamp/timestamp.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/units/time_delta/time_delta.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/units/data_size/data_size.o
+
     ${WEBRTC_NINJA_ROOT}/obj/api/crypto/options/crypto_options.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log_factory/rtc_event_log_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log/rtc_event_log.o
