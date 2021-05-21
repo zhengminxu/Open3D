@@ -87,17 +87,7 @@ set(EXTRA_WEBRTC_OBJS
     # Confimed
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
 
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/time/timestamp_extrapolator/timestamp_extrapolator.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/system/file_wrapper/file_wrapper.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/transport_api/transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtp_headers/rtp_headers.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtp_packet_info/rtp_packet_info.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log_output_file/rtc_event_log_output_file.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtc_error/rtc_error.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/ice_transport_factory/ice_transport_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/media_stream_interface/media_stream_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/create_peerconnection_factory/create_peerconnection_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/rtp_parameters.o
+
     ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/media_types.o
     ${WEBRTC_NINJA_ROOT}/obj/api/neteq/tick_timer/tick_timer.o
     ${WEBRTC_NINJA_ROOT}/obj/api/neteq/default_neteq_controller_factory/default_neteq_controller_factory.o
