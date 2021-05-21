@@ -51,12 +51,15 @@ namespace open3d {
 namespace visualization {
 namespace webrtc_server {
 
-// List of ICE servers. We only use publicly available STUN servers, which works
-// for most users. In certain network configurations (e.g. if the peers are
-// behind certain type of firewalls), STUN server may fail to resolve and in
-// this case, we'll need to implement and host a separate TURN server. If our
-// default list fails to connect, you may replace this with other STUN servers.
-static const std::list<std::string> ice_servers{"stun:stun.l.google.com:19302"};
+// List of ICE servers (STUN or TURN). STUN servers is used by default. In
+// certain network configurations TURN servers are required to forward WebRTC
+// traffic.
+static const std::list<std::string> s_public_ice_servers{
+        "stun:stun.l.google.com:19302"};
+static const std::list<std::string> s_open3d_ice_servers{
+        "turn:user:password@34.69.27.100:3478",
+        // "turn:user:password@34.69.27.100:3478?transport=tcp",
+};
 
 static std::string GetEnvWebRTCIP() {
     if (const char *env_p = std::getenv("WEBRTC_IP")) {
@@ -200,6 +203,12 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             rtc::Thread *thread = rtc::Thread::Current();
             rtc::InitializeSSL();
             Json::Value config;
+            std::list<std::string> ice_servers;
+            ice_servers.insert(ice_servers.end(), s_public_ice_servers.begin(),
+                               s_public_ice_servers.end());
+            ice_servers.insert(ice_servers.end(), s_open3d_ice_servers.begin(),
+                               s_open3d_ice_servers.end());
+
             impl_->peer_connection_manager_ =
                     std::make_unique<PeerConnectionManager>(
                             ice_servers, config["urls"], ".*", "");
