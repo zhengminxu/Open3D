@@ -125,6 +125,13 @@ int main(int argc, char* argv[]) {
     /////////////////
 
     ///////// webrtc-streamer example
+    // Example usage:
+    //
+    // make DrawWebRTC -j && (cd bin/examples && \
+    //   WEBRTC_STUN_SERVER="turn:user:password@$(curl -s ifconfig.me):3478" \
+    //   WEBRTC_PUBLIC_IP=$(curl -s ifconfig.me) WEBRTC_IP=192.168.86.121 \
+    //   ./DrawWebRTC)
+    //
     // Internal address.
     std::unique_ptr<cricket::TurnServer> turn_server;
     turn_server.reset(new cricket::TurnServer(thread));
