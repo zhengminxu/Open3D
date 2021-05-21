@@ -170,11 +170,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_network_adaptation.o
     ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_playout.o
     ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_audio/rtc_event_audio_send_stream_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/test/fake_video_codecs/fake_decoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/test/fake_video_codecs/fake_encoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/test/fake_video_codecs/fake_vp8_decoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/test/fake_video_codecs/configurable_frame_size_encoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/test/fake_video_codecs/fake_vp8_encoder.o
     ${WEBRTC_NINJA_ROOT}/obj/call/simulated_network/simulated_network.o
     ${WEBRTC_NINJA_ROOT}/obj/call/version/version.o
     ${WEBRTC_NINJA_ROOT}/obj/call/rtp_interfaces/rtp_config.o
@@ -271,112 +266,11 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/data_channel_utils.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/track_media_info_map.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/stats_collector.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_sse2/fir_filter_sse.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_sse2/sinc_resampler_sse.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_cc/dot_product_with_scale.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_avx2/sinc_resampler_avx2.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_avx2/fir_filter_avx2.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/vad_gmm.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/vector_scaling_operations.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/vad_filterbank.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/vad_sp.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/splitting_filter.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/webrtc_vad.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/sqrt_of_one_minus_x_squared.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/spl_sqrt.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/spl_inl.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/vad_core.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/resample_48khz.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/real_fft.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/resample_fractional.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/resample_by_2.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/spl_init.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/refl_coef_to_lpc.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/resample.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/resample_by_2_internal.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/complex_fft.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/filter_ar_fast_q12.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/complex_bit_reverse.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/filter_ma_fast_q12.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/filter_ar.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/energy.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/downsample_fast.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/min_max_operations.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/get_hanning_window.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/lpc_to_refl_coef.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/levinson_durbin.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/cross_correlation.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/randomization_functions.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/ilbc_specific_functions.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/get_scaling_square.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/copy_set_operations.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/division_operations.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/auto_correlation.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/auto_corr_to_refl_coef.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio_c/ring_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/resampler.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/push_sinc_resampler.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/vad.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/wav_file.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/smoothing_filter.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/real_fourier.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/audio_converter.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/channel_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/audio_util.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/real_fourier_ooura.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/push_resampler.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/wav_header.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/window_generator.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/common_audio/sinc_resampler.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/fir_filter_factory/fir_filter_c.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/fir_filter_factory/fir_filter_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor/spl_sqrt_floor.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/third_party/ooura/fft_size_256/fft4g.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/third_party/ooura/fft_size_128/ooura_fft.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_audio/third_party/ooura/fft_size_128/ooura_fft_sse2.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_internal_video_codecs/internal_decoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_internal_video_codecs/internal_encoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_internal_video_codecs/fake_video_codec_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_internal_video_codecs/multiplex_codec_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/media/rtc_simulcast_encoder_adapter/simulcast_encoder_adapter.o
     ${WEBRTC_NINJA_ROOT}/obj/media/rtc_vp9_profile/vp9_profile.o
     ${WEBRTC_NINJA_ROOT}/obj/media/rtc_data/sctp_transport.o
     ${WEBRTC_NINJA_ROOT}/obj/media/rtc_encoder_simulcast_proxy/encoder_simulcast_proxy.o
     ${WEBRTC_NINJA_ROOT}/obj/media/rtc_h264_profile_id/h264_profile_level_id.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/webrtc_voice_engine.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/webrtc_media_engine.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/webrtc_video_engine.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/adm_helpers.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/simulcast.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/unhandled_packets_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_audio_video/payload_type_mapper.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/rid_description.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/codec.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/media_channel.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/adapted_video_track_source.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/media_constants.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/rtp_data_engine.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/media_engine.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/rtp_utils.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/turn_utils.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/stream_params.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/video_adapter.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/video_source_base.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/video_common.o
-    ${WEBRTC_NINJA_ROOT}/obj/media/rtc_media_base/video_broadcaster.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/video_render_frames.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/video_frame_buffer_pool.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/video_frame_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/incoming_video_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/webrtc_libyuv.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/pps_parser.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/sps_parser.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/sps_vui_rewriter.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/frame_rate_estimator.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/h264_bitstream_parser.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/bitrate_adjuster.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/common_video/h264_common.o
-    ${WEBRTC_NINJA_ROOT}/obj/common_video/generic_frame_descriptor/generic_frame_descriptor/generic_frame_info.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/weak_ptr/weak_ptr.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/stringutils/string_format.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/stringutils/string_builder.o
@@ -549,44 +443,8 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log_factory/rtc_event_log_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log/rtc_event_log.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log/rtc_event.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/builtin_video_encoder_factory/builtin_video_encoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/builtin_video_decoder_factory/builtin_video_decoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/vp8_temporal_layers_factory/vp8_temporal_layers_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/rtc_software_fallback_wrappers/video_encoder_software_fallback_wrapper.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/rtc_software_fallback_wrappers/video_decoder_software_fallback_wrapper.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/sdp_video_format.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/vp8_temporal_layers.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/video_encoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/video_codec.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/spatial_layer.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/video_decoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/video_decoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/video_encoder_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/video_codecs/video_codecs_api/vp8_frame_config.o
     ${WEBRTC_NINJA_ROOT}/obj/api/task_queue/task_queue/task_queue_base.o
     ${WEBRTC_NINJA_ROOT}/obj/api/task_queue/default_task_queue_factory/default_task_queue_factory_stdlib.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/builtin_audio_encoder_factory/builtin_audio_encoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/builtin_audio_decoder_factory/builtin_audio_decoder_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/audio_codecs_api/audio_encoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/audio_codecs_api/audio_decoder.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/audio_codecs_api/audio_codec_pair_id.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/audio_codecs_api/audio_format.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/isac/audio_encoder_isac_float/audio_encoder_isac_float.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/isac/audio_decoder_isac_float/audio_decoder_isac_float.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/L16/audio_decoder_L16/audio_decoder_L16.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/L16/audio_encoder_L16/audio_encoder_L16.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/g711/audio_decoder_g711/audio_decoder_g711.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/g711/audio_encoder_g711/audio_encoder_g711.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/opus/audio_encoder_opus/audio_encoder_opus.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/opus/audio_encoder_multiopus/audio_encoder_multi_channel_opus.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/opus/audio_decoder_opus/audio_decoder_opus.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/opus/audio_decoder_multiopus/audio_decoder_multi_channel_opus.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/opus/audio_encoder_opus_config/audio_encoder_multi_channel_opus_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/opus/audio_encoder_opus_config/audio_encoder_opus_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/g722/audio_decoder_g722/audio_decoder_g722.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/g722/audio_encoder_g722/audio_encoder_g722.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/ilbc/audio_encoder_ilbc/audio_encoder_ilbc.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio_codecs/ilbc/audio_decoder_ilbc/audio_decoder_ilbc.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/stun_types/stun.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/network_control/network_types.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/goog_cc/goog_cc_factory.o
@@ -614,19 +472,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_frame/video_source_interface.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_frame/i420_buffer.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/encoded_image/encoded_image.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/video_capture/video_capture_module/video_capture_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/video_capture/video_capture_module/video_capture_impl.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/video_capture/video_capture_module/device_info_impl.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/video_capture/video_capture_internal_impl/device_info_linux.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/video_capture/video_capture_internal_impl/video_capture_linux.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/overuse_estimator.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/bwe_defines.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/inter_arrival.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/remote_bitrate_estimator_single_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/remote_estimator_proxy.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/overuse_detector.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/aimd_rate_control.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/remote_bitrate_estimator/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_video_header/rtp_video_header.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/flexfec_receiver.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/rtp_rtcp/rtp_rtcp/remote_ntp_time_estimator.o
