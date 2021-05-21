@@ -46,7 +46,6 @@ function(get_webrtc_args WEBRTC_ARGS)
 
     # Sound support
     set(WEBRTC_ARGS rtc_include_pulse_audio=false\n${WEBRTC_ARGS})
-    set(WEBRTC_ARGS rtc_include_internal_audio_device=false\n${WEBRTC_ARGS})
 
     # Use clang for compilation
     set(WEBRTC_ARGS is_clang=false\n${WEBRTC_ARGS})
@@ -118,20 +117,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/async_stun_tcp_socket.o
     ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/basic_ice_controller.o
     ${WEBRTC_NINJA_ROOT}/obj/p2p/rtc_p2p/basic_packet_socket_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/channel_receive.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/audio_state.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/audio_level.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/channel_send_frame_transformer_delegate.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/channel_send.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/audio_transport_impl.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/audio_send_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/audio_receive_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/null_audio_poller.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/remix_resample.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/audio/channel_receive_frame_transformer_delegate.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/utility/audio_frame_operations/audio_frame_operations.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/utility/audio_frame_operations/channel_mixer.o
-    ${WEBRTC_NINJA_ROOT}/obj/audio/utility/audio_frame_operations/channel_mixing_matrix.o
     ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtc_stats_report.o
     ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtc_stats.o
     ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtcstats_objects.o
@@ -452,8 +437,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/bitrate_settings/bitrate_settings.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/rtp/dependency_descriptor/dependency_descriptor.o
     ${WEBRTC_NINJA_ROOT}/obj/api/audio/aec3_config/echo_canceller3_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio/audio_frame_api/channel_layout.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/audio/audio_frame_api/audio_frame.o
     ${WEBRTC_NINJA_ROOT}/obj/api/audio/aec3_factory/echo_canceller3_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_frame_i010/i010_buffer.o
     ${WEBRTC_NINJA_ROOT}/obj/api/video/video_bitrate_allocator/video_bitrate_allocator.o
@@ -597,11 +580,4 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/modules/third_party/g722/g722_3p/g722_encode.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/third_party/g722/g722_3p/g722_decode.o
     ${WEBRTC_NINJA_ROOT}/obj/modules/third_party/g711/g711_3p/g711.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_buffer/fine_audio_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_buffer/audio_device_buffer.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_impl/file_audio_device_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_impl/audio_device_dummy.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_impl/file_audio_device.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_impl/test_audio_device.o
-    ${WEBRTC_NINJA_ROOT}/obj/modules/audio_device/audio_device_generic/audio_device_generic.o
 )
