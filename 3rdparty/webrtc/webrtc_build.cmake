@@ -78,6 +78,7 @@ ExternalProject_Add(
     INSTALL_COMMAND ""
     BUILD_IN_SOURCE ON
     ${BUILD_BYPRODUCTS} ${EXTRA_WEBRTC_OBJS}
+    BUILD_ALWAYS ON
 )
 
 # libwebrtc.a
