@@ -70,6 +70,14 @@ static std::string GetEnvWebRTCIP() {
     }
 }
 
+static std::string GetEnvWebRTCPublicIP() {
+    if (const char *env_p = std::getenv("WEBRTC_PUBLIC_IP")) {
+        return std::string(env_p);
+    } else {
+        return "localhost";
+    }
+}
+
 static std::string GetEnvWebRTCPort() {
     if (const char *env_p = std::getenv("WEBRTC_PORT")) {
         return std::string(env_p);
@@ -275,6 +283,42 @@ void WebRTCWindowSystem::StartWebRTCServer() {
                              HttpServerRequestHandler::HttpFunction>
                             func = impl_->peer_connection_manager_
                                            ->GetHttpApi();
+
+                    // Internal address.
+                    std::unique_ptr<cricket::TurnServer> turn_server;
+                    rtc::SocketAddress int_addr;
+                    int_addr.FromString(GetEnvWebRTCIP() + ":3478");
+                    turn_server.reset(new cricket::TurnServer(thread));
+                    // UDP.
+                    rtc::AsyncUDPSocket *udp_socket =
+                            rtc::AsyncUDPSocket::Create(thread->socketserver(),
+                                                        int_addr);
+                    if (udp_socket) {
+                        std::cout << "TURN Listening UDP at: "
+                                  << int_addr.ToString() << std::endl;
+                        turn_server->AddInternalSocket(udp_socket,
+                                                       cricket::PROTO_UDP);
+                    }
+                    // TCP.
+                    rtc::AsyncSocket *tcp_socket =
+                            thread->socketserver()->CreateAsyncSocket(
+                                    AF_INET, SOCK_STREAM);
+                    if (tcp_socket) {
+                        std::cout << "TURN Listening TCP at: "
+                                  << int_addr.ToString() << std::endl;
+                        tcp_socket->Bind(int_addr);
+                        tcp_socket->Listen(5);
+                        turn_server->AddInternalServerSocket(
+                                tcp_socket, cricket::PROTO_TCP);
+                    }
+                    // External address.
+                    rtc::SocketAddress ext_addr;
+                    ext_addr.FromString(GetEnvWebRTCPublicIP() + ":3478");
+                    std::cout << "TURN external addr: " << ext_addr.ToString()
+                              << std::endl;
+                    turn_server->SetExternalSocketFactory(
+                            new rtc::BasicPacketSocketFactory(),
+                            rtc::SocketAddress(ext_addr.ipaddr(), 0));
 
                     // Main loop for Civet server.
                     utility::LogInfo("Open3D WebVisualizer is serving at {}.",
