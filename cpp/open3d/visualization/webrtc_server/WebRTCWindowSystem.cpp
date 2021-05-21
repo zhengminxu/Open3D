@@ -286,10 +286,9 @@ void WebRTCWindowSystem::StartWebRTCServer() {
 
                     // Embedded TURN server. Set to if (true) to use.
                     //
-                    // make DrawWebRTC -j && (cd bin/examples && \
-                    //   WEBRTC_STUN_SERVER="turn:user:password@$(curl -s \
-                    //   ifconfig.me):3478" WEBRTC_PUBLIC_IP=$(curl -s \
-                    //   ifconfig.me) WEBRTC_IP=192.168.86.121 ./DrawWebRTC)
+                    // clang-format off
+                    // make DrawWebRTC -j && (cd bin/examples && WEBRTC_STUN_SERVER="turn:user:password@$(curl -s ifconfig.me):3478" WEBRTC_PUBLIC_IP=$(curl -s ifconfig.me) WEBRTC_IP=192.168.86.121 ./DrawWebRTC)
+                    // clang-format on
                     if (false) {
                         // Internal address.
                         std::unique_ptr<cricket::TurnServer> turn_server;

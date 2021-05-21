@@ -80,6 +80,11 @@ public:
 
 }  // namespace
 
+// Example usage:
+//
+// clang-format off
+// make turn_server -j && ./bin/turn_server 192.168.86.121:3478 $(curl -s ifconfig.me) "realm"
+// clang-format on
 int main(int argc, char* argv[]) {
     rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_VERBOSE);
     if (argc != 4) {
@@ -101,7 +106,7 @@ int main(int argc, char* argv[]) {
 
     rtc::Thread* thread = rtc::Thread::Current();
 
-    //////////////// Google Example
+    // Google Example //////////////////////////////////////////////////////////
     // rtc::AsyncUDPSocket* int_socket =
     //         rtc::AsyncUDPSocket::Create(thread->socketserver(), int_addr);
     // if (!int_socket) {
@@ -122,16 +127,9 @@ int main(int argc, char* argv[]) {
     // server.AddInternalSocket(int_socket, cricket::PROTO_UDP);
     // server.SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
     //                                 rtc::SocketAddress(ext_addr, 0));
-    /////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
-    ///////// webrtc-streamer example
-    // Example usage:
-    //
-    // make DrawWebRTC -j && (cd bin/examples && \
-    //   WEBRTC_STUN_SERVER="turn:user:password@$(curl -s ifconfig.me):3478" \
-    //   WEBRTC_PUBLIC_IP=$(curl -s ifconfig.me) WEBRTC_IP=192.168.86.121 \
-    //   ./DrawWebRTC)
-    //
+    // webrtc-streamer example /////////////////////////////////////////////////
     // Internal address.
     std::unique_ptr<cricket::TurnServer> turn_server;
     turn_server.reset(new cricket::TurnServer(thread));
@@ -157,7 +155,7 @@ int main(int argc, char* argv[]) {
     std::cout << "TURN external addr: " << ext_addr.ToString() << std::endl;
     turn_server->SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
                                           rtc::SocketAddress(ext_addr, 0));
-    /////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
     thread->Run();
     return 0;
