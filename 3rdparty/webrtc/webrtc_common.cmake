@@ -88,13 +88,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
 
 
-
-    ${WEBRTC_NINJA_ROOT}/obj/api/crypto/options/crypto_options.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log_factory/rtc_event_log_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log/rtc_event_log.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/rtc_event_log/rtc_event_log/rtc_event.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/task_queue/task_queue/task_queue_base.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/task_queue/default_task_queue_factory/default_task_queue_factory_stdlib.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/stun_types/stun.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/network_control/network_types.o
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/goog_cc/goog_cc_factory.o
