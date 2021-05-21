@@ -84,14 +84,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/p2p/p2p_server_utils/turn_server.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
-    # Confimed
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
-
-
     ${WEBRTC_NINJA_ROOT}/obj/api/transport/stun_types/stun.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/transport/network_control/network_types.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/transport/goog_cc/goog_cc_factory.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/transport/field_trial_based_config/field_trial_based_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/transport/bitrate_settings/bitrate_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/transport/rtp/dependency_descriptor/dependency_descriptor.o
 )
