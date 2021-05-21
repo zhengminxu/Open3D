@@ -66,12 +66,23 @@ private:
     const std::map<std::string, std::string> name_to_key_;
 };
 
+class AlwaysTrueAuth : public cricket::TurnAuthInterface {
+public:
+    explicit AlwaysTrueAuth() {}
+
+    virtual bool GetKey(const std::string& username,
+                        const std::string& realm,
+                        std::string* key) {
+        *key = "password";
+        return true;
+    }
+};
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
-    if (argc != 5) {
-        std::cerr << "usage: turnserver int-addr ext-ip realm auth-file"
-                  << std::endl;
+    if (argc != 4) {
+        std::cerr << "usage: turnserver int-addr ext-ip realm" << std::endl;
         return 1;
     }
 
@@ -97,11 +108,11 @@ int main(int argc, char* argv[]) {
     }
 
     cricket::TurnServer server(main);
-    std::fstream auth_file(argv[4], std::fstream::in);
-
-    TurnFileAuth auth(auth_file.is_open()
-                              ? webrtc_examples::ReadAuthFile(&auth_file)
-                              : std::map<std::string, std::string>());
+    // std::fstream auth_file(argv[4], std::fstream::in);
+    // TurnFileAuth auth(auth_file.is_open()
+    //                           ? webrtc_examples::ReadAuthFile(&auth_file)
+    //                           : std::map<std::string, std::string>());
+    AlwaysTrueAuth auth;
     server.set_realm(argv[3]);
     server.set_software(kSoftware);
     server.set_auth_hook(&auth);
