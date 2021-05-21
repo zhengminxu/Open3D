@@ -47,3 +47,17 @@ add_custom_command(
     OUTPUT always_rebuild
     COMMAND cmake -E echo
 )
+
+add_executable(turn_server
+    TurnServer.cpp
+)
+target_compile_definitions(turn_server PRIVATE
+    WEBRTC_POSIX
+    _FILE_OFFSET_BITS=64 # for civetweb
+    _LARGEFILE_SOURCE=1  # for civetweb
+)
+
+open3d_show_and_abort_on_warning(turn_server)
+open3d_set_global_properties(turn_server)
+open3d_set_open3d_lib_properties(turn_server)
+open3d_link_3rdparty_libraries(turn_server)
