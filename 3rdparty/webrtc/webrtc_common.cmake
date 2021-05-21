@@ -84,15 +84,8 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/p2p/p2p_server_utils/turn_server.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
-
+    # Confimed
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/crc32.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/data_rate_limiter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_invoker.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_tcp_socket.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_packet_socket.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/task_utils/pending_task_safety_flag/pending_task_safety_flag.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/task_utils/repeating_task/repeating_task.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/memory/fifo_buffer/fifo_buffer.o
 
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/time/timestamp_extrapolator/timestamp_extrapolator.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/system/file_wrapper/file_wrapper.o
