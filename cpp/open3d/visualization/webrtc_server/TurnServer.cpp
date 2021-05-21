@@ -99,18 +99,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    rtc::Thread* main = rtc::Thread::Current();
+    rtc::Thread* thread = rtc::Thread::Current();
 
     //////////////// Google Example
     // rtc::AsyncUDPSocket* int_socket =
-    //         rtc::AsyncUDPSocket::Create(main->socketserver(), int_addr);
+    //         rtc::AsyncUDPSocket::Create(thread->socketserver(), int_addr);
     // if (!int_socket) {
     //     std::cerr << "Failed to create a UDP socket bound at"
     //               << int_addr.ToString() << std::endl;
     //     return 1;
     // }
 
-    // cricket::TurnServer server(main);
+    // cricket::TurnServer server(thread);
     // // std::fstream auth_file(argv[4], std::fstream::in);
     // // TurnFileAuth auth(auth_file.is_open()
     // //                           ? webrtc_examples::ReadAuthFile(&auth_file)
@@ -125,34 +125,33 @@ int main(int argc, char* argv[]) {
     /////////////////
 
     ///////// webrtc-streamer example
-    std::unique_ptr<cricket::TurnServer> turnserver;
-    turnserver.reset(new cricket::TurnServer(main));
-
-    rtc::AsyncUDPSocket* server_socket =
-            rtc::AsyncUDPSocket::Create(main->socketserver(), int_addr);
-    if (server_socket) {
-        std::cout << "TURN Listening UDP at " << int_addr.ToString()
+    // Internal address.
+    std::unique_ptr<cricket::TurnServer> turn_server;
+    turn_server.reset(new cricket::TurnServer(thread));
+    // UDP.
+    rtc::AsyncUDPSocket* udp_socket =
+            rtc::AsyncUDPSocket::Create(thread->socketserver(), int_addr);
+    if (udp_socket) {
+        std::cout << "TURN Listening UDP at: " << int_addr.ToString()
                   << std::endl;
-        turnserver->AddInternalSocket(server_socket, cricket::PROTO_UDP);
+        turn_server->AddInternalSocket(udp_socket, cricket::PROTO_UDP);
     }
-    rtc::AsyncSocket* tcp_server_socket =
-            main->socketserver()->CreateAsyncSocket(AF_INET, SOCK_STREAM);
-    if (tcp_server_socket) {
-        std::cout << "TURN Listening TCP at " << int_addr.ToString()
+    // TCP.
+    rtc::AsyncSocket* tcp_socket =
+            thread->socketserver()->CreateAsyncSocket(AF_INET, SOCK_STREAM);
+    if (tcp_socket) {
+        std::cout << "TURN Listening TCP at: " << int_addr.ToString()
                   << std::endl;
-        tcp_server_socket->Bind(int_addr);
-        tcp_server_socket->Listen(5);
-        turnserver->AddInternalServerSocket(tcp_server_socket,
-                                            cricket::PROTO_TCP);
+        tcp_socket->Bind(int_addr);
+        tcp_socket->Listen(5);
+        turn_server->AddInternalServerSocket(tcp_socket, cricket::PROTO_TCP);
     }
-
-    std::cout << "TURN external addr:" << ext_addr.ToString() << std::endl;
-    turnserver->SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
-                                         rtc::SocketAddress(ext_addr, 0));
-
-    std::cout << "Listening internally at " << int_addr.ToString() << std::endl;
+    // External address.
+    std::cout << "TURN external addr: " << ext_addr.ToString() << std::endl;
+    turn_server->SetExternalSocketFactory(new rtc::BasicPacketSocketFactory(),
+                                          rtc::SocketAddress(ext_addr, 3478));
     /////////////////
 
-    main->Run();
+    thread->Run();
     return 0;
 }
