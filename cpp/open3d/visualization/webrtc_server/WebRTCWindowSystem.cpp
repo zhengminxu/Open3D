@@ -57,7 +57,7 @@ namespace webrtc_server {
 static const std::list<std::string> s_public_ice_servers{
         "stun:stun.l.google.com:19302"};
 static const std::list<std::string> s_open3d_ice_servers{
-        "turn:user:password@34.69.27.100:3478",
+        // "turn:user:password@34.69.27.100:3478",
         // "turn:user:password@34.69.27.100:3478?transport=tcp",
 };
 
@@ -74,6 +74,20 @@ static std::string GetEnvWebRTCPort() {
         return std::string(env_p);
     } else {
         return "8888";
+    }
+}
+
+/// Get custom STUN server address from WEBRTC_STUN_SERVER environment variable.
+/// Example usage:
+/// 1. Run WEBRTC_STUN_SERVER=turn:user:password@$(curl -s ifconfig.me):3478
+/// 2. Start your TURN server binding to a local IP address and port
+/// 3. Set router configurations to forward your local IP address and port to
+///    the public IP address and port.
+static std::string GetCustomSTUNServer() {
+    if (const char *env_p = std::getenv("WEBRTC_STUN_SERVER")) {
+        return std::string(env_p);
+    } else {
+        return "";
     }
 }
 
@@ -206,8 +220,12 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             std::list<std::string> ice_servers;
             ice_servers.insert(ice_servers.end(), s_public_ice_servers.begin(),
                                s_public_ice_servers.end());
+            if (!GetCustomSTUNServer().empty()) {
+                ice_servers.push_back(GetCustomSTUNServer());
+            }
             ice_servers.insert(ice_servers.end(), s_open3d_ice_servers.begin(),
                                s_open3d_ice_servers.end());
+            utility::LogInfo("ICE servers: {}", ice_servers);
 
             impl_->peer_connection_manager_ =
                     std::make_unique<PeerConnectionManager>(
