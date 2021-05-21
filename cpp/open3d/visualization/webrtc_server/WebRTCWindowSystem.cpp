@@ -83,11 +83,11 @@ static std::string GetEnvWebRTCPort() {
 /// Example usage:
 /// 1. Set WEBRTC_STUN_SERVER to:
 ///    - UDP only
-///      turn:user:password@$(curl -s ifconfig.me):3478
+///      WEBRTC_STUN_SERVER="turn:user:password@$(curl -s ifconfig.me):3478"
 ///    - TCP only
-///      turn:user:password@$(curl -s ifconfig.me):3478?transport=tcp
+///      WEBRTC_STUN_SERVER="turn:user:password@$(curl -s ifconfig.me):3478?transport=tcp"
 ///    - UDP and TCP
-///      turn:user:password@$(curl -s ifconfig.me):3478;turn:user:password@$(curl -s ifconfig.me):3478?transport=tcp
+///      WEBRTC_STUN_SERVER="turn:user:password@$(curl -s ifconfig.me):3478;turn:user:password@$(curl -s ifconfig.me):3478?transport=tcp"
 /// 2. Start your TURN server binding to a local IP address and port
 /// 3. Set router configurations to forward your local IP address and port to
 ///    the public IP address and port.
@@ -230,7 +230,10 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             ice_servers.insert(ice_servers.end(), s_public_ice_servers.begin(),
                                s_public_ice_servers.end());
             if (!GetCustomSTUNServer().empty()) {
-                ice_servers.push_back(GetCustomSTUNServer());
+                std::vector<std::string> custom_servers =
+                        utility::SplitString(GetCustomSTUNServer(), ";");
+                ice_servers.insert(ice_servers.end(), custom_servers.begin(),
+                                   custom_servers.end());
             }
             ice_servers.insert(ice_servers.end(), s_open3d_ice_servers.begin(),
                                s_open3d_ice_servers.end());
