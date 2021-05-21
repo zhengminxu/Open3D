@@ -85,40 +85,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
 
-    ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtc_stats_report.o
-    ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtc_stats.o
-    ${WEBRTC_NINJA_ROOT}/obj/stats/rtc_stats/rtcstats_objects.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/metrics/metrics.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/field_trial/field_trial.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/system_wrappers/cpu_info.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/system_wrappers/rtp_to_ntp_estimator.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/system_wrappers/clock.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/system_wrappers/cpu_features_linux.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/system_wrappers/sleep.o
-    ${WEBRTC_NINJA_ROOT}/obj/system_wrappers/system_wrappers/cpu_features.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_video/rtc_event_video_receive_stream_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_video/rtc_event_video_send_stream_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_stream_config/rtc_stream_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_pacing/rtc_event_alr_state.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_rtp_rtcp/rtc_event_rtp_packet_outgoing.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_rtp_rtcp/rtc_event_rtp_packet_incoming.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_rtp_rtcp/rtc_event_rtcp_packet_incoming.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_rtp_rtcp/rtc_event_rtcp_packet_outgoing.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/ice_log/rtc_event_ice_candidate_pair.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/ice_log/ice_logger.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/ice_log/rtc_event_dtls_transport_state.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/ice_log/rtc_event_ice_candidate_pair_config.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/ice_log/rtc_event_dtls_writable_state.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_log_impl_encoder/var_int.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_log_impl_encoder/rtc_event_log_encoder_common.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_log_impl_encoder/blob_encoding.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_log_impl_encoder/delta_encoding.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_probe_result_success.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_route_change.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_probe_cluster_created.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_bwe_update_loss_based.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_probe_result_failure.o
-    ${WEBRTC_NINJA_ROOT}/obj/logging/rtc_event_bwe/rtc_event_bwe_update_delay_based.o
     ${WEBRTC_NINJA_ROOT}/obj/call/simulated_network/simulated_network.o
     ${WEBRTC_NINJA_ROOT}/obj/call/version/version.o
     ${WEBRTC_NINJA_ROOT}/obj/call/rtp_interfaces/rtp_config.o
