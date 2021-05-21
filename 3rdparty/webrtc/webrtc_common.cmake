@@ -85,15 +85,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
 
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ssl_fingerprint.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_stream_adapter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/socket_adapters.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ssl_certificate.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ssl_adapter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_session_cache.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/rtc_certificate.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_utility.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_adapter.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/socket_address_pair.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_key_pair.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_digest.o
@@ -131,18 +122,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/api/rtc_error/rtc_error.o
     ${WEBRTC_NINJA_ROOT}/obj/api/ice_transport_factory/ice_transport_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/media_stream_interface/media_stream_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/data_channel_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/rtp_receiver_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/dtls_transport_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/stats_types.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/proxy.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/rtp_transceiver_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/rtp_sender_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/sctp_transport_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/peer_connection_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/candidate.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/jsep_ice_candidate.o
-    ${WEBRTC_NINJA_ROOT}/obj/api/libjingle_peerconnection_api/jsep.o
     ${WEBRTC_NINJA_ROOT}/obj/api/create_peerconnection_factory/create_peerconnection_factory.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/rtp_parameters.o
     ${WEBRTC_NINJA_ROOT}/obj/api/rtp_parameters/media_types.o
