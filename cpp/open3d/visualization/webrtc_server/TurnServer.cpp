@@ -81,6 +81,7 @@ public:
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_VERBOSE);
     if (argc != 4) {
         std::cerr << "usage: turnserver int-addr ext-ip realm" << std::endl;
         return 1;

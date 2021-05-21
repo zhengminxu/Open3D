@@ -55,7 +55,8 @@ namespace webrtc_server {
 // certain network configurations TURN servers are required to forward WebRTC
 // traffic.
 static const std::list<std::string> s_public_ice_servers{
-        "stun:stun.l.google.com:19302"};
+        // "stun:stun.l.google.com:19302",
+};
 static const std::list<std::string> s_open3d_ice_servers{
         // "turn:user:password@34.69.27.100:3478",
         // "turn:user:password@34.69.27.100:3478?transport=tcp",
