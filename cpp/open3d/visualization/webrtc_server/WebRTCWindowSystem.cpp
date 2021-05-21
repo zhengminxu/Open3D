@@ -77,12 +77,21 @@ static std::string GetEnvWebRTCPort() {
     }
 }
 
+// clang-format off
 /// Get custom STUN server address from WEBRTC_STUN_SERVER environment variable.
+/// If there are more than one server, separate them with ";".
 /// Example usage:
-/// 1. Run WEBRTC_STUN_SERVER=turn:user:password@$(curl -s ifconfig.me):3478
+/// 1. Set WEBRTC_STUN_SERVER to:
+///    - UDP only
+///      turn:user:password@$(curl -s ifconfig.me):3478
+///    - TCP only
+///      turn:user:password@$(curl -s ifconfig.me):3478?transport=tcp
+///    - UDP and TCP
+///      turn:user:password@$(curl -s ifconfig.me):3478;turn:user:password@$(curl -s ifconfig.me):3478?transport=tcp
 /// 2. Start your TURN server binding to a local IP address and port
 /// 3. Set router configurations to forward your local IP address and port to
 ///    the public IP address and port.
+// clang-format on
 static std::string GetCustomSTUNServer() {
     if (const char *env_p = std::getenv("WEBRTC_STUN_SERVER")) {
         return std::string(env_p);
