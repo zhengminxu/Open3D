@@ -84,45 +84,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/p2p/p2p_server_utils/turn_server.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
-
-    ${WEBRTC_NINJA_ROOT}/obj/pc/video_rtp_track_source/video_rtp_track_source.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_transceiver/rtp_transceiver.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_sender/rtp_sender.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/video_track/video_track.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_parameters_conversion/rtp_parameters_conversion.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_transmission_manager/rtp_transmission_manager.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/video_track_source/video_track_source.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/video_rtp_receiver/video_rtp_receiver.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/peer_connection_message_handler/peer_connection_message_handler.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtp_receiver/rtp_receiver.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/usage_pattern/usage_pattern.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/media_stream/media_stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/jitter_buffer_delay/jitter_buffer_delay.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/media_protocol_names/media_protocol_names.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/transceiver_list/transceiver_list.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/connection_context/connection_context.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/dtmf_sender/dtmf_sender.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/channel_manager.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/jsep_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/dtls_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/dtls_srtp_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/rtp_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/sctp_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/sctp_data_channel_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/srtp_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/session_description.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/rtp_media_utils.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/transport_stats.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/sctp_utils.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/channel.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/srtp_session.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/srtp_filter.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/ice_transport.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/simulcast_description.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/external_hmac.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/jsep_transport_controller.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/media_session.o
-    ${WEBRTC_NINJA_ROOT}/obj/pc/rtc_pc_base/rtcp_mux_filter.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/sdp_serializer.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/sdp_utils.o
     ${WEBRTC_NINJA_ROOT}/obj/pc/peerconnection/data_channel_controller.o
