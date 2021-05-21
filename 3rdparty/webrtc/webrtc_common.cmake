@@ -84,31 +84,7 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/p2p/p2p_server_utils/turn_server.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
 
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_event/event.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_json/json.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_operations_chain/operations_chain.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/platform_thread_types/platform_thread_types.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/platform_thread/platform_thread.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/null_socket_server/null_socket_server.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/ip_address/ip_address.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/logging/logging.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/net_helpers/net_helpers.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/network_constants/network_constants.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/checks/checks.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/criticalsection/recursive_critical_section.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/callback_list/callback_list.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/async_resolver_interface/async_resolver_interface.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/async_socket/async_socket.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/boringssl_certificate.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/boringssl_identity.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/log_sinks.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ifaddrs_converter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/unique_id_generator.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/stream.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ssl_stream_adapter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ssl_identity.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/proxy_info.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/rtc_certificate_generator.o
+
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/ssl_fingerprint.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/openssl_stream_adapter.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/socket_adapters.o
