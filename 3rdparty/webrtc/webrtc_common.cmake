@@ -111,25 +111,6 @@ set(EXTRA_WEBRTC_OBJS
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_invoker.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_tcp_socket.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rtc_base/async_packet_socket.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/rate_limiter/rate_limiter.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/stable_target_rate_experiment/stable_target_rate_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/rate_control_settings/rate_control_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/quality_scaler_settings/quality_scaler_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/rtt_mult_experiment/rtt_mult_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/quality_scaling_experiment/quality_scaling_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/min_video_bitrate_experiment/min_video_bitrate_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/normalize_simulcast_size_experiment/normalize_simulcast_size_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/quality_rampup_experiment/quality_rampup_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/keyframe_interval_settings_experiment/keyframe_interval_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/alr_experiment/alr_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/cpu_speed_experiment/cpu_speed_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/balanced_degradation_settings/balanced_degradation_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/jitter_upper_bound_experiment/jitter_upper_bound_experiment.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/encoder_info_settings/encoder_info_settings.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/field_trial_parser/field_trial_list.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/field_trial_parser/field_trial_units.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/field_trial_parser/field_trial_parser.o
-    ${WEBRTC_NINJA_ROOT}/obj/rtc_base/experiments/field_trial_parser/struct_parameters_parser.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/task_utils/pending_task_safety_flag/pending_task_safety_flag.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/task_utils/repeating_task/repeating_task.o
     ${WEBRTC_NINJA_ROOT}/obj/rtc_base/memory/fifo_buffer/fifo_buffer.o
