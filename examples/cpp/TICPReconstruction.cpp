@@ -38,8 +38,6 @@ using namespace open3d;
 using namespace open3d::visualization;
 using namespace open3d::t::pipelines::registration;
 
-const int WIDTH = 1280;
-const int HEIGHT = 800;
 float verticalFoV = 25;
 
 const Eigen::Vector3f CENTER_OFFSET(-10.0f, 0.0f, 30.0f);
@@ -352,25 +350,39 @@ private:
                 // condition with the data, and pass it to the visualizer for
                 // rendering, using `AddGeometry`, or update an existing
                 // pointcloud using `UpdateGeometry`, then setup camera.
-                gui::Application::GetInstance().PostToMainThread(this, [this,
-                                                                        i]() {
-                    // Locking to protect: pcd_.source_,
-                    // pcd_.correspondence_src_, pcd_correpondece_tar_.
-                    std::lock_guard<std::mutex> lock(pcd_lock_);
+                gui::Application::GetInstance().PostToMainThread(
+                        this, [this]() {
+                            // Locking to protect: pcd_.source_,
+                            // pcd_.correspondence_src_, pcd_correpondece_tar_.
+                            std::lock_guard<std::mutex> lock(pcd_lock_);
 
-                    this->widget3d_->GetScene()->GetScene()->UpdateGeometry(
-                            SRC_CLOUD, pcd_.source_,
-                            rendering::Scene::kUpdatePointsFlag |
-                                    rendering::Scene::kUpdateColorsFlag);
-                    this->widget3d_->GetScene()->GetScene()->UpdateGeometry(
-                            SRC_CORRES, pcd_.correspondence_src_,
-                            rendering::Scene::kUpdatePointsFlag |
-                                    rendering::Scene::kUpdateColorsFlag);
-                    this->widget3d_->GetScene()->GetScene()->UpdateGeometry(
-                            TAR_CORRES, pcd_.correspondence_tar_,
-                            rendering::Scene::kUpdatePointsFlag |
-                                    rendering::Scene::kUpdateColorsFlag);
-                });
+                            this->widget3d_->GetScene()
+                                    ->GetScene()
+                                    ->UpdateGeometry(
+                                            SRC_CLOUD, pcd_.source_,
+                                            rendering::Scene::
+                                                            kUpdatePointsFlag |
+                                                    rendering::Scene::
+                                                            kUpdateColorsFlag);
+                            this->widget3d_->GetScene()
+                                    ->GetScene()
+                                    ->UpdateGeometry(
+                                            SRC_CORRES,
+                                            pcd_.correspondence_src_,
+                                            rendering::Scene::
+                                                            kUpdatePointsFlag |
+                                                    rendering::Scene::
+                                                            kUpdateColorsFlag);
+                            this->widget3d_->GetScene()
+                                    ->GetScene()
+                                    ->UpdateGeometry(
+                                            TAR_CORRES,
+                                            pcd_.correspondence_tar_,
+                                            rendering::Scene::
+                                                            kUpdatePointsFlag |
+                                                    rendering::Scene::
+                                                            kUpdateColorsFlag);
+                        });
                 // -------------------------------------------------------
 
                 // ICPConvergenceCriteria, to terminate iteration.
@@ -665,7 +677,6 @@ private:
     std::string path_target_;
     std::string registration_method_;
     utility::VerbosityLevel verbosity_;
-    bool visualize_output_;
 
 private:
     std::vector<double> voxel_sizes_;
@@ -678,17 +689,34 @@ private:
     t::pipelines::registration::RegistrationResult result_;
 };
 
-//------------------------------------------------------------------------------
-int main(int argc, const char* argv[]) {
-    if (argc < 3) {
-        utility::LogError("Expected dataset path as input");
+void PrintHelp() {
+    using namespace open3d;
+
+    PrintOpen3DVersion();
+    // clang-format off
+    utility::LogInfo("Usage:");
+    utility::LogInfo("    > TICPReconstruction [device] [config_file_path]");
+    // clang-format on
+    utility::LogInfo("");
+}
+
+int main(int argc, char* argv[]) {
+    using namespace open3d;
+
+    utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
+
+    if (argc != 3 ||
+        utility::ProgramOptionExistsAny(argc, argv, {"-h", "--help"})) {
+        PrintHelp();
+        return 1;
     }
+
     const std::string path_config = std::string(argv[2]);
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
     auto& app = gui::Application::GetInstance();
-    app.Initialize(argc, argv);
+    app.Initialize(argc, (const char**)argv);
     app.AddWindow(std::make_shared<ExampleWindow>(path_config,
                                                   core::Device(argv[1])));
     app.Run();
