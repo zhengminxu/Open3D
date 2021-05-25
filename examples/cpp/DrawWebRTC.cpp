@@ -78,9 +78,10 @@ void AddDrawWindow(
 void DrawPCD(const std::string &filename) {
     geometry::PointCloud pcd;
     io::ReadPointCloud(filename, pcd);
+    pcd.EstimateNormals();
     auto pcd_ptr = std::make_shared<geometry::PointCloud>(pcd);
 
-    AddDrawWindow({pcd_ptr}, filename, 800, 480);
+    AddDrawWindow({pcd_ptr}, filename, 300, 200);
 }
 
 int main(int argc, char **argv) {
@@ -97,10 +98,10 @@ int main(int argc, char **argv) {
     // Uncomment this line to see more WebRTC loggings
     // utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/apartment.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/bedroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/boardroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/lobby.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
 
     visualization::gui::Application::GetInstance().Run();
 }
