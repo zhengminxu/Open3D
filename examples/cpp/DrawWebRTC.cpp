@@ -75,60 +75,13 @@ void AddDrawWindow(
 
 // Create a window with an empty box and a custom action button for adding a
 // new visualization vindow.
-void EmptyBox() {
-    const double pc_rad = 1.0;
-    const double r = 0.4;
+void DrawPCD(const std::string &filename) {
 
-    auto big_bbox = std::make_shared<geometry::AxisAlignedBoundingBox>(
-            Eigen::Vector3d{-pc_rad, -3, -pc_rad},
-            Eigen::Vector3d{6.0 + r, 1.0 + r, pc_rad});
+    geometry::PointCloud pcd;
+    io::ReadPointCloud(filename, pcd);
+    auto pcd_ptr = std::make_shared<geometry::PointCloud>(pcd);
 
-    auto new_window_action =
-            [](visualization::visualizer::O3DVisualizer &o3dvis) {
-                utility::LogInfo("new_window_action called");
-                auto mesh = std::make_shared<geometry::TriangleMesh>();
-                io::ReadTriangleMesh(TEST_DIR + "/knot.ply", *mesh);
-                mesh->ComputeVertexNormals();
-                AddDrawWindow({mesh}, "Open3D pcd", 640, 480);
-            };
-
-    AddDrawWindow({big_bbox}, "Open3D EmptyBox", 800, 480,
-                  {{"Load example mesh", new_window_action}});
-}
-
-// Create a window with various geometry objects.
-void BoxWithObjects() {
-    const double pc_rad = 1.0;
-    const double r = 0.4;
-    auto sphere_unlit = geometry::TriangleMesh::CreateSphere(r);
-    sphere_unlit->Translate({0.0, 1.0, 0.0});
-    auto sphere_colored_unlit = geometry::TriangleMesh::CreateSphere(r);
-    sphere_colored_unlit->PaintUniformColor({1.0, 0.0, 0.0});
-    sphere_colored_unlit->Translate({2.0, 1.0, 0.0});
-    auto sphere_lit = geometry::TriangleMesh::CreateSphere(r);
-    sphere_lit->ComputeVertexNormals();
-    sphere_lit->Translate({4, 1, 0});
-    auto sphere_colored_lit = geometry::TriangleMesh::CreateSphere(r);
-    sphere_colored_lit->ComputeVertexNormals();
-    sphere_colored_lit->PaintUniformColor({0.0, 1.0, 0.0});
-    sphere_colored_lit->Translate({6, 1, 0});
-    auto big_bbox = std::make_shared<geometry::AxisAlignedBoundingBox>(
-            Eigen::Vector3d{-pc_rad, -3, -pc_rad},
-            Eigen::Vector3d{6.0 + r, 1.0 + r, pc_rad});
-    auto bbox = sphere_unlit->GetAxisAlignedBoundingBox();
-    auto sphere_bbox = std::make_shared<geometry::AxisAlignedBoundingBox>(
-            bbox.min_bound_, bbox.max_bound_);
-    sphere_bbox->color_ = {1.0, 0.5, 0.0};
-    auto lines = geometry::LineSet::CreateFromAxisAlignedBoundingBox(
-            sphere_lit->GetAxisAlignedBoundingBox());
-    auto lines_colored = geometry::LineSet::CreateFromAxisAlignedBoundingBox(
-            sphere_colored_lit->GetAxisAlignedBoundingBox());
-    lines_colored->PaintUniformColor({0.0, 0.0, 1.0});
-
-    AddDrawWindow(
-            {sphere_unlit, sphere_colored_unlit, sphere_lit, sphere_colored_lit,
-             big_bbox, sphere_bbox, lines, lines_colored},
-            "Open3D BoxWithObjects", 640, 480);
+    AddDrawWindow({pcd_ptr}, filename, 800, 480);
 }
 
 int main(int argc, char **argv) {
@@ -138,13 +91,17 @@ int main(int argc, char **argv) {
                 "test_dir: {}",
                 TEST_DIR);
     }
+
     visualization::webrtc_server::WebRTCWindowSystem::GetInstance()
             ->EnableWebRTC();
 
     // Uncomment this line to see more WebRTC loggings
     // utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
-    EmptyBox();
-    BoxWithObjects();
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/apartment.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/bedroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/boardroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/lobby.ply");
+    
     visualization::gui::Application::GetInstance().Run();
 }
