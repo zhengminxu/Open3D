@@ -80,7 +80,7 @@ void DrawPCD(const std::string &filename) {
     io::ReadPointCloud(filename, pcd);
     auto pcd_ptr = std::make_shared<geometry::PointCloud>(pcd);
 
-    AddDrawWindow({pcd_ptr}, filename, 800, 480);
+    AddDrawWindow({pcd_ptr}, filename, 600, 400);
 }
 
 int main(int argc, char **argv) {
