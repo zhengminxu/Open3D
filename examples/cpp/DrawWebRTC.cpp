@@ -81,7 +81,7 @@ void DrawPCD(const std::string &filename) {
     pcd.EstimateNormals();
     auto pcd_ptr = std::make_shared<geometry::PointCloud>(pcd);
 
-    AddDrawWindow({pcd_ptr}, filename, 300, 200);
+    AddDrawWindow({pcd_ptr}, filename, 600, 400);
 }
 
 int main(int argc, char **argv) {
