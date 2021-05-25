@@ -76,7 +76,6 @@ void AddDrawWindow(
 // Create a window with an empty box and a custom action button for adding a
 // new visualization vindow.
 void DrawPCD(const std::string &filename) {
-
     geometry::PointCloud pcd;
     io::ReadPointCloud(filename, pcd);
     auto pcd_ptr = std::make_shared<geometry::PointCloud>(pcd);
@@ -102,6 +101,6 @@ int main(int argc, char **argv) {
     DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/bedroom.ply");
     DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/boardroom.ply");
     DrawPCD(TEST_DIR + "/open3d_downloads/redwood_indoor_rgbd/lobby.ply");
-    
+
     visualization::gui::Application::GetInstance().Run();
 }

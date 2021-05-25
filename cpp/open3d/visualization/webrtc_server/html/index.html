@@ -208,11 +208,19 @@
       /**
        * Load/unload callbacks.
        */
+
+      //  window.onload = function () {
+      //     addConnection("window_0");
+      //     addConnection("window_1");
+      //     addConnection("window_2");
+      //     addConnection("window_3");
+      // };       
       window.onload = function () {
         WebRtcStreamer.getMediaList()
           .then((response) => response.json())
           .then((response) => updateMediaList(response));
       };
+
       window.onbeforeunload = function () {
         for (let key in webRtcServerList) {
           webRtcServerList[key].disconnect();
@@ -340,8 +348,58 @@
 
 		<!-- OPEN3D -->
 		<nav id="menu"></nav>
-		<div id="content"></div>
-		<!-- OPEN3D END -->
+
+    <div class="col-lg-8 col-lg-offset-2">
+      <section class="no-padding" id="portfolio">
+        <div class="alert alert-info">
+          <span class="glyphicon glyphicon-search"></span>
+          Click thumbnails to see zoomed images
+        </div>
+          <div class="container-fluid">
+              <div class="row no-gutter popup-gallery">
+                  <div class="col-lg-6">
+                    <div id="content">
+                      <div id="div_video_window_0">
+                        <div class="vsc-controller vsc-nosource" data-vscid="z6xt7h05e"></div>
+                        <h2 id="title_video_window_0"></h2>
+                        <video id="video_window_0" title="window_0" src="" data-vscid="z6xt7h05e" style="opacity: 1;"></video>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div id="content">
+                      <div id="div_video_window_1">
+                        <div class="vsc-controller vsc-nosource" data-vscid="eyn06zzka"></div>
+                        <h2 id="title_video_window_1"></h2>
+                        <video id="video_window_1" title="window_1" src="" data-vscid="eyn06zzka" style="opacity: 1;"></video>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div id="content">
+                      <div id="div_video_window_2">
+                        <div class="vsc-controller vsc-nosource" data-vscid="zuke4vd6b"></div>
+                        <h2 id="title_video_window_2"></h2>
+                        <video id="video_window_2" title="window_2" src="" data-vscid="zuke4vd6b" style="opacity: 1;"></video>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div id="content">
+                      <div id="div_video_window_3">
+                        <div class="vsc-controller vsc-nosource" data-vscid="tttqjh886"></div>
+                        <h2 id="title_video_window_3"></h2>
+                        <video id="video_window_3" title="window_3" src="" data-vscid="tttqjh886" style="opacity: 1;"></video>
+                      </div>
+                    </div>
+                  </div>  
+              </div>
+          </div>
+      </section>
+      </div>              
+
+    
+    <!-- OPEN3D END -->
 
 		<div class="col-lg-3">
 			<h2>Paper</h2>
