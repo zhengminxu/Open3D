@@ -23,7 +23,10 @@
 cmake_minimum_required(VERSION 3.18)
 project(webrtc CXX)
 
-option(WEBRTC_IS_DEBUG       "WebRTC Debug buid"              OFF)
+include(CMakeDependentOption)
+# Force WEBRTC_IS_DEBUG to ON if WIN32 Debug, else allow user setting.
+cmake_dependent_option(WEBRTC_IS_DEBUG "WebRTC Debug build" OFF
+    "NOT CMAKE_BUILD_TYPE STREQUAL Debug OR NOT WIN32" ON)
 option(GLIBCXX_USE_CXX11_ABI "Set -D_GLIBCXX_USE_CXX11_ABI=1" OFF)
 
 # Set paths
@@ -67,7 +70,9 @@ add_custom_target(webrtc
 
 # libwebrtc_extra.a
 add_library(webrtc_extra STATIC ${EXTRA_WEBRTC_OBJS})
-set_source_files_properties(${EXTRA_WEBRTC_OBJS} PROPERTIES GENERATED TRUE)
+set_source_files_properties(${EXTRA_WEBRTC_OBJS} PROPERTIES
+	GENERATED TRUE
+	EXTERNAL_OBJECT TRUE)
 add_dependencies(webrtc_extra webrtc)
 set_target_properties(webrtc_extra PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(webrtc_extra PROPERTIES
@@ -85,13 +90,15 @@ set_target_properties(webrtc_extra PROPERTIES
 # `-- lib
 #     |-- libwebrtc.a
 #     `-- libwebrtc_extra.a
-install(DIRECTORY
-    ${WEBRTC_ROOT}/src/  # The trailing / is critical
-    DESTINATION include
-    FILES_MATCHING PATTERN "*.h"
-)
+file(GLOB_RECURSE WEBRTC_INCLUDES RELATIVE ${WEBRTC_ROOT}/src
+    ${WEBRTC_ROOT}/src/*.h
+    )
+foreach(header ${WEBRTC_INCLUDES})
+    get_filename_component(dir ${header} DIRECTORY)
+    install(FILES ${WEBRTC_ROOT}/src/${header} DESTINATION include/${dir})
+endforeach()
 install(FILES
-    ${WEBRTC_NINJA_ROOT}/obj/libwebrtc.a
-    ${WEBRTC_NINJA_ROOT}/obj/libwebrtc_extra.a
+    ${WEBRTC_NINJA_ROOT}/obj/${CMAKE_STATIC_LIBRARY_PREFIX}webrtc${CMAKE_STATIC_LIBRARY_SUFFIX}
+    ${WEBRTC_NINJA_ROOT}/obj/${CMAKE_STATIC_LIBRARY_PREFIX}webrtc_extra${CMAKE_STATIC_LIBRARY_SUFFIX}
     DESTINATION lib
 )
