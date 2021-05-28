@@ -28,6 +28,7 @@
 
 #include "open3d/Open3D.h"
 #include "open3d/utility/FileSystem.h"
+#include "open3d/visualization/rendering/Open3DScene.h"
 
 // TODO: edit Open3D.h.in
 #include "open3d/visualization/webrtc_server/WebRTCWindowSystem.h"
@@ -57,6 +58,26 @@ void AddDrawWindow(
 
     auto draw = std::make_shared<visualization::visualizer::O3DVisualizer>(
             window_name, width, height);
+    // draw->ShowMenu(true);
+    // auto scene = draw->GetScene();
+    // scene->SetLighting(open3d::visualization::rendering::Open3DScene::LightingProfile::NO_SHADOWS,
+    // {-0.331, 0.839, 0.431});
+    draw->SetHDRI("streetlamp");
+    // draw->impl_->SetIBL("");
+
+    auto hidefunc =
+            [](open3d::visualization::visualizer::O3DVisualizer &o3dvis) {
+                o3dvis.ShowMenu(false);
+            };
+
+    draw->AddAction("HideMenu", hidefunc);
+    draw->AddAction("eMenu", hidefunc);
+    draw->AddAction("eenu", hidefunc);
+    draw->AddAction("eMeu", hidefunc);
+    draw->AddAction("eMenu", hidefunc);
+    draw->AddAction("eMnu", hidefunc);
+    draw->AddAction("eenu", hidefunc);
+
     for (auto &o : objects) {
         if (o.geometry) {
             draw->AddGeometry(o.name, o.geometry);
@@ -70,6 +91,7 @@ void AddDrawWindow(
     }
     draw->ResetCameraToDefault();
     visualization::gui::Application::GetInstance().AddWindow(draw);
+
     draw.reset();  // so we don't hold onto the pointer after Run() cleans up
 }
 
@@ -99,9 +121,9 @@ int main(int argc, char **argv) {
     // utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
     DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/apartment.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/boardroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/loft.ply");
 
     visualization::gui::Application::GetInstance().Run();
 }

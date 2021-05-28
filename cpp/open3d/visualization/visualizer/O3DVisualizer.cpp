@@ -79,7 +79,7 @@ static const std::string kShaderLit = "defaultLit";
 static const std::string kShaderUnlit = "defaultUnlit";
 static const std::string kShaderUnlitLines = "unlitLine";
 
-static const std::string kDefaultIBL = "default";
+static const std::string kDefaultIBL = "streetlamp";
 
 enum MenuId {
     MENU_ABOUT = 0,
@@ -683,6 +683,10 @@ struct O3DVisualizer::Impl {
             std::string resource_path =
                     Application::GetInstance().GetResourcePath();
             this->SetIBL(resource_path + std::string("/") + std::string(val));
+            utility::LogWarning((resource_path + std::string("/") +
+                                 std::string(val) +
+                                 std::string(" resource path"))
+                                        .c_str());
             this->settings.lighting->SetSelectedValue(kCustomName);
         });
         grid->AddChild(std::make_shared<Label>("HDR map"));
@@ -1889,6 +1893,28 @@ void O3DVisualizer::StopRPCInterface() {
     utility::LogWarning(
             "O3DVisualizer::StopRPCInterface: RPC interface not built");
 #endif
+}
+
+void O3DVisualizer::SetHDRI(const std::string &name) {
+    std::string path =
+            std::string(Application::GetInstance().GetResourcePath()) +
+            std::string("/") + std::string(name);
+    if (utility::filesystem::FileExists(path + "_ibl.ktx")) {
+        impl_->scene_->GetScene()->GetScene()->SetIndirectLight(path);
+        impl_->scene_->ForceRedraw();
+        impl_->ui_state_.ibl_path = path;
+    } else if (utility::filesystem::FileExists(path)) {
+        if (path.find("_ibl.ktx") == path.size() - 8) {
+            impl_->ui_state_.ibl_path = path.substr(0, path.size() - 8);
+            impl_->scene_->GetScene()->GetScene()->SetIndirectLight(
+                    impl_->ui_state_.ibl_path);
+            impl_->scene_->ForceRedraw();
+        } else {
+            utility::LogWarning(
+                    "Could not load IBL path. Filename must be of the form "
+                    "'name_ibl.ktx' and be paired with 'name_skybox.ktx'");
+        }
+    }
 }
 
 void O3DVisualizer::AddAction(const std::string &name,
