@@ -170,9 +170,9 @@
             videoElt.muted = true;
             videoElt.controls = false;
             videoElt.playsinline = true;
+            videoElt.innerText = "Your browser does not support HTML5 video.";
 
             divElt.appendChild(videoElt);
-
             contentDiv.appendChild(divElt);
           }
         }

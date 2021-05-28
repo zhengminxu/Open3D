@@ -30,9 +30,6 @@
 #include "open3d/utility/FileSystem.h"
 #include "open3d/visualization/rendering/Open3DScene.h"
 
-// TODO: edit Open3D.h.in
-#include "open3d/visualization/webrtc_server/WebRTCWindowSystem.h"
-
 using namespace open3d;
 
 // TODO: remove hard-coded path.
