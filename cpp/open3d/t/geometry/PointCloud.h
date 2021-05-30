@@ -279,6 +279,7 @@ public:
         return Append(other);
     }
 
+public:
     /// \brief Transforms the points and normals (if exist)
     /// of the PointCloud.
     /// Extracts R, t from Transformation
@@ -324,6 +325,16 @@ public:
     /// \brief Returns the device attribute of this PointCloud.
     core::Device GetDevice() const { return device_; }
 
+public:
+    /// \brief Function to compute point color gradients.
+    /// Reference: Park, Q.-Y. Zhou, and V. Koltun,
+    /// Colored Point Cloud Registration Revisited, ICCV, 2017.
+    void EstimateColorGradients(const double radius, const int max_knn_ = 30);
+
+    /// \brief Function to compute point normals.
+    void EstimateNormals() { utility::LogError("Unimplemented."); }
+
+public:
     /// \brief Factory function to create a pointcloud from a depth image and a
     /// camera model.
     ///
