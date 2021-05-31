@@ -143,37 +143,62 @@ RegistrationResult RegistrationICP(
     if (max_correspondence_distance <= 0.0) {
         utility::LogError("Invalid max_correspondence_distance.");
     }
-    if ((estimation.GetTransformationEstimationType() ==
-                 TransformationEstimationType::PointToPlane ||
-         estimation.GetTransformationEstimationType() ==
-                 TransformationEstimationType::ColoredICP) &&
+
+    auto target_ptr = std::make_shared<geometry::PointCloud>();
+
+    if (estimation.GetTransformationEstimationType() ==
+                TransformationEstimationType::PointToPlane &&
         (!target.HasNormals())) {
         utility::LogError(
-                "TransformationEstimationPointToPlane and "
-                "TransformationEstimationColoredICP "
-                "require pre-computed normal vectors for target PointCloud.");
+                "TransformationEstimationPointToPlane require pre-computed "
+                "normal vectors for target PointCloud.");
+    }
+
+    // ColoredICP requires pre-computed color_gradients for target points.
+    if (estimation.GetTransformationEstimationType() ==
+        TransformationEstimationType::ColoredICP) {
+        if (!target.HasNormals()) {
+            utility::LogError(
+                    "ColoredICP requires target pointcloud to have normals.");
+        }
+        if (!target.HasColors()) {
+            utility::LogError(
+                    "ColoredICP requires target pointcloud to have colors.");
+        }
+        if (!source.HasColors()) {
+            utility::LogError(
+                    "ColoredICP requires source pointcloud to have colors.");
+        }
+
+        auto target_copy = target;
+        target_copy.EstimateColorGradients(geometry::KDTreeSearchParamHybrid(
+                max_correspondence_distance * 2.0, 30));
+        target_ptr = std::make_shared<geometry::PointCloud>(target_copy);
+    } else {
+        target_ptr = std::make_shared<geometry::PointCloud>(target);
     }
 
     Eigen::Matrix4d transformation = init;
     geometry::KDTreeFlann kdtree;
-    kdtree.SetGeometry(target);
+    kdtree.SetGeometry(*target_ptr);
     geometry::PointCloud pcd = source;
     if (!init.isIdentity()) {
         pcd.Transform(init);
     }
     RegistrationResult result;
     result = GetRegistrationResultAndCorrespondences(
-            pcd, target, kdtree, max_correspondence_distance, transformation);
+            pcd, *target_ptr, kdtree, max_correspondence_distance,
+            transformation);
     for (int i = 0; i < criteria.max_iteration_; i++) {
         utility::LogDebug("ICP Iteration #{:d}: Fitness {:.4f}, RMSE {:.4f}", i,
                           result.fitness_, result.inlier_rmse_);
         Eigen::Matrix4d update = estimation.ComputeTransformation(
-                pcd, target, result.correspondence_set_);
+                pcd, *target_ptr, result.correspondence_set_);
         transformation = update * transformation;
         pcd.Transform(update);
         RegistrationResult backup = result;
         result = GetRegistrationResultAndCorrespondences(
-                pcd, target, kdtree, max_correspondence_distance,
+                pcd, *target_ptr, kdtree, max_correspondence_distance,
                 transformation);
 
         if (std::abs(backup.fitness_ - result.fitness_) <
