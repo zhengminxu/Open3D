@@ -112,6 +112,56 @@ void ProjectCPU(
                 }
             });
 }
+
+void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
+                                       const core::Tensor& normals,
+                                       const core::Tensor& colors,
+                                       const core::Tensor neighbour_indices,
+                                       core::Tensor& color_gradients,
+                                       const int min_knn_threshold = 4) {
+    int64_t n = points.GetLength();
+    int64_t max_knn = neighbour_indices.GetShape()[1];
+
+    const float* points_ptr = points.GetDataPtr<float>();
+    const float* normals_ptr = normals.GetDataPtr<float>();
+    const float* colors_ptr = colors.GetDataPtr<float>();
+    const int64_t* neighbour_indices_ptr =
+            neighbour_indices.GetDataPtr<int64_t>();
+
+	float* color_gradients_ptr = color_gradients.GetDataPtr<float>();
+
+    core::kernel::CPULauncher::LaunchGeneralKernel(
+            n, [&](int64_t workload_idx) {
+                float color_t = (colors_ptr[3 * workload_idx + 0] +
+                                 colors_ptr[3 * workload_idx + 1] +
+                                 colors_ptr[3 * workload_idx + 2]) /
+                                3.0;
+
+                int neighbours_count = 0;
+
+                // TODO: try binary search to find -1.
+				// TODO: Tensor::Find(scalar), to get indices for first 
+				// occurances.
+                for (int i = 0; i < max_knn; i++) {
+                    if (neighbour_indices_ptr[max_knn * workload_idx + i] ==
+                        -1) {
+                        break;
+                    }
+                    neighbours_count++;
+                }
+
+				float A[3 * neighbours_count] = {0};
+				float AtA[9] = {0};
+				float Atb[3] = {0};
+
+                for (int neighbour_idx = 0; neighbour_idx < neighbours_count; neighbour_idx++) {
+					float AtA_local[9] = {0};
+
+
+                }
+            });
+}
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry

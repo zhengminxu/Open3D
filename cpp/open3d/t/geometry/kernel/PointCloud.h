@@ -29,6 +29,7 @@
 #include <unordered_map>
 
 #include "open3d/core/Tensor.h"
+#include "open3d/t/geometry/PointCloud.h"
 
 namespace open3d {
 namespace t {
@@ -57,6 +58,12 @@ void Project(
         float depth_scale,
         float depth_max);
 
+void EstimatePointWiseColorGradient(const geometry::PointCloud pcd,
+                                    const core::Tensor neighbour_indices,
+                                    core::Tensor& color_gradient,
+                                    const int min_knn_threshold = 4);
+
+// --------------- CPU Kernel --------------------------- //
 void UnprojectCPU(
         const core::Tensor& depth,
         utility::optional<std::reference_wrapper<const core::Tensor>>
@@ -78,6 +85,14 @@ void ProjectCPU(
         const core::Tensor& extrinsics,
         float depth_scale,
         float depth_max);
+
+void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
+                                       const core::Tensor& normals,
+                                       const core::Tensor& colors,
+                                       const core::Tensor neighbour_indices,
+                                       core::Tensor& color_gradient,
+                                       const int min_knn_threshold = 4);
+// ------------------------------------------------------ //
 
 #ifdef BUILD_CUDA_MODULE
 void UnprojectCUDA(
@@ -101,6 +116,13 @@ void ProjectCUDA(
         const core::Tensor& extrinsics,
         float depth_scale,
         float depth_max);
+
+void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
+                                        const core::Tensor& normals,
+                                        const core::Tensor& colors,
+                                        const core::Tensor neighbour_indices,
+                                        core::Tensor& color_gradient,
+                                        const int min_knn_threshold = 4);
 #endif
 
 }  // namespace pointcloud

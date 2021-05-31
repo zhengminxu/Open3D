@@ -145,6 +145,15 @@ void UnprojectCPU
                 colors.value().get().Slice(0, 0, total_pts_count);
     }
 }
+
+#if defined(__CUDACC__)
+void EstimatePointWiseColorGradientCUDA
+#else
+void EstimatePointWiseColorGradientCPU
+#endif
+        () {
+}
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry
