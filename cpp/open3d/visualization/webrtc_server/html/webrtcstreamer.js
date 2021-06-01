@@ -271,8 +271,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: "BUTTON_DOWN",
-          x: event.offsetX,
-          y: event.offsetY,
+          x: event.offsetX*2,
+          y: event.offsetY*2,
           modifiers: WebRtcStreamer._getModifiers(event),
           button: {
             button: o3dmouseButtons[event.button],
@@ -288,8 +288,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: "BUTTON_DOWN",
-          x: Math.round(event.targetTouches[0].pageX - rect.left),
-          y: Math.round(event.targetTouches[0].pageY - rect.top),
+          x: Math.round(event.targetTouches[0].pageX - rect.left)*2,
+          y: Math.round(event.targetTouches[0].pageY - rect.top)*2,
           modifiers: 0,
           button: {
             button: o3dmouseButtons[event.button],
@@ -304,8 +304,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: "BUTTON_UP",
-          x: event.offsetX,
-          y: event.offsetY,
+          x: event.offsetX*2,
+          y: event.offsetY*2,
           modifiers: WebRtcStreamer._getModifiers(event),
           button: {
             button: o3dmouseButtons[event.button],
@@ -321,8 +321,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: "BUTTON_UP",
-          x: Math.round(event.targetTouches[0].pageX - rect.left),
-          y: Math.round(event.targetTouches[0].pageY - rect.top),
+          x: Math.round(event.targetTouches[0].pageX - rect.left)*2,
+          y: Math.round(event.targetTouches[0].pageY - rect.top)*2,
           modifiers: 0,
           button: {
             button: o3dmouseButtons[event.button],
@@ -340,8 +340,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: event.buttons == 0 ? "MOVE" : "DRAG",
-          x: event.offsetX,
-          y: event.offsetY,
+          x: event.offsetX*2,
+          y: event.offsetY*2,
           modifiers: WebRtcStreamer._getModifiers(event),
           move: {
             buttons: event.buttons, // MouseButtons ORed together
@@ -359,8 +359,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: "DRAG",
-          x: Math.round(event.targetTouches[0].pageX - rect.left),
-          y: Math.round(event.targetTouches[0].pageY - rect.top),
+          x: Math.round(event.targetTouches[0].pageX - rect.left)*2,
+          y: Math.round(event.targetTouches[0].pageY - rect.top)*2,
           modifiers: 0,
           move: {
             buttons: 1, // MouseButtons ORed together
@@ -373,8 +373,8 @@ var WebRtcStreamer = (function () {
           window_uid: windowUID,
           class_name: "MouseEvent",
           type: "BUTTON_UP",
-          x: event.offsetX,
-          y: event.offsetY,
+          x: event.offsetX*2,
+          y: event.offsetY*2,
           modifiers: WebRtcStreamer._getModifiers(event),
           button: {
             button: o3dmouseButtons[event.button],
@@ -406,8 +406,8 @@ var WebRtcStreamer = (function () {
             window_uid: windowUID,
             class_name: "MouseEvent",
             type: "WHEEL",
-            x: event.offsetX,
-            y: event.offsetY,
+            x: event.offsetX*2,
+            y: event.offsetY*2,
             modifiers: WebRtcStreamer._getModifiers(event),
             wheel: {
               dx: dx,
