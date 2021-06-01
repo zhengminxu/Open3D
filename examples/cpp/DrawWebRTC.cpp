@@ -55,7 +55,7 @@ void AddDrawWindow(
 
     auto draw = std::make_shared<visualization::visualizer::O3DVisualizer>(
             window_name, width, height);
-    // draw->ShowMenu(true);
+    draw->ShowMenu(true);
     // auto scene = draw->GetScene();
     // scene->SetLighting(open3d::visualization::rendering::Open3DScene::LightingProfile::NO_SHADOWS,
     // {-0.331, 0.839, 0.431});
@@ -68,12 +68,6 @@ void AddDrawWindow(
             };
 
     draw->AddAction("HideMenu", hidefunc);
-    draw->AddAction("eMenu", hidefunc);
-    draw->AddAction("eenu", hidefunc);
-    draw->AddAction("eMeu", hidefunc);
-    draw->AddAction("eMenu", hidefunc);
-    draw->AddAction("eMnu", hidefunc);
-    draw->AddAction("eenu", hidefunc);
 
     for (auto &o : objects) {
         if (o.geometry) {
@@ -97,10 +91,10 @@ void AddDrawWindow(
 void DrawPCD(const std::string &filename) {
     geometry::PointCloud pcd;
     io::ReadPointCloud(filename, pcd);
-    pcd.EstimateNormals();
+    // pcd.EstimateNormals();
     auto pcd_ptr = std::make_shared<geometry::PointCloud>(pcd);
 
-    AddDrawWindow({pcd_ptr}, filename, 600, 400);
+    AddDrawWindow({pcd_ptr}, filename, 1130, 400);
 }
 
 int main(int argc, char **argv) {
@@ -117,10 +111,14 @@ int main(int argc, char **argv) {
     // Uncomment this line to see more WebRTC loggings
     // utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/apartment.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/boardroom.ply");
-    DrawPCD(TEST_DIR + "/open3d_downloads/redwood/loft.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_col/apt.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_col/bedroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_col/boardroom.ply");
+    DrawPCD(TEST_DIR + "/open3d_downloads/redwood_col/loft.ply");
+    // DrawPCD(TEST_DIR + "/open3d_downloads/redwood/bedroom.ply");
+    // DrawPCD(TEST_DIR + "/open3d_downloads/redwood/apartment.ply");
+    // DrawPCD(TEST_DIR + "/open3d_downloads/redwood/boardroom.ply");
+    // DrawPCD(TEST_DIR + "/open3d_downloads/redwood/loft.ply");
 
     visualization::gui::Application::GetInstance().Run();
 }
