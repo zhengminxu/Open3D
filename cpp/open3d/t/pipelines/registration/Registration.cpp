@@ -31,6 +31,7 @@
 #include "open3d/t/geometry/PointCloud.h"
 #include "open3d/utility/Console.h"
 #include "open3d/utility/Helper.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -62,6 +63,8 @@ static RegistrationResult GetRegistrationResultAndCorrespondences(
         return result;
     }
 
+    utility::Timer time_nns;
+    time_nns.Start();
     bool check = target_nns.HybridIndex(max_correspondence_distance);
     if (!check) {
         utility::LogError(
@@ -75,24 +78,45 @@ static RegistrationResult GetRegistrationResultAndCorrespondences(
     std::tie(result.correspondence_set_.second, distances) =
             target_nns.HybridSearch(source.GetPoints(),
                                     max_correspondence_distance, 1);
+    time_nns.Stop();
+    utility::LogInfo(" Time: NNS: {}", time_nns.GetDuration());
 
+    utility::Timer time_indexing_0, time_indexing_1, time_indexing_2;
+    time_indexing_0.Start();
     core::Tensor valid = result.correspondence_set_.second.Ne(-1).Reshape({-1});
+    time_indexing_0.Stop();
+
+    time_indexing_1.Start();
     // correpondence_set : (i, corres[i]).
     // source[i] and target[corres[i]] is a correspondence.
     result.correspondence_set_.first =
             core::Tensor::Arange(0, source.GetPoints().GetShape()[0], 1,
                                  core::Dtype::Int64, device)
                     .IndexGet({valid});
+    time_indexing_1.Stop();
+
+    time_indexing_2.Start();
     // Only take valid indices.
     result.correspondence_set_.second =
             result.correspondence_set_.second.IndexGet({valid}).Reshape({-1});
+    time_indexing_2.Stop();
 
     // Number of good correspondences (C).
     int num_correspondences = result.correspondence_set_.first.GetLength();
 
+    utility::Timer time_reduction;
+
+    time_reduction.Start();
     // Reduction sum of "distances" for error.
     double squared_error =
             static_cast<double>(distances.Sum({0}).Item<float>());
+    time_reduction.Stop();
+
+    utility::LogInfo(
+            " Time: Indexing 0: {}, 1: {}, 2: {}, Reduction: {}",
+            time_indexing_0.GetDuration(), time_indexing_1.GetDuration(),
+            time_indexing_2.GetDuration(), time_reduction.GetDuration());
+
     result.fitness_ = static_cast<double>(num_correspondences) /
                       static_cast<double>(source.GetPoints().GetLength());
     result.inlier_rmse_ =
