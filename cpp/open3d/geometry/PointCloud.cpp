@@ -593,7 +593,7 @@ void PointCloud::EstimateColorGradients(
     this->color_gradients_.resize(n_points, Eigen::Vector3d::Zero());
 
 #pragma omp parallel for schedule(static)
-    for (size_t k = 0; k < n_points; k++) {
+    for (int k = 0; k < static_cast<int>(n_points); k++) {
         const Eigen::Vector3d &vt = this->points_[k];
         const Eigen::Vector3d &nt = this->normals_[k];
         double it = (this->colors_[k](0) + this->colors_[k](1) +
@@ -615,6 +615,9 @@ void PointCloud::EstimateColorGradients(
             for (size_t i = 1; i < nn; i++) {
                 int P_adj_idx = point_idx[i];
                 Eigen::Vector3d vt_adj = this->points_[P_adj_idx];
+                // projection (p') of a point p on a plane defined by normal n,
+                // where o is the closest point to p on the plane, is given by:
+                // p' = p - [(p - o).dot(n)] * n
                 Eigen::Vector3d vt_proj = vt_adj - (vt_adj - vt).dot(nt) * nt;
                 double it_adj = (this->colors_[P_adj_idx](0) +
                                  this->colors_[P_adj_idx](1) +

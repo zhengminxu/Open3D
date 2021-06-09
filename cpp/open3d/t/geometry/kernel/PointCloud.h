@@ -29,7 +29,6 @@
 #include <unordered_map>
 
 #include "open3d/core/Tensor.h"
-#include "open3d/t/geometry/PointCloud.h"
 
 namespace open3d {
 namespace t {
@@ -58,7 +57,9 @@ void Project(
         float depth_scale,
         float depth_max);
 
-void EstimatePointWiseColorGradient(const geometry::PointCloud pcd,
+void EstimatePointWiseColorGradient(const core::Tensor& points,
+                                    const core::Tensor& normals,
+                                    const core::Tensor& colors,
                                     const core::Tensor neighbour_indices,
                                     core::Tensor& color_gradient,
                                     const int min_knn_threshold = 4);

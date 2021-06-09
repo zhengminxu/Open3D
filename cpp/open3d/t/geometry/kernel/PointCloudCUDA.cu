@@ -126,6 +126,21 @@ void ProjectCUDA(
                 }
             });
 }
+
+void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
+                                        const core::Tensor& normals,
+                                        const core::Tensor& colors,
+                                        const core::Tensor neighbour_indices,
+                                        core::Tensor& color_gradients,
+                                        const int min_knn_threshold /*= 4*/) {
+    utility::LogError("Unimplemented");
+
+    // core::kernel::CUDALauncher::LaunchGeneralKernel(
+    //         n, [=] OPEN3D_DEVICE(int64_t workload_idx) {
+
+    // 		});
+}
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry
