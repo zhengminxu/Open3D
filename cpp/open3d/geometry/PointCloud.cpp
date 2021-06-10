@@ -37,6 +37,7 @@
 #include "open3d/geometry/TriangleMesh.h"
 #include "open3d/utility/Console.h"
 #include "open3d/utility/Eigen.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace geometry {
@@ -590,6 +591,8 @@ void PointCloud::EstimateColorGradients(
                 "PointCloud must have colors and normals attribute "
                 "to compute color gradients.");
     }
+    utility::Timer time;
+    time.Start();
 
     geometry::KDTreeFlann tree;
     tree.SetGeometry(*this);
@@ -624,6 +627,7 @@ void PointCloud::EstimateColorGradients(
                 // where o is the closest point to p on the plane, is given by:
                 // p' = p - [(p - o).dot(n)] * n
                 Eigen::Vector3d vt_proj = vt_adj - (vt_adj - vt).dot(nt) * nt;
+
                 double it_adj = (this->colors_[P_adj_idx](0) +
                                  this->colors_[P_adj_idx](1) +
                                  this->colors_[P_adj_idx](2)) /
@@ -638,6 +642,7 @@ void PointCloud::EstimateColorGradients(
             A(nn - 1, 1) = (nn - 1) * nt(1);
             A(nn - 1, 2) = (nn - 1) * nt(2);
             b(nn - 1, 0) = 0;
+
             // solving linear equation
             bool is_success = false;
             Eigen::MatrixXd x;
@@ -648,6 +653,9 @@ void PointCloud::EstimateColorGradients(
             }
         }
     }
+
+    time.Stop();
+    utility::LogInfo(" Time: {}", time.GetDuration());
 }
 
 std::tuple<Eigen::Vector3d, Eigen::Matrix3d>

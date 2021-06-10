@@ -34,6 +34,7 @@
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/t/geometry/kernel/PointCloudImpl.h"
+#include "open3d/t/pipelines/kernel/SVD3x3CUDA.cuh"
 #include "open3d/utility/Console.h"
 
 namespace open3d {
@@ -127,18 +128,118 @@ void ProjectCUDA(
             });
 }
 
+template <typename T>
+__global__ void EstimatePointWiseColorGradientCUDAKernel(
+        const T* points_ptr,
+        const T* normals_ptr,
+        const T* colors_ptr,
+        const int64_t* neighbour_indices_ptr,
+        T* color_gradients_ptr,
+        const int64_t n,
+        const int max_knn) {
+    const int k = threadIdx.x + blockIdx.x * blockDim.x;
+    if (k >= n) return;
+
+    T vt[3] = {points_ptr[3 * k + 0], points_ptr[3 * k + 1],
+               points_ptr[3 * k + 2]};
+    T nt[3] = {normals_ptr[3 * k + 0], normals_ptr[3 * k + 1],
+               normals_ptr[3 * k + 2]};
+    T it = (colors_ptr[3 * k + 0] + colors_ptr[3 * k + 1] +
+            colors_ptr[3 * k + 2]) /
+           3.0;
+
+    T AtA_local[9] = {0};
+    T Atb_local[3] = {0};
+
+    // approximate image gradient of vt's tangential plane
+    // projection (p') of a point p on a plane defined by normal n,
+    // where o is the closest point to p on the plane, is given by:
+    // p' = p - [(p - o).dot(n)] * n
+    // p' = p - [(p.dot(n) - s)] * n [where s = o.dot(n)]
+    // Computing the scalar s.
+    T s = vt[0] * nt[0] + vt[1] * nt[1] + vt[2] * nt[2];
+
+    int i = 1;
+    for (i = 1; i < max_knn; i++) {
+        int neighbour_idx = neighbour_indices_ptr[max_knn * k + i];
+
+        if (neighbour_idx == -1) {
+            break;
+        }
+
+        T vt_adj[3] = {points_ptr[3 * neighbour_idx + 0],
+                       points_ptr[3 * neighbour_idx + 1],
+                       points_ptr[3 * neighbour_idx + 2]};
+
+        // p' = p - d * n [where d = p.dot(n) - s]
+        // Computing the scalar d.
+        T d = vt_adj[0] * nt[0] + vt_adj[1] * nt[1] + vt_adj[2] * nt[2] - s;
+
+        // Computing the p' (projection of the point).
+        T vt_proj[3] = {vt_adj[0] - d * nt[0], vt_adj[1] - d * nt[1],
+                        vt_adj[2] - d * nt[2]};
+
+        T it_adj = (colors_ptr[3 * neighbour_idx + 0] +
+                    colors_ptr[3 * neighbour_idx + 1] +
+                    colors_ptr[3 * neighbour_idx + 2]) /
+                   3.0;
+
+        T A[3] = {vt_proj[0] - vt[0], vt_proj[1] - vt[1], vt_proj[2] - vt[2]};
+        T b = it_adj - it;
+
+        AtA_local[0] += A[0] * A[0];
+        AtA_local[1] += A[1] * A[0];
+        AtA_local[2] += A[2] * A[0];
+        AtA_local[4] += A[1] * A[1];
+        AtA_local[5] += A[2] * A[1];
+        AtA_local[8] += A[2] * A[2];
+
+        Atb_local[0] += A[0] * b;
+        Atb_local[1] += A[1] * b;
+        Atb_local[2] += A[2] * b;
+    }
+
+    // Orthogonal constraint.
+    T A[3] = {(i - 1) * nt[0], (i - 1) * nt[1], (i - 1) * nt[2]};
+
+    AtA_local[0] += A[0] * A[0];
+    AtA_local[1] += A[0] * A[1];
+    AtA_local[2] += A[0] * A[2];
+    AtA_local[4] += A[1] * A[1];
+    AtA_local[5] += A[1] * A[2];
+    AtA_local[8] += A[2] * A[2];
+
+    // Symmetry.
+    AtA_local[3] = AtA_local[1];
+    AtA_local[6] = AtA_local[2];
+    AtA_local[7] = AtA_local[5];
+
+    solve_svd3x3(AtA_local[0], AtA_local[1], AtA_local[2], AtA_local[3],
+                 AtA_local[4], AtA_local[5], AtA_local[6], AtA_local[7],
+                 AtA_local[8], Atb_local[0], Atb_local[1], Atb_local[2],
+                 color_gradients_ptr[3 * k + 0], color_gradients_ptr[3 * k + 1],
+                 color_gradients_ptr[3 * k + 2]);
+}
+
 void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
                                         const core::Tensor& normals,
                                         const core::Tensor& colors,
                                         const core::Tensor neighbour_indices,
                                         core::Tensor& color_gradients,
                                         const int min_knn_threshold /*= 4*/) {
-    utility::LogError("Unimplemented");
+    // core::Dtype dtype = points.GetDtype();
 
-    // core::kernel::CUDALauncher::LaunchGeneralKernel(
-    //         n, [=] OPEN3D_DEVICE(int64_t workload_idx) {
+    const int64_t n = points.GetLength();
+    const dim3 blocks((n + 1024 - 1) / 1024);
+    const dim3 threads(1024);
 
-    // 		});
+    EstimatePointWiseColorGradientCUDAKernel<<<blocks, threads>>>(
+            points.GetDataPtr<float>(), normals.GetDataPtr<float>(),
+            colors.GetDataPtr<float>(), neighbour_indices.GetDataPtr<int64_t>(),
+            color_gradients.GetDataPtr<float>(), n,
+            /*max_knn =*/neighbour_indices.GetShape()[1]);
+
+    OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 }  // namespace pointcloud

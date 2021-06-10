@@ -39,6 +39,7 @@
 #include "open3d/core/nns/NearestNeighborSearch.h"
 #include "open3d/t/geometry/TensorMap.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -259,18 +260,20 @@ void PointCloud::EstimateColorGradients(const double radius,
     }
 
     core::Dtype dtype = this->GetPointColors().GetDtype();
-    if (dtype != core::Dtype::Float64 || dtype != core::Dtype::Float32) {
+    if (dtype != core::Dtype::Float64 && dtype != core::Dtype::Float32) {
         utility::LogError(
                 "Only Float32 or Float64 type color attribute supported for "
                 "estimating color gradient.");
     }
+    utility::Timer time;
+    time.Start();
 
     core::nns::NearestNeighborSearch tree(this->GetPoints());
     core::Device device(GetDevice());
 
     int64_t length = GetPoints().GetLength();
 
-    this->SetPointAttr("color_gradient",
+    this->SetPointAttr("color_gradients",
                        core::Tensor::Empty({length, 3}, dtype, device));
 
     bool check = tree.HybridIndex(radius);
@@ -282,8 +285,14 @@ void PointCloud::EstimateColorGradients(const double radius,
     std::tie(neighbour_indices, squared_distances) =
             tree.HybridSearch(GetPoints(), radius, max_knn);
 
-    // EstimatePointWiseColorGradient Kernel : pass pcd, workload_idx and output
-    // color_gradient tensor
+    // std::cout << "test PointCloud::EstimateColorGradients" << std::endl;
+
+    // Compute and set `color_gradient` attribute.
+    kernel::pointcloud::EstimatePointWiseColorGradient(
+            this->GetPoints(), this->GetPointNormals(), this->GetPointColors(),
+            neighbour_indices, this->GetPointAttr("color_gradients"), 4);
+    time.Stop();
+    utility::LogInfo(" Time: {}", time.GetDuration());
 }
 
 static PointCloud CreatePointCloudWithNormals(

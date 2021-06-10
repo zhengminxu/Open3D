@@ -31,6 +31,7 @@
 #include "open3d/pipelines/registration/Feature.h"
 #include "open3d/utility/Console.h"
 #include "open3d/utility/Helper.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace pipelines {
@@ -190,8 +191,13 @@ RegistrationResult RegistrationMultiScaleICP(
         }
 
         auto target_copy = target;
+        utility::Timer time;
+        time.Start();
         target_copy.EstimateColorGradients(geometry::KDTreeSearchParamHybrid(
                 max_correspondence_distances[num_iterations - 1] * 2.0, 30));
+        time.Stop();
+        utility::LogInfo(" EstimateColorGradient: {}", time.GetDuration());
+
         target_ptr = std::make_shared<geometry::PointCloud>(target_copy);
     } else {
         target_ptr = std::make_shared<geometry::PointCloud>(target);
