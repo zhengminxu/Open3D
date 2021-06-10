@@ -25,4 +25,4 @@
 // ----------------------------------------------------------------------------
 
 #include "open3d/core/kernel/CUDALauncher.cuh"
-#include "open3d/t/pipelines/kernel/FillInLinearSystemImpl.h"
+#include "open3d/t/pipelines/registration/RobustKernelImpl.h"
