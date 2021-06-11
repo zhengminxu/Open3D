@@ -251,17 +251,22 @@ void ComputePoseColoredICPCUDA(const core::Tensor &source_points,
     const dim3 threads(kThread1DUnit);
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        scalar_t *global_sum_ptr = global_sum.GetDataPtr<scalar_t>();
+        scalar_t sqrt_lambda_geometric = 0.98;
+        scalar_t sqrt_lambda_photometric = 0.02;
 
         DISPATCH_ROBUST_KERNEL_FUNCTION(
                 kernel.type_, scalar_t, kernel.scaling_parameter_,
                 kernel.shape_parameter_, [&]() {
                     ComputePoseColoredICPKernelCUDA<<<blocks, threads>>>(
                             source_points.GetDataPtr<scalar_t>(),
+                            source_colors.GetDataPtr<scalar_t>(),
                             target_points.GetDataPtr<scalar_t>(),
                             target_normals.GetDataPtr<scalar_t>(),
-                            correspondence_indices.GetDataPtr<int64_t>(), n,
-                            global_sum_ptr, func_t);
+                            target_colors.GetDataPtr<scalar_t>(),
+                            target_color_gradients.GetDataPtr<scalar_t>(),
+                            correspondence_indices.GetDataPtr<int64_t>(),
+                            sqrt_lambda_geometric, sqrt_lambda_photometric, n,
+                            global_sum.GetDataPtr<scalar_t>(), func_t);
                 });
     });
 

@@ -110,9 +110,10 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
                 kernel);
     } else if (device_type == core::Device::DeviceType::CUDA) {
         CUDA_CALL(ComputePoseColoredICPCUDA, source_points_contiguous,
-                  target_points_contiguous, target_normals_contiguous,
-                  corres_contiguous, pose, residual, inlier_count, dtype,
-                  device, kernel);
+                  source_colors_contiguous, target_points_contiguous,
+                  target_normals_contiguous, target_colors_contiguous,
+                  target_color_gradients_contiguous, corres_contiguous, pose,
+                  residual, inlier_count, dtype, device, kernel);
     } else {
         utility::LogError("Unimplemented device.");
     }

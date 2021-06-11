@@ -138,15 +138,14 @@ core::Tensor TransformationEstimationPointToPlane::ComputeTransformation(
     return pipelines::kernel::PoseToTransformation(pose);
 }
 
-
 double TransformationEstimationColoredICP::ComputeRMSE(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
         const core::Tensor &correspondences) const {
-	return 0.0;
+    return 0.0;
 }
 
-core::Tensor TransformationEstimationPointToPlane::ComputeTransformation(
+core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
         const core::Tensor &correspondences,
@@ -155,19 +154,21 @@ core::Tensor TransformationEstimationPointToPlane::ComputeTransformation(
 
     if (target.GetDevice() != device) {
         utility::LogError(
-                "Target Pointcloud's device {} != Source Pointcloud's device {}.",
+                "Target Pointcloud's device {} != Source Pointcloud's device "
+                "{}.",
                 target.GetDevice().ToString(), device.ToString());
     }
 
     // Get pose {6} of type Float64 from correspondences indexed source and
     // target point cloud.
-    // core::Tensor pose = pipelines::kernel::ComputePoseColoredICP(
-    //         source.GetPoints(), target.GetPoints(), target.GetPointNormals(),
-    //         correspondences, inlier_cout, this->kernel_);
+    core::Tensor pose = pipelines::kernel::ComputePoseColoredICP(
+            source.GetPoints(), source.GetPointColors(), target.GetPoints(),
+            target.GetPointNormals(), target.GetPointColors(),
+            target.GetPointAttr("color_gradients"), correspondences,
+            inlier_cout, this->kernel_);
 
     // Get transformation {4,4} of type Float64 from pose {6}.
-    // return pipelines::kernel::PoseToTransformation(pose);
-	return core::Tensor::Eye(4, core::Dtype::Float32, core::Device("CPU:0"));
+    return pipelines::kernel::PoseToTransformation(pose);
 }
 
 }  // namespace registration
