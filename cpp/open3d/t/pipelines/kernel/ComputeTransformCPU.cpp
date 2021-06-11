@@ -61,12 +61,12 @@ static void ComputePosePointToPlaneKernelCPU(
     std::vector<scalar_t> zeros_29(29, 0.0);
     A_1x29 = tbb::parallel_reduce(
             tbb::blocked_range<int>(0, n), zeros_29,
-            [&](tbb::blocked_range<int> r, std::vector<scalar_t> A_reduction) {
+            [&](tbb::blocked_range<int> r, std::vector<scalar_t> A) {
                 for (int workload_idx = r.begin(); workload_idx < r.end();
                      workload_idx++) {
 #else
-    scalar_t *A_reduction = A_1x29.data();
-#pragma omp parallel for reduction(+ : A_reduction[:29]) schedule(auto)
+    scalar_t *A = A_1x29.data();
+#pragma omp parallel for reduction(+ : A[:29]) schedule(auto)
     for (int workload_idx = 0; workload_idx < n; workload_idx++) {
 #endif
                     scalar_t J_ij[6];
@@ -81,41 +81,41 @@ static void ComputePosePointToPlaneKernelCPU(
                     scalar_t w = op(r);
 
                     if (valid) {
-                        A_reduction[0] += J_ij[0] * w * J_ij[0];
-                        A_reduction[1] += J_ij[1] * w * J_ij[0];
-                        A_reduction[2] += J_ij[1] * w * J_ij[1];
-                        A_reduction[3] += J_ij[2] * w * J_ij[0];
-                        A_reduction[4] += J_ij[2] * w * J_ij[1];
-                        A_reduction[5] += J_ij[2] * w * J_ij[2];
-                        A_reduction[6] += J_ij[3] * w * J_ij[0];
-                        A_reduction[7] += J_ij[3] * w * J_ij[1];
-                        A_reduction[8] += J_ij[3] * w * J_ij[2];
-                        A_reduction[9] += J_ij[3] * w * J_ij[3];
-                        A_reduction[10] += J_ij[4] * w * J_ij[0];
-                        A_reduction[11] += J_ij[4] * w * J_ij[1];
-                        A_reduction[12] += J_ij[4] * w * J_ij[2];
-                        A_reduction[13] += J_ij[4] * w * J_ij[3];
-                        A_reduction[14] += J_ij[4] * w * J_ij[4];
-                        A_reduction[15] += J_ij[5] * w * J_ij[0];
-                        A_reduction[16] += J_ij[5] * w * J_ij[1];
-                        A_reduction[17] += J_ij[5] * w * J_ij[2];
-                        A_reduction[18] += J_ij[5] * w * J_ij[3];
-                        A_reduction[19] += J_ij[5] * w * J_ij[4];
-                        A_reduction[20] += J_ij[5] * w * J_ij[5];
+                        A[0] += J_ij[0] * w * J_ij[0];
+                        A[1] += J_ij[1] * w * J_ij[0];
+                        A[2] += J_ij[1] * w * J_ij[1];
+                        A[3] += J_ij[2] * w * J_ij[0];
+                        A[4] += J_ij[2] * w * J_ij[1];
+                        A[5] += J_ij[2] * w * J_ij[2];
+                        A[6] += J_ij[3] * w * J_ij[0];
+                        A[7] += J_ij[3] * w * J_ij[1];
+                        A[8] += J_ij[3] * w * J_ij[2];
+                        A[9] += J_ij[3] * w * J_ij[3];
+                        A[10] += J_ij[4] * w * J_ij[0];
+                        A[11] += J_ij[4] * w * J_ij[1];
+                        A[12] += J_ij[4] * w * J_ij[2];
+                        A[13] += J_ij[4] * w * J_ij[3];
+                        A[14] += J_ij[4] * w * J_ij[4];
+                        A[15] += J_ij[5] * w * J_ij[0];
+                        A[16] += J_ij[5] * w * J_ij[1];
+                        A[17] += J_ij[5] * w * J_ij[2];
+                        A[18] += J_ij[5] * w * J_ij[3];
+                        A[19] += J_ij[5] * w * J_ij[4];
+                        A[20] += J_ij[5] * w * J_ij[5];
 
-                        A_reduction[21] += J_ij[0] * w * r;
-                        A_reduction[22] += J_ij[1] * w * r;
-                        A_reduction[23] += J_ij[2] * w * r;
-                        A_reduction[24] += J_ij[3] * w * r;
-                        A_reduction[26] += J_ij[5] * w * r;
-                        A_reduction[25] += J_ij[4] * w * r;
+                        A[21] += J_ij[0] * w * r;
+                        A[22] += J_ij[1] * w * r;
+                        A[23] += J_ij[2] * w * r;
+                        A[24] += J_ij[3] * w * r;
+                        A[26] += J_ij[5] * w * r;
+                        A[25] += J_ij[4] * w * r;
 
-                        A_reduction[27] += r * r;
-                        A_reduction[28] += 1;
+                        A[27] += r * r;
+                        A[28] += 1;
                     }
                 }
 #ifdef _WIN32
-                return A_reduction;
+                return A;
             },
             // TBB: Defining reduction operation.
             [&](std::vector<scalar_t> &a, std::vector<scalar_t> &b) {
@@ -129,7 +129,7 @@ static void ComputePosePointToPlaneKernelCPU(
 
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < 29; i++) {
-        global_sum[i] = A_reduction[i];
+        global_sum[i] = A[i];
     }
 }
 
@@ -186,12 +186,12 @@ static void ComputePoseColoredICPKernelCPU(
     std::vector<scalar_t> zeros_29(29, 0.0);
     A_1x29 = tbb::parallel_reduce(
             tbb::blocked_range<int>(0, n), zeros_29,
-            [&](tbb::blocked_range<int> r, std::vector<scalar_t> A_reduction) {
+            [&](tbb::blocked_range<int> r, std::vector<scalar_t> A) {
                 for (int workload_idx = r.begin(); workload_idx < r.end();
                      workload_idx++) {
 #else
-    scalar_t *A_reduction = A_1x29.data();
-#pragma omp parallel for reduction(+ : A_reduction[:29]) schedule(auto)
+    scalar_t *A = A_1x29.data();
+#pragma omp parallel for reduction(+ : A[:29]) schedule(auto)
     for (int workload_idx = 0; workload_idx < n; workload_idx++) {
 #endif
                     scalar_t J_G[6] = {0}, J_I[6] = {0};
@@ -204,73 +204,46 @@ static void ComputePoseColoredICPKernelCPU(
                             correspondence_indices, sqrt_lambda_geometric,
                             sqrt_lambda_photometric, J_G, J_I, r_G, r_I);
 
-                    scalar_t w_G = op(r_G);
-                    scalar_t w_I = op(r_I);
+                    scalar_t w_G = 1.0; //op(r_G);
+                    scalar_t w_I = 1.0; //op(r_I);
 
                     if (valid) {
                         // Dump J, r into JtJ and Jtr
-                        A_reduction[0] =
-                                +J_G[0] * w_G * J_G[0] + J_I[0] * w_I * J_I[0];
-                        A_reduction[1] =
-                                +J_G[1] * w_G * J_G[0] + J_I[1] * w_I * J_I[0];
-                        A_reduction[2] =
-                                +J_G[1] * w_G * J_G[1] + J_I[1] * w_I * J_I[1];
-                        A_reduction[3] =
-                                +J_G[2] * w_G * J_G[0] + J_I[2] * w_I * J_I[0];
-                        A_reduction[4] =
-                                +J_G[2] * w_G * J_G[1] + J_I[2] * w_I * J_I[1];
-                        A_reduction[5] =
-                                +J_G[2] * w_G * J_G[2] + J_I[2] * w_I * J_I[2];
-                        A_reduction[6] =
-                                +J_G[3] * w_G * J_G[0] + J_I[3] * w_I * J_I[0];
-                        A_reduction[7] =
-                                +J_G[3] * w_G * J_G[1] + J_I[3] * w_I * J_I[1];
-                        A_reduction[8] =
-                                +J_G[3] * w_G * J_G[2] + J_I[3] * w_I * J_I[2];
-                        A_reduction[9] =
-                                +J_G[3] * w_G * J_G[3] + J_I[3] * w_I * J_I[3];
-                        A_reduction[10] +=
-                                J_G[4] * w_G * J_G[0] + J_I[4] * w_I * J_I[0];
-                        A_reduction[11] +=
-                                J_G[4] * w_G * J_G[1] + J_I[4] * w_I * J_I[1];
-                        A_reduction[12] +=
-                                J_G[4] * w_G * J_G[2] + J_I[4] * w_I * J_I[2];
-                        A_reduction[13] +=
-                                J_G[4] * w_G * J_G[3] + J_I[4] * w_I * J_I[3];
-                        A_reduction[14] +=
-                                J_G[4] * w_G * J_G[4] + J_I[4] * w_I * J_I[4];
-                        A_reduction[15] +=
-                                J_G[5] * w_G * J_G[0] + J_I[5] * w_I * J_I[0];
-                        A_reduction[16] +=
-                                J_G[5] * w_G * J_G[1] + J_I[5] * w_I * J_I[1];
-                        A_reduction[17] +=
-                                J_G[5] * w_G * J_G[2] + J_I[5] * w_I * J_I[2];
-                        A_reduction[18] +=
-                                J_G[5] * w_G * J_G[3] + J_I[5] * w_I * J_I[3];
-                        A_reduction[19] +=
-                                J_G[5] * w_G * J_G[4] + J_I[5] * w_I * J_I[4];
-                        A_reduction[20] +=
-                                J_G[5] * w_G * J_G[5] + J_I[5] * w_I * J_I[5];
+                        A[0] += J_G[0] * w_G * J_G[0] + J_I[0] * w_I * J_I[0];
+                        A[1] += J_G[1] * w_G * J_G[0] + J_I[1] * w_I * J_I[0];
+                        A[2] += J_G[1] * w_G * J_G[1] + J_I[1] * w_I * J_I[1];
+                        A[3] += J_G[2] * w_G * J_G[0] + J_I[2] * w_I * J_I[0];
+                        A[4] += J_G[2] * w_G * J_G[1] + J_I[2] * w_I * J_I[1];
+                        A[5] += J_G[2] * w_G * J_G[2] + J_I[2] * w_I * J_I[2];
+                        A[6] += J_G[3] * w_G * J_G[0] + J_I[3] * w_I * J_I[0];
+                        A[7] += J_G[3] * w_G * J_G[1] + J_I[3] * w_I * J_I[1];
+                        A[8] += J_G[3] * w_G * J_G[2] + J_I[3] * w_I * J_I[2];
+                        A[9] += J_G[3] * w_G * J_G[3] + J_I[3] * w_I * J_I[3];
+                        A[10] += J_G[4] * w_G * J_G[0] + J_I[4] * w_I * J_I[0];
+                        A[11] += J_G[4] * w_G * J_G[1] + J_I[4] * w_I * J_I[1];
+                        A[12] += J_G[4] * w_G * J_G[2] + J_I[4] * w_I * J_I[2];
+                        A[13] += J_G[4] * w_G * J_G[3] + J_I[4] * w_I * J_I[3];
+                        A[14] += J_G[4] * w_G * J_G[4] + J_I[4] * w_I * J_I[4];
+                        A[15] += J_G[5] * w_G * J_G[0] + J_I[5] * w_I * J_I[0];
+                        A[16] += J_G[5] * w_G * J_G[1] + J_I[5] * w_I * J_I[1];
+                        A[17] += J_G[5] * w_G * J_G[2] + J_I[5] * w_I * J_I[2];
+                        A[18] += J_G[5] * w_G * J_G[3] + J_I[5] * w_I * J_I[3];
+                        A[19] += J_G[5] * w_G * J_G[4] + J_I[5] * w_I * J_I[4];
+                        A[20] += J_G[5] * w_G * J_G[5] + J_I[5] * w_I * J_I[5];
 
-                        A_reduction[21] +=
-                                J_G[0] * w_G * r_G + J_I[0] * w_I * r_I;
-                        A_reduction[22] +=
-                                J_G[1] * w_G * r_G + J_I[1] * w_I * r_I;
-                        A_reduction[23] +=
-                                J_G[2] * w_G * r_G + J_I[2] * w_I * r_I;
-                        A_reduction[24] +=
-                                J_G[3] * w_G * r_G + J_I[3] * w_I * r_I;
-                        A_reduction[26] +=
-                                J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
-                        A_reduction[25] +=
-                                J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
+                        A[21] += J_G[0] * w_G * r_G + J_I[0] * w_I * r_I;
+                        A[22] += J_G[1] * w_G * r_G + J_I[1] * w_I * r_I;
+                        A[23] += J_G[2] * w_G * r_G + J_I[2] * w_I * r_I;
+                        A[24] += J_G[3] * w_G * r_G + J_I[3] * w_I * r_I;
+                        A[26] += J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
+                        A[25] += J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
 
-                        A_reduction[27] += r_G * r_G + r_I * r_I;
-                        A_reduction[28] += 1;
+                        A[27] += r_G * r_G + r_I * r_I;
+                        A[28] += 1;
                     }
                 }
 #ifdef _WIN32
-                return A_reduction;
+                return A;
             },
             // TBB: Defining reduction operation.
             [&](std::vector<scalar_t> &a, std::vector<scalar_t> &b) {
@@ -284,7 +257,7 @@ static void ComputePoseColoredICPKernelCPU(
 
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < 29; i++) {
-        global_sum[i] = A_reduction[i];
+        global_sum[i] = A[i];
     }
 }
 
@@ -300,14 +273,18 @@ void ComputePoseColoredICPCPU(const core::Tensor &source_points,
                               int &inlier_count,
                               const core::Dtype &dtype,
                               const core::Device &device,
-                              const registration::RobustKernel &kernel) {
+                              const registration::RobustKernel &kernel,
+                              const float &lambda_geometric) {
     int n = source_points.GetLength();
 
     core::Tensor global_sum = core::Tensor::Zeros({29}, dtype, device);
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        scalar_t sqrt_lambda_geometric = 0.98;
-        scalar_t sqrt_lambda_photometric = 0.02;
+        scalar_t sqrt_lambda_geometric =
+                static_cast<scalar_t>(sqrt(lambda_geometric));
+        scalar_t sqrt_lambda_photometric =
+                static_cast<scalar_t>(sqrt(1.0 - lambda_geometric));
+
         DISPATCH_ROBUST_KERNEL_FUNCTION(
                 kernel.type_, scalar_t, kernel.scaling_parameter_,
                 kernel.shape_parameter_, [&]() {

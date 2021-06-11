@@ -188,8 +188,8 @@ __global__ void ComputePoseColoredICPKernelCUDA(
             target_color_gradients_ptr, correspondence_indices,
             sqrt_lambda_geometric, sqrt_lambda_photometric, J_G, J_I, r_G, r_I);
 
-    scalar_t w_G = op(r_G);
-    scalar_t w_I = op(r_I);
+    scalar_t w_G = 1.0; //op(r_G);
+    scalar_t w_I = 1.0; //op(r_I);
 
     if (valid) {
         // Dump J, r into JtJ and Jtr
@@ -243,7 +243,8 @@ void ComputePoseColoredICPCUDA(const core::Tensor &source_points,
                                int &inlier_count,
                                const core::Dtype &dtype,
                                const core::Device &device,
-                               const registration::RobustKernel &kernel) {
+                               const registration::RobustKernel &kernel,
+                               const float &lambda_geometric) {
     int n = source_points.GetLength();
 
     core::Tensor global_sum = core::Tensor::Zeros({29}, dtype, device);
@@ -251,8 +252,10 @@ void ComputePoseColoredICPCUDA(const core::Tensor &source_points,
     const dim3 threads(kThread1DUnit);
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        scalar_t sqrt_lambda_geometric = 0.98;
-        scalar_t sqrt_lambda_photometric = 0.02;
+        scalar_t sqrt_lambda_geometric =
+                static_cast<scalar_t>(sqrt(lambda_geometric));
+        scalar_t sqrt_lambda_photometric =
+                static_cast<scalar_t>(sqrt(1.0 - lambda_geometric));
 
         DISPATCH_ROBUST_KERNEL_FUNCTION(
                 kernel.type_, scalar_t, kernel.scaling_parameter_,
