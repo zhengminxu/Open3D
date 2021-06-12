@@ -816,7 +816,11 @@ TEST(PointCloud, EstimateColorGradients) {
     pcd.normals_ = normals;
     pcd.colors_ = colors;
 
-    pcd.EstimateColorGradients(geometry::KDTreeSearchParamHybrid(3.0, 5));
+    pcd.EstimateColorGradients(geometry::KDTreeSearchParamHybrid(4.0, 5));
+
+    //     std::cout << " Color Gradients: " << std::endl;
+    //     for (auto dt : pcd.color_gradients_) std::cout << dt.transpose() <<
+    //     std::endl;
 
     ExpectEQ(pcd.color_gradients_,
              std::vector<Eigen::Vector3d>(

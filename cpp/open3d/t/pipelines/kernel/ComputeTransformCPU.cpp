@@ -108,8 +108,8 @@ static void ComputePosePointToPlaneKernelCPU(
                         A[22] += J_ij[1] * w * r;
                         A[23] += J_ij[2] * w * r;
                         A[24] += J_ij[3] * w * r;
-                        A[26] += J_ij[5] * w * r;
                         A[25] += J_ij[4] * w * r;
+                        A[26] += J_ij[5] * w * r;
 
                         A[27] += r * r;
                         A[28] += 1;
@@ -206,8 +206,8 @@ static void ComputePoseColoredICPKernelCPU(
                             correspondence_indices, sqrt_lambda_geometric,
                             sqrt_lambda_photometric, J_G, J_I, r_G, r_I);
 
-                    scalar_t w_G = 1.0;  // op(r_G);
-                    scalar_t w_I = 1.0;  // op(r_I);
+                    scalar_t w_G = op(r_G);
+                    scalar_t w_I = op(r_I);
 
                     if (valid) {
                         // Dump J, r into JtJ and Jtr

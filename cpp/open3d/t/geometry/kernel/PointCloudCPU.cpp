@@ -118,105 +118,131 @@ void ProjectCPU(
 void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
                                        const core::Tensor& normals,
                                        const core::Tensor& colors,
-                                       const core::Tensor neighbour_indices,
+                                       const core::Tensor& neighbour_indices,
+                                       const core::Tensor& neighbour_row_splits,
                                        core::Tensor& color_gradients,
-                                       const int min_knn_threshold /*= 4*/) {
+                                       const int64_t& max_nn) {
     int64_t n = points.GetLength();
-    int64_t max_knn = neighbour_indices.GetShape()[1];
 
     const float* points_ptr = points.GetDataPtr<float>();
     const float* normals_ptr = normals.GetDataPtr<float>();
     const float* colors_ptr = colors.GetDataPtr<float>();
     const int64_t* neighbour_indices_ptr =
             neighbour_indices.GetDataPtr<int64_t>();
+    const int64_t* neighbour_row_splits_ptr =
+            neighbour_row_splits.GetDataPtr<int64_t>();
 
     float* color_gradients_ptr = color_gradients.GetDataPtr<float>();
 
-#pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)
     for (int k = 0; k < static_cast<int>(n); k++) {
-        float vt[3] = {points_ptr[3 * k + 0], points_ptr[3 * k + 1],
-                       points_ptr[3 * k + 2]};
+        int64_t neighbour_start_idx = neighbour_row_splits_ptr[k];
+        int64_t neighbour_count =
+                neighbour_row_splits_ptr[k + 1] - neighbour_start_idx;
+        neighbour_count = neighbour_count < max_nn ? neighbour_count : max_nn;
 
-        float nt[3] = {normals_ptr[3 * k + 0], normals_ptr[3 * k + 1],
-                       normals_ptr[3 * k + 2]};
-        float it = (colors_ptr[3 * k + 0] + colors_ptr[3 * k + 1] +
-                    colors_ptr[3 * k + 2]) /
-                   3.0;
+        if (neighbour_count >= 4) {
+            float vt[3] = {points_ptr[3 * k + 0], points_ptr[3 * k + 1],
+                           points_ptr[3 * k + 2]};
 
-        float AtA_local[9] = {0};
-        float Atb_local[3] = {0};
+            float nt[3] = {normals_ptr[3 * k + 0], normals_ptr[3 * k + 1],
+                           normals_ptr[3 * k + 2]};
+            float it = (colors_ptr[3 * k + 0] + colors_ptr[3 * k + 1] +
+                        colors_ptr[3 * k + 2]) /
+                       3.0;
 
-        // approximate image gradient of vt's tangential plane
-        // projection (p') of a point p on a plane defined by normal n,
-        // where o is the closest point to p on the plane, is given by:
-        // p' = p - [(p - o).dot(n)] * n
-        // p' = p - [(p.dot(n) - s)] * n [where s = o.dot(n)]
-        // Computing the scalar s.
-        float s = vt[0] * nt[0] + vt[1] * nt[1] + vt[2] * nt[2];
+            float AtA_local[9] = {0};
+            float Atb_local[3] = {0};
 
-        int i = 1;
-        for (i = 1; i < max_knn; i++) {
-            int neighbour_idx = neighbour_indices_ptr[max_knn * k + i];
+            // approximate image gradient of vt's tangential plane
+            // projection (p') of a point p on a plane defined by normal n,
+            // where o is the closest point to p on the plane, is given by:
+            // p' = p - [(p - o).dot(n)] * n
+            // p' = p - [(p.dot(n) - s)] * n [where s = o.dot(n)]
+            // Computing the scalar s.
+            float s = vt[0] * nt[0] + vt[1] * nt[1] + vt[2] * nt[2];
 
-            if (neighbour_idx == -1) {
-                break;
+            int i = 1;
+            for (i = 1; i < neighbour_count; i++) {
+                int64_t neighbour_idx =
+                        neighbour_indices_ptr[neighbour_start_idx + i];
+
+                if (neighbour_idx == -1) {
+                    break;
+                }
+
+                float vt_adj[3] = {points_ptr[3 * neighbour_idx + 0],
+                                   points_ptr[3 * neighbour_idx + 1],
+                                   points_ptr[3 * neighbour_idx + 2]};
+
+                // p' = p - d * n [where d = p.dot(n) - s]
+                // Computing the scalar d.
+                float d = vt_adj[0] * nt[0] + vt_adj[1] * nt[1] +
+                          vt_adj[2] * nt[2] - s;
+
+                // Computing the p' (projection of the point).
+                float vt_proj[3] = {vt_adj[0] - d * nt[0],
+                                    vt_adj[1] - d * nt[1],
+                                    vt_adj[2] - d * nt[2]};
+
+                float it_adj = (colors_ptr[3 * neighbour_idx + 0] +
+                                colors_ptr[3 * neighbour_idx + 1] +
+                                colors_ptr[3 * neighbour_idx + 2]) /
+                               3.0;
+
+                float A[3] = {vt_proj[0] - vt[0], vt_proj[1] - vt[1],
+                              vt_proj[2] - vt[2]};
+                float b = it_adj - it;
+
+                AtA_local[0] += A[0] * A[0];
+                AtA_local[1] += A[1] * A[0];
+                AtA_local[2] += A[2] * A[0];
+                AtA_local[4] += A[1] * A[1];
+                AtA_local[5] += A[2] * A[1];
+                AtA_local[8] += A[2] * A[2];
+
+                Atb_local[0] += A[0] * b;
+                Atb_local[1] += A[1] * b;
+                Atb_local[2] += A[2] * b;
             }
 
-            float vt_adj[3] = {points_ptr[3 * neighbour_idx + 0],
-                               points_ptr[3 * neighbour_idx + 1],
-                               points_ptr[3 * neighbour_idx + 2]};
-
-            // p' = p - d * n [where d = p.dot(n) - s]
-            // Computing the scalar d.
-            float d = vt_adj[0] * nt[0] + vt_adj[1] * nt[1] +
-                      vt_adj[2] * nt[2] - s;
-
-            // Computing the p' (projection of the point).
-            float vt_proj[3] = {vt_adj[0] - d * nt[0], vt_adj[1] - d * nt[1],
-                                vt_adj[2] - d * nt[2]};
-
-            float it_adj = (colors_ptr[3 * neighbour_idx + 0] +
-                            colors_ptr[3 * neighbour_idx + 1] +
-                            colors_ptr[3 * neighbour_idx + 2]) /
-                           3.0;
-
-            float A[3] = {vt_proj[0] - vt[0], vt_proj[1] - vt[1],
-                          vt_proj[2] - vt[2]};
-            float b = it_adj - it;
+            // Orthogonal constraint.
+            float A[3] = {(i - 1) * nt[0], (i - 1) * nt[1], (i - 1) * nt[2]};
 
             AtA_local[0] += A[0] * A[0];
-            AtA_local[1] += A[1] * A[0];
-            AtA_local[2] += A[2] * A[0];
+            AtA_local[1] += A[0] * A[1];
+            AtA_local[2] += A[0] * A[2];
             AtA_local[4] += A[1] * A[1];
-            AtA_local[5] += A[2] * A[1];
+            AtA_local[5] += A[1] * A[2];
             AtA_local[8] += A[2] * A[2];
 
-            Atb_local[0] += A[0] * b;
-            Atb_local[1] += A[1] * b;
-            Atb_local[2] += A[2] * b;
+            // Symmetry.
+            AtA_local[3] = AtA_local[1];
+            AtA_local[6] = AtA_local[2];
+            AtA_local[7] = AtA_local[5];
+
+            solve_svd3x3(AtA_local[0], AtA_local[1], AtA_local[2], AtA_local[3],
+                         AtA_local[4], AtA_local[5], AtA_local[6], AtA_local[7],
+                         AtA_local[8], Atb_local[0], Atb_local[1], Atb_local[2],
+                         color_gradients_ptr[3 * k + 0],
+                         color_gradients_ptr[3 * k + 1],
+                         color_gradients_ptr[3 * k + 2]);
+
+            // printf("\n AtA: \n %f, %f, %f \n %f, %f, %f \n %f, %f, %f",
+            //        AtA_local[0], AtA_local[1], AtA_local[2], AtA_local[3],
+            //        AtA_local[4], AtA_local[5], AtA_local[6], AtA_local[7],
+            //        AtA_local[8]);
+            // printf("\n Atb: \n %f, %f, %f", Atb_local[0], Atb_local[1],
+            //        Atb_local[2]);
+            // printf("\n X: \n %f, %f, %f", color_gradients_ptr[3 * k + 0],
+            //        color_gradients_ptr[3 * k + 1],
+            // color_gradients_ptr[3 * k + 2]);
+
+        } else {
+            color_gradients_ptr[3 * k] = 0;
+            color_gradients_ptr[3 * k + 1] = 0;
+            color_gradients_ptr[3 * k + 2] = 0;
         }
-
-        // Orthogonal constraint.
-        float A[3] = {(i - 1) * nt[0], (i - 1) * nt[1], (i - 1) * nt[2]};
-
-        AtA_local[0] += A[0] * A[0];
-        AtA_local[1] += A[0] * A[1];
-        AtA_local[2] += A[0] * A[2];
-        AtA_local[4] += A[1] * A[1];
-        AtA_local[5] += A[1] * A[2];
-        AtA_local[8] += A[2] * A[2];
-
-        // Symmetry.
-        AtA_local[3] = AtA_local[1];
-        AtA_local[6] = AtA_local[2];
-        AtA_local[7] = AtA_local[5];
-
-        solve_svd3x3(AtA_local[0], AtA_local[1], AtA_local[2], AtA_local[3],
-                     AtA_local[4], AtA_local[5], AtA_local[6], AtA_local[7],
-                     AtA_local[8], Atb_local[0], Atb_local[1], Atb_local[2],
-                     color_gradients_ptr[3 * k + 0],
-                     color_gradients_ptr[3 * k + 1],
-                     color_gradients_ptr[3 * k + 2]);
     }
 }
 

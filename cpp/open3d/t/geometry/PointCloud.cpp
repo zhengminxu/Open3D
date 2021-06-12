@@ -260,39 +260,40 @@ void PointCloud::EstimateColorGradients(const double radius,
     }
 
     core::Dtype dtype = this->GetPointColors().GetDtype();
-    if (dtype != core::Dtype::Float64 && dtype != core::Dtype::Float32) {
+
+    // TODO: Support Float64. Only SVD solver used currently does not support
+    // F64.
+    if (dtype != core::Dtype::Float32) {
         utility::LogError(
-                "Only Float32 or Float64 type color attribute supported for "
+                "Only Float32 type color attribute supported for "
                 "estimating color gradient.");
     }
-    // utility::Timer time;
-    // time.Start();
 
     core::nns::NearestNeighborSearch tree(this->GetPoints());
     core::Device device(GetDevice());
 
     int64_t length = GetPoints().GetLength();
-
     this->SetPointAttr("color_gradients",
                        core::Tensor::Empty({length, 3}, dtype, device));
 
-    bool check = tree.HybridIndex(radius);
+    // TODO: Move NNS inside kernel, and use Open3D::RadiusSearch for CUDA, and
+    // integrated Point-wise NanoFlann::RadiusSearch for CPU.
+    bool check = tree.FixedRadiusIndex(radius);
     if (!check) {
-        utility::LogError("HybridSearch index is not set.");
+        utility::LogError(
+                "NearestNeighborSearch::FixedRadiusIndex "
+                "Index is not set.");
     }
 
-    core::Tensor neighbour_indices, squared_distances;
-    std::tie(neighbour_indices, squared_distances) =
-            tree.HybridSearch(GetPoints(), radius, max_knn);
-
-    // std::cout << "test PointCloud::EstimateColorGradients" << std::endl;
+    core::Tensor indices, distance, row_splits;
+    std::tie(indices, distance, row_splits) =
+            tree.FixedRadiusSearch(this->GetPoints(), radius, true);
 
     // Compute and set `color_gradient` attribute.
     kernel::pointcloud::EstimatePointWiseColorGradient(
             this->GetPoints(), this->GetPointNormals(), this->GetPointColors(),
-            neighbour_indices, this->GetPointAttr("color_gradients"), 4);
-    // time.Stop();
-    // utility::LogInfo(" Time: {}", time.GetDuration());
+            indices, row_splits, this->GetPointAttr("color_gradients"),
+            max_knn);
 }
 
 static PointCloud CreatePointCloudWithNormals(

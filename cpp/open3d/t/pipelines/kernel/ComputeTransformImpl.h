@@ -233,25 +233,9 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
                    source_points_ptr[source_idx + 1],
                    source_points_ptr[source_idx + 2]};
 
-    float cs[3] = {source_colors_ptr[source_idx],
-                   source_colors_ptr[source_idx + 1],
-                   source_colors_ptr[source_idx + 2]};
-
-    float is = (cs[0] + cs[1] + cs[2]) / 3.0;
-
     float vt[3] = {target_points_ptr[target_idx],
                    target_points_ptr[target_idx + 1],
                    target_points_ptr[target_idx + 2]};
-
-    float ct[3] = {target_colors_ptr[target_idx],
-                   target_colors_ptr[target_idx + 1],
-                   target_colors_ptr[target_idx + 2]};
-
-    float it = (ct[0] + ct[1] + ct[2]) / 3.0;
-
-    float dit[3] = {target_color_gradients_ptr[target_idx],
-                    target_color_gradients_ptr[target_idx + 1],
-                    target_color_gradients_ptr[target_idx + 2]};
 
     float nt[3] = {target_normals_ptr[target_idx],
                    target_normals_ptr[target_idx + 1],
@@ -260,13 +244,6 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
     float d = (vs[0] - vt[0]) * nt[0] + (vs[1] - vt[1]) * nt[1] +
               (vs[2] - vt[2]) * nt[2];
 
-    float vs_proj[3] = {vs[0] - d * nt[0], vs[1] - d * nt[1],
-                        vs[2] - d * nt[2]};
-
-    float is_proj = dit[0] * (vs_proj[0] - vt[0]) +
-                    dit[1] * (vs_proj[1] - vt[1]) +
-                    dit[2] * (vs_proj[2] - vt[2]) + it;
-
     J_G[0] = sqrt_lambda_geometric * (-vs[2] * nt[1] + vs[1] * nt[2]);
     J_G[1] = sqrt_lambda_geometric * (vs[2] * nt[0] - vs[0] * nt[2]);
     J_G[2] = sqrt_lambda_geometric * (-vs[1] * nt[0] + vs[0] * nt[1]);
@@ -274,6 +251,27 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
     J_G[4] = sqrt_lambda_geometric * nt[1];
     J_G[5] = sqrt_lambda_geometric * nt[2];
     r_G = sqrt_lambda_geometric * d;
+
+    float vs_proj[3] = {vs[0] - d * nt[0], vs[1] - d * nt[1],
+                        vs[2] - d * nt[2]};
+
+    float is =
+            (source_colors_ptr[source_idx] + source_colors_ptr[source_idx + 1] +
+             source_colors_ptr[source_idx + 2]) /
+            3.0;
+
+    float it =
+            (target_colors_ptr[target_idx] + target_colors_ptr[target_idx + 1] +
+             target_colors_ptr[target_idx + 2]) /
+            3.0;
+
+    float dit[3] = {target_color_gradients_ptr[target_idx],
+                    target_color_gradients_ptr[target_idx + 1],
+                    target_color_gradients_ptr[target_idx + 2]};
+
+    float is_proj = dit[0] * (vs_proj[0] - vt[0]) +
+                    dit[1] * (vs_proj[1] - vt[1]) +
+                    dit[2] * (vs_proj[2] - vt[2]) + it;
 
     float s = dit[0] * nt[0] + dit[1] * nt[1] + dit[2] * nt[2];
     float ditM[3] = {s * nt[0] - dit[0], s * nt[1] - dit[1],

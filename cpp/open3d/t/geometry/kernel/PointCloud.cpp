@@ -107,18 +107,21 @@ void Project(
 void EstimatePointWiseColorGradient(const core::Tensor& points,
                                     const core::Tensor& normals,
                                     const core::Tensor& colors,
-                                    const core::Tensor neighbour_indices,
+                                    const core::Tensor& neighbour_indices,
+                                    const core::Tensor& neighbour_row_splits,
                                     core::Tensor& color_gradient,
-                                    const int min_knn_threshold /*= 4*/) {
+                                    const int64_t& max_nn) {
     core::Device device = points.GetDevice();
 
     core::Device::DeviceType device_type = device.GetType();
     if (device_type == core::Device::DeviceType::CPU) {
-        EstimatePointWiseColorGradientCPU(points, normals, colors,
-                                          neighbour_indices, color_gradient, 4);
+        EstimatePointWiseColorGradientCPU(
+                points, normals, colors, neighbour_indices,
+                neighbour_row_splits, color_gradient, max_nn);
     } else if (device_type == core::Device::DeviceType::CUDA) {
         CUDA_CALL(EstimatePointWiseColorGradientCUDA, points, normals, colors,
-                  neighbour_indices, color_gradient, 4);
+                  neighbour_indices, neighbour_row_splits, color_gradient,
+                  max_nn);
     } else {
         utility::LogError("Unimplemented device");
     }

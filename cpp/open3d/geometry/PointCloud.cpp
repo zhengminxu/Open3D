@@ -620,13 +620,21 @@ void PointCloud::EstimateColorGradients(
             A.setZero();
             b.setZero();
 
+            // std::cout << "\n VT: " << vt.transpose() << std::endl;
+
             for (size_t i = 1; i < nn; i++) {
                 int P_adj_idx = point_idx[i];
                 Eigen::Vector3d vt_adj = this->points_[P_adj_idx];
+
+                // std::cout << " VT_ADJ: " << vt_adj.transpose() << std::endl;
+
                 // projection (p') of a point p on a plane defined by normal n,
                 // where o is the closest point to p on the plane, is given by:
                 // p' = p - [(p - o).dot(n)] * n
                 Eigen::Vector3d vt_proj = vt_adj - (vt_adj - vt).dot(nt) * nt;
+
+                // std::cout << " VT_PROJ: " << vt_proj.transpose() <<
+                // std::endl;
 
                 double it_adj = (this->colors_[P_adj_idx](0) +
                                  this->colors_[P_adj_idx](1) +
@@ -648,6 +656,12 @@ void PointCloud::EstimateColorGradients(
             Eigen::MatrixXd x;
             std::tie(is_success, x) = utility::SolveLinearSystemPSD(
                     A.transpose() * A, A.transpose() * b);
+
+            // std::cout << "\n AtA: " << A.transpose() * A << std::endl;
+            // std::cout << "\n Atb: " << (A.transpose() * b).transpose()
+            //           << std::endl;
+            // std::cout << "\n x: " << x.transpose() << std::endl;
+
             if (is_success) {
                 this->color_gradients_[k] = x;
             }

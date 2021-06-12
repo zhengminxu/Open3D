@@ -146,14 +146,6 @@ void UnprojectCPU
     }
 }
 
-#if defined(__CUDACC__)
-void EstimatePointWiseColorGradientCUDA
-#else
-void EstimatePointWiseColorGradientCPU
-#endif
-        () {
-}
-
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry

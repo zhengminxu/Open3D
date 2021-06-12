@@ -159,24 +159,24 @@ core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
                 target.GetDevice().ToString(), device.ToString());
     }
 
-    auto target_clone = target.Clone();
-//     core::Tensor color_gradients =
-//             core::Tensor::Load("target_color_gradient_f32.npy");
-//     target_clone.SetPointAttr(
-//             "color_gradients",
-//             color_gradients.To(device, target.GetPoints().GetDtype()));
+    if (!target.HasPointAttr("color_gradients")) {
+        utility::LogError(
+                "ColoredICP::ComputeTransform requires pointcloud to have "
+                "pre-computed color_gradients.");
+    }
 
     // Get pose {6} of type Float64 from correspondences indexed source and
     // target point cloud.
     core::Tensor pose = pipelines::kernel::ComputePoseColoredICP(
-            source.GetPoints(), source.GetPointColors(), target_clone.GetPoints(),
-            target_clone.GetPointNormals(), target_clone.GetPointColors(),
-            target_clone.GetPointAttr("color_gradients"), correspondences,
+            source.GetPoints(), source.GetPointColors(), target.GetPoints(),
+            target.GetPointNormals(), target.GetPointColors(),
+            target.GetPointAttr("color_gradients"), correspondences,
             inlier_cout, this->kernel_, this->lambda_geometric_);
 
     // Get transformation {4,4} of type Float64 from pose {6}.
     core::Tensor transform = pipelines::kernel::PoseToTransformation(pose);
-        std::cout << " Output: \n " << transform.ToString() << std::endl;
+
+    //     std::cout << " Output: \n " << transform.ToString() << std::endl;
     /*
     Legacy:
          0.999993   0.00372512  0.000284199  -0.00639423
@@ -189,7 +189,6 @@ core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
         [0.0632854 -0.0535878 -0.996556 19.4114],
         [-0.997229 0.0357315 -0.0652495 -9.56064],
         [0.0 0.0 0.0 1.0]]
-
 
     CPU:
         [[0.0393034 0.997949 -0.0505279 -13.0397],

@@ -60,9 +60,10 @@ void Project(
 void EstimatePointWiseColorGradient(const core::Tensor& points,
                                     const core::Tensor& normals,
                                     const core::Tensor& colors,
-                                    const core::Tensor neighbour_indices,
+                                    const core::Tensor& neighbour_indices,
+                                    const core::Tensor& neighbour_count,
                                     core::Tensor& color_gradient,
-                                    const int min_knn_threshold = 4);
+                                    const int64_t& max_nn);
 
 // --------------- CPU Kernel --------------------------- //
 void UnprojectCPU(
@@ -90,9 +91,10 @@ void ProjectCPU(
 void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
                                        const core::Tensor& normals,
                                        const core::Tensor& colors,
-                                       const core::Tensor neighbour_indices,
+                                       const core::Tensor& neighbour_indices,
+                                       const core::Tensor& neighbour_count,
                                        core::Tensor& color_gradient,
-                                       const int min_knn_threshold = 4);
+                                       const int64_t& max_nn);
 // ------------------------------------------------------ //
 
 #ifdef BUILD_CUDA_MODULE
@@ -121,9 +123,10 @@ void ProjectCUDA(
 void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
                                         const core::Tensor& normals,
                                         const core::Tensor& colors,
-                                        const core::Tensor neighbour_indices,
+                                        const core::Tensor& neighbour_indices,
+                                        const core::Tensor& neighbour_count,
                                         core::Tensor& color_gradient,
-                                        const int min_knn_threshold = 4);
+                                        const int64_t& max_nn);
 #endif
 
 }  // namespace pointcloud
