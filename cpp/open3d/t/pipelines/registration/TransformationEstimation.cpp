@@ -159,16 +159,47 @@ core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
                 target.GetDevice().ToString(), device.ToString());
     }
 
+    auto target_clone = target.Clone();
+//     core::Tensor color_gradients =
+//             core::Tensor::Load("target_color_gradient_f32.npy");
+//     target_clone.SetPointAttr(
+//             "color_gradients",
+//             color_gradients.To(device, target.GetPoints().GetDtype()));
+
     // Get pose {6} of type Float64 from correspondences indexed source and
     // target point cloud.
     core::Tensor pose = pipelines::kernel::ComputePoseColoredICP(
-            source.GetPoints(), source.GetPointColors(), target.GetPoints(),
-            target.GetPointNormals(), target.GetPointColors(),
-            target.GetPointAttr("color_gradients"), correspondences,
-            inlier_cout, this->kernel_);
+            source.GetPoints(), source.GetPointColors(), target_clone.GetPoints(),
+            target_clone.GetPointNormals(), target_clone.GetPointColors(),
+            target_clone.GetPointAttr("color_gradients"), correspondences,
+            inlier_cout, this->kernel_, this->lambda_geometric_);
 
     // Get transformation {4,4} of type Float64 from pose {6}.
-    return pipelines::kernel::PoseToTransformation(pose);
+    core::Tensor transform = pipelines::kernel::PoseToTransformation(pose);
+        std::cout << " Output: \n " << transform.ToString() << std::endl;
+    /*
+    Legacy:
+         0.999993   0.00372512  0.000284199  -0.00639423
+      -0.0037256     0.999992   0.00170515   0.00485329
+    -0.000277845   -0.0017062     0.999999    0.0032935
+               0            0            0            1
+
+    CUDA:
+        [[0.0391050 0.997924 -0.0511781 -13.0404],
+        [0.0632854 -0.0535878 -0.996556 19.4114],
+        [-0.997229 0.0357315 -0.0652495 -9.56064],
+        [0.0 0.0 0.0 1.0]]
+
+
+    CPU:
+        [[0.0393034 0.997949 -0.0505279 -13.0397],
+        [0.0636685 -0.0529653 -0.996565 19.4103],
+        [-0.997197 0.0359513 -0.0656196 -9.5593],
+        [0.0 0.0 0.0 1.0]]
+
+    */
+
+    return transform;
 }
 
 }  // namespace registration

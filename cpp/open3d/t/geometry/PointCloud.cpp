@@ -265,8 +265,8 @@ void PointCloud::EstimateColorGradients(const double radius,
                 "Only Float32 or Float64 type color attribute supported for "
                 "estimating color gradient.");
     }
-    utility::Timer time;
-    time.Start();
+    // utility::Timer time;
+    // time.Start();
 
     core::nns::NearestNeighborSearch tree(this->GetPoints());
     core::Device device(GetDevice());
@@ -291,8 +291,8 @@ void PointCloud::EstimateColorGradients(const double radius,
     kernel::pointcloud::EstimatePointWiseColorGradient(
             this->GetPoints(), this->GetPointNormals(), this->GetPointColors(),
             neighbour_indices, this->GetPointAttr("color_gradients"), 4);
-    time.Stop();
-    utility::LogInfo(" Time: {}", time.GetDuration());
+    // time.Stop();
+    // utility::LogInfo(" Time: {}", time.GetDuration());
 }
 
 static PointCloud CreatePointCloudWithNormals(

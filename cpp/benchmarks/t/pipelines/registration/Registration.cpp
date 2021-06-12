@@ -44,15 +44,15 @@ static const std::string source_colored_pcd_filename =
 static const std::string target_colored_pcd_filename =
         std::string(TEST_DATA_DIR) + "/ColoredICP/frag_116.ply";
 
-static const double voxel_downsampling_factor = 0.025;
+static const double voxel_downsampling_factor = 0.05;
 
 // ICP ConvergenceCriteria.
 static const double relative_fitness = 1e-6;
 static const double relative_rmse = 1e-6;
-static const int max_iterations = 10;
+static const int max_iterations = 1;
 
 // NNS parameter.
-static const double max_correspondence_distance = 0.075;
+static const double max_correspondence_distance = 0.07;
 
 // Initial transformation guess for registation.
 static const std::vector<float> initial_transform_flat{
@@ -206,12 +206,12 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
         ->Unit(benchmark::kMillisecond);
 #endif
 
-// BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-//                   ColoredICP / CPU32,
-//                   core::Device("CPU:0"),
-//                   core::Dtype::Float32,
-//                   TransformationEstimationType::ColoredICP)
-//         ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  ColoredICP / CPU32,
+                  core::Device("CPU:0"),
+                  core::Dtype::Float32,
+                  TransformationEstimationType::ColoredICP)
+        ->Unit(benchmark::kMillisecond);
 
 #ifdef BUILD_CUDA_MODULE
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,

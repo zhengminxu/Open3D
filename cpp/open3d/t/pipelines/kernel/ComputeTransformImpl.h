@@ -189,7 +189,7 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianPointToPlane<double>(
 
 template <typename scalar_t>
 OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP(
-        int64_t workload_idx,
+        const int64_t workload_idx,
         const scalar_t *source_points_ptr,
         const scalar_t *source_colors_ptr,
         const scalar_t *target_points_ptr,
@@ -208,7 +208,7 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP(
 
 template <>
 OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
-        int64_t workload_idx,
+        const int64_t workload_idx,
         const float *source_points_ptr,
         const float *source_colors_ptr,
         const float *target_points_ptr,
@@ -229,33 +229,33 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
     const int64_t target_idx = 3 * correspondence_indices[workload_idx];
     const int64_t source_idx = 3 * workload_idx;
 
-    float vs[3] = {source_points_ptr[source_idx * 3],
-                   source_points_ptr[source_idx * 3 + 1],
-                   source_points_ptr[source_idx * 3 + 2]};
+    float vs[3] = {source_points_ptr[source_idx],
+                   source_points_ptr[source_idx + 1],
+                   source_points_ptr[source_idx + 2]};
 
-    float cs[3] = {source_colors_ptr[source_idx * 3],
-                   source_colors_ptr[source_idx * 3 + 1],
-                   source_colors_ptr[source_idx * 3 + 2]};
+    float cs[3] = {source_colors_ptr[source_idx],
+                   source_colors_ptr[source_idx + 1],
+                   source_colors_ptr[source_idx + 2]};
 
-    float is = cs[0] + cs[1] + cs[2] / 3.0;
+    float is = (cs[0] + cs[1] + cs[2]) / 3.0;
 
-    float vt[3] = {target_points_ptr[target_idx * 3],
-                   target_points_ptr[target_idx * 3 + 1],
-                   target_points_ptr[target_idx * 3 + 2]};
+    float vt[3] = {target_points_ptr[target_idx],
+                   target_points_ptr[target_idx + 1],
+                   target_points_ptr[target_idx + 2]};
 
-    float ct[3] = {target_colors_ptr[target_idx * 3],
-                   target_colors_ptr[target_idx * 3 + 1],
-                   target_colors_ptr[target_idx * 3 + 2]};
+    float ct[3] = {target_colors_ptr[target_idx],
+                   target_colors_ptr[target_idx + 1],
+                   target_colors_ptr[target_idx + 2]};
 
-    float it = ct[0] + ct[1] + ct[2] / 3.0;
+    float it = (ct[0] + ct[1] + ct[2]) / 3.0;
 
-    float dit[3] = {target_color_gradients_ptr[target_idx * 3],
-                    target_color_gradients_ptr[target_idx * 3 + 1],
-                    target_color_gradients_ptr[target_idx * 3 + 2]};
+    float dit[3] = {target_color_gradients_ptr[target_idx],
+                    target_color_gradients_ptr[target_idx + 1],
+                    target_color_gradients_ptr[target_idx + 2]};
 
-    float nt[3] = {target_normals_ptr[target_idx * 3],
-                   target_normals_ptr[target_idx * 3 + 1],
-                   target_normals_ptr[target_idx * 3 + 2]};
+    float nt[3] = {target_normals_ptr[target_idx],
+                   target_normals_ptr[target_idx + 1],
+                   target_normals_ptr[target_idx + 2]};
 
     float d = (vs[0] - vt[0]) * nt[0] + (vs[1] - vt[1]) * nt[1] +
               (vs[2] - vt[2]) * nt[2];
@@ -268,11 +268,11 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
                     dit[2] * (vs_proj[2] - vt[2]) + it;
 
     J_G[0] = sqrt_lambda_geometric * (-vs[2] * nt[1] + vs[1] * nt[2]);
-    J_G[0] = sqrt_lambda_geometric * (vs[2] * nt[0] - vs[0] * nt[2]);
-    J_G[0] = sqrt_lambda_geometric * (-vs[1] * nt[0] + vs[1] * nt[1]);
-    J_G[0] = sqrt_lambda_geometric * nt[0];
-    J_G[0] = sqrt_lambda_geometric * nt[1];
-    J_G[0] = sqrt_lambda_geometric * nt[2];
+    J_G[1] = sqrt_lambda_geometric * (vs[2] * nt[0] - vs[0] * nt[2]);
+    J_G[2] = sqrt_lambda_geometric * (-vs[1] * nt[0] + vs[0] * nt[1]);
+    J_G[3] = sqrt_lambda_geometric * nt[0];
+    J_G[4] = sqrt_lambda_geometric * nt[1];
+    J_G[5] = sqrt_lambda_geometric * nt[2];
     r_G = sqrt_lambda_geometric * d;
 
     float s = dit[0] * nt[0] + dit[1] * nt[1] + dit[2] * nt[2];
@@ -280,19 +280,19 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
                      s * nt[2] - dit[2]};
 
     J_I[0] = sqrt_lambda_photometric * (-vs[2] * ditM[1] + vs[1] * ditM[2]);
-    J_I[0] = sqrt_lambda_photometric * (vs[2] * ditM[0] - vs[0] * ditM[2]);
-    J_I[0] = sqrt_lambda_photometric * (-vs[1] * ditM[0] + vs[1] * ditM[1]);
-    J_I[0] = sqrt_lambda_photometric * ditM[0];
-    J_I[0] = sqrt_lambda_photometric * ditM[1];
-    J_I[0] = sqrt_lambda_photometric * ditM[2];
-    r_G = sqrt_lambda_photometric * (is - is_proj);
+    J_I[1] = sqrt_lambda_photometric * (vs[2] * ditM[0] - vs[0] * ditM[2]);
+    J_I[2] = sqrt_lambda_photometric * (-vs[1] * ditM[0] + vs[0] * ditM[1]);
+    J_I[3] = sqrt_lambda_photometric * ditM[0];
+    J_I[4] = sqrt_lambda_photometric * ditM[1];
+    J_I[5] = sqrt_lambda_photometric * ditM[2];
+    r_I = sqrt_lambda_photometric * (is - is_proj);
 
     return true;
 }
 
 template <>
 OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<double>(
-        int64_t workload_idx,
+        const int64_t workload_idx,
         const double *source_points_ptr,
         const double *source_colors_ptr,
         const double *target_points_ptr,
@@ -313,33 +313,33 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<double>(
     const int64_t target_idx = 3 * correspondence_indices[workload_idx];
     const int64_t source_idx = 3 * workload_idx;
 
-    double vs[3] = {source_points_ptr[source_idx * 3],
-                    source_points_ptr[source_idx * 3 + 1],
-                    source_points_ptr[source_idx * 3 + 2]};
+    double vs[3] = {source_points_ptr[source_idx],
+                    source_points_ptr[source_idx + 1],
+                    source_points_ptr[source_idx + 2]};
 
-    double cs[3] = {source_colors_ptr[source_idx * 3],
-                    source_colors_ptr[source_idx * 3 + 1],
-                    source_colors_ptr[source_idx * 3 + 2]};
+    double cs[3] = {source_colors_ptr[source_idx],
+                    source_colors_ptr[source_idx + 1],
+                    source_colors_ptr[source_idx + 2]};
 
-    double is = cs[0] + cs[1] + cs[2] / 3.0;
+    double is = (cs[0] + cs[1] + cs[2]) / 3.0;
 
-    double vt[3] = {target_points_ptr[target_idx * 3],
-                    target_points_ptr[target_idx * 3 + 1],
-                    target_points_ptr[target_idx * 3 + 2]};
+    double vt[3] = {target_points_ptr[target_idx],
+                    target_points_ptr[target_idx + 1],
+                    target_points_ptr[target_idx + 2]};
 
-    double ct[3] = {target_colors_ptr[target_idx * 3],
-                    target_colors_ptr[target_idx * 3 + 1],
-                    target_colors_ptr[target_idx * 3 + 2]};
+    double ct[3] = {target_colors_ptr[target_idx],
+                    target_colors_ptr[target_idx + 1],
+                    target_colors_ptr[target_idx + 2]};
 
-    double it = ct[0] + ct[1] + ct[2] / 3.0;
+    double it = (ct[0] + ct[1] + ct[2]) / 3.0;
 
-    double dit[3] = {target_color_gradients_ptr[target_idx * 3],
-                     target_color_gradients_ptr[target_idx * 3 + 1],
-                     target_color_gradients_ptr[target_idx * 3 + 2]};
+    double dit[3] = {target_color_gradients_ptr[target_idx],
+                     target_color_gradients_ptr[target_idx + 1],
+                     target_color_gradients_ptr[target_idx + 2]};
 
-    double nt[3] = {target_normals_ptr[target_idx * 3],
-                    target_normals_ptr[target_idx * 3 + 1],
-                    target_normals_ptr[target_idx * 3 + 2]};
+    double nt[3] = {target_normals_ptr[target_idx],
+                    target_normals_ptr[target_idx + 1],
+                    target_normals_ptr[target_idx + 2]};
 
     double d = (vs[0] - vt[0]) * nt[0] + (vs[1] - vt[1]) * nt[1] +
                (vs[2] - vt[2]) * nt[2];
@@ -352,11 +352,11 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<double>(
                      dit[2] * (vs_proj[2] - vt[2]) + it;
 
     J_G[0] = sqrt_lambda_geometric * (-vs[2] * nt[1] + vs[1] * nt[2]);
-    J_G[0] = sqrt_lambda_geometric * (vs[2] * nt[0] - vs[0] * nt[2]);
-    J_G[0] = sqrt_lambda_geometric * (-vs[1] * nt[0] + vs[1] * nt[1]);
-    J_G[0] = sqrt_lambda_geometric * nt[0];
-    J_G[0] = sqrt_lambda_geometric * nt[1];
-    J_G[0] = sqrt_lambda_geometric * nt[2];
+    J_G[1] = sqrt_lambda_geometric * (vs[2] * nt[0] - vs[0] * nt[2]);
+    J_G[2] = sqrt_lambda_geometric * (-vs[1] * nt[0] + vs[0] * nt[1]);
+    J_G[3] = sqrt_lambda_geometric * nt[0];
+    J_G[4] = sqrt_lambda_geometric * nt[1];
+    J_G[5] = sqrt_lambda_geometric * nt[2];
     r_G = sqrt_lambda_geometric * d;
 
     double s = dit[0] * nt[0] + dit[1] * nt[1] + dit[2] * nt[2];
@@ -364,12 +364,12 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<double>(
                       s * nt[2] - dit[2]};
 
     J_I[0] = sqrt_lambda_photometric * (-vs[2] * ditM[1] + vs[1] * ditM[2]);
-    J_I[0] = sqrt_lambda_photometric * (vs[2] * ditM[0] - vs[0] * ditM[2]);
-    J_I[0] = sqrt_lambda_photometric * (-vs[1] * ditM[0] + vs[1] * ditM[1]);
-    J_I[0] = sqrt_lambda_photometric * ditM[0];
-    J_I[0] = sqrt_lambda_photometric * ditM[1];
-    J_I[0] = sqrt_lambda_photometric * ditM[2];
-    r_G = sqrt_lambda_photometric * (is - is_proj);
+    J_I[1] = sqrt_lambda_photometric * (vs[2] * ditM[0] - vs[0] * ditM[2]);
+    J_I[2] = sqrt_lambda_photometric * (-vs[1] * ditM[0] + vs[0] * ditM[1]);
+    J_I[3] = sqrt_lambda_photometric * ditM[0];
+    J_I[4] = sqrt_lambda_photometric * ditM[1];
+    J_I[5] = sqrt_lambda_photometric * ditM[2];
+    r_I = sqrt_lambda_photometric * (is - is_proj);
 
     return true;
 }

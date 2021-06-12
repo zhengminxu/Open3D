@@ -219,7 +219,7 @@ public:
     ~TransformationEstimationColoredICP() override{};
 
     explicit TransformationEstimationColoredICP(
-            double lambda_geometric = 0.968,
+            float lambda_geometric = 0.968,
             const RobustKernel &kernel =
                     RobustKernel(RobustKernelMethod::L2Loss, 1.0, 1.0))
         : lambda_geometric_(lambda_geometric), kernel_(kernel) {
@@ -244,7 +244,7 @@ public:
                                        int &inlier_count) const override;
 
 public:
-    double lambda_geometric_ = 0.968;
+    float lambda_geometric_ = 0.968;
     /// RobustKernel for outlier rejection.
     RobustKernel kernel_ = RobustKernel(RobustKernelMethod::L2Loss, 1.0, 1.0);
 

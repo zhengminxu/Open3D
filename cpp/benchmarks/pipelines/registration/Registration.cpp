@@ -143,9 +143,9 @@ static void BenchmarkRegistrationColoredICPLegacy(benchmark::State& state,
 
     source.EstimateNormals(
             open3d::geometry::KDTreeSearchParamHybrid(voxel_size * 2.0, 30));
-
     target.EstimateNormals(
             open3d::geometry::KDTreeSearchParamHybrid(voxel_size * 2.0, 30));
+
     for (auto _ : state) {
         auto result = pipelines::registration::RegistrationICP(
                 source, target, 0.07, trans,
@@ -169,8 +169,8 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICPLegacy,
 
 BENCHMARK_CAPTURE(BenchmarkRegistrationColoredICPLegacy,
                   ColoredICP / Legacy,
-                  0.0125,
-                  20)
+                  0.05,
+                  1)
         ->Unit(benchmark::kMillisecond);
 
 }  // namespace registration

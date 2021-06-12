@@ -591,8 +591,8 @@ void PointCloud::EstimateColorGradients(
                 "PointCloud must have colors and normals attribute "
                 "to compute color gradients.");
     }
-    utility::Timer time;
-    time.Start();
+    // utility::Timer time;
+    // time.Start();
 
     geometry::KDTreeFlann tree;
     tree.SetGeometry(*this);
@@ -654,8 +654,8 @@ void PointCloud::EstimateColorGradients(
         }
     }
 
-    time.Stop();
-    utility::LogInfo(" Time: {}", time.GetDuration());
+    // time.Stop();
+    // utility::LogInfo(" Time: {}", time.GetDuration());
 }
 
 std::tuple<Eigen::Vector3d, Eigen::Matrix3d>

@@ -28,6 +28,8 @@
 
 #include <Eigen/Geometry>
 
+#include "open3d/core/EigenConverter.h"
+#include "open3d/core/Tensor.h"
 #include "open3d/geometry/PointCloud.h"
 #include "open3d/utility/Console.h"
 #include "open3d/utility/Eigen.h"

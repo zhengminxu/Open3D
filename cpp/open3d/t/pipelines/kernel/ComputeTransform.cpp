@@ -79,7 +79,8 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
                                    const core::Tensor &target_color_gradients,
                                    const core::Tensor &correspondence_indices,
                                    int &inlier_count,
-                                   const registration::RobustKernel &kernel) {
+                                   const registration::RobustKernel &kernel,
+                                   const float &lambda_geometric) {
     // Get dtype and device.
     core::Dtype dtype = source_points.GetDtype();
     core::Device device = source_points.GetDevice();
@@ -96,8 +97,6 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
             target_color_gradients.Contiguous();
     core::Tensor corres_contiguous = correspondence_indices.Contiguous();
 
-    float lamda_geometric = 0.986;
-
     float residual = 0;
     core::Device::DeviceType device_type = device.GetType();
     if (device_type == core::Device::DeviceType::CPU) {
@@ -106,14 +105,14 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
                 target_points_contiguous, target_normals_contiguous,
                 target_colors_contiguous, target_color_gradients_contiguous,
                 corres_contiguous, pose, residual, inlier_count, dtype, device,
-                kernel, lamda_geometric);
+                kernel, lambda_geometric);
     } else if (device_type == core::Device::DeviceType::CUDA) {
         CUDA_CALL(ComputePoseColoredICPCUDA, source_points_contiguous,
                   source_colors_contiguous, target_points_contiguous,
                   target_normals_contiguous, target_colors_contiguous,
                   target_color_gradients_contiguous, corres_contiguous, pose,
                   residual, inlier_count, dtype, device, kernel,
-                  lamda_geometric);
+                  lambda_geometric);
     } else {
         utility::LogError("Unimplemented device.");
     }

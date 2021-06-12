@@ -160,8 +160,8 @@ __global__ void ComputePoseColoredICPKernelCUDA(
         const scalar_t *target_colors_ptr,
         const scalar_t *target_color_gradients_ptr,
         const int64_t *correspondence_indices,
-        const scalar_t &sqrt_lambda_geometric,
-        const scalar_t &sqrt_lambda_photometric,
+        const scalar_t sqrt_lambda_geometric,
+        const scalar_t sqrt_lambda_photometric,
         const int n,
         scalar_t *global_sum,
         funct_t op) {
@@ -188,8 +188,8 @@ __global__ void ComputePoseColoredICPKernelCUDA(
             target_color_gradients_ptr, correspondence_indices,
             sqrt_lambda_geometric, sqrt_lambda_photometric, J_G, J_I, r_G, r_I);
 
-    scalar_t w_G = 1.0; //op(r_G);
-    scalar_t w_I = 1.0; //op(r_I);
+    scalar_t w_G = 1.0;  // op(r_G);
+    scalar_t w_I = 1.0;  // op(r_I);
 
     if (valid) {
         // Dump J, r into JtJ and Jtr

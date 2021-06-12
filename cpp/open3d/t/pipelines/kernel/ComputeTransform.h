@@ -57,7 +57,8 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
                                    const core::Tensor &target_color_gradients,
                                    const core::Tensor &correspondence_indices,
                                    int &inlier_count,
-                                   const registration::RobustKernel &kernel);
+                                   const registration::RobustKernel &kernel,
+                                   const float &lambda_geometric);
 
 /// \brief Computes (R) Rotation {3,3} and (t) translation {3,}
 /// for point to point registration method.
