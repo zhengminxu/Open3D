@@ -8,7 +8,7 @@
 **  with minimal branching and elementary floating point operations,
 **  University of Wisconsin - Madison technical report TR1690, May 2011
 **
-**	Identical GPU version
+**	Identical CPU version
 ** 	Implementated by: Kui Wu
 **	kwu@cs.utah.edu
 **  Simply modified back to CPU by: Wei Dong
@@ -172,7 +172,7 @@ inline void svd(float a11,
         Ss.f = __fadd_rn(Ss.f, Ss.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
+        printf("CPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
                Sch.f);
 #endif
         //###########################################################
@@ -236,7 +236,7 @@ inline void svd(float a11,
         Sqvvy.f = __fsub_rn(Sqvvy.f, Stmp1.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
+        printf("CPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
                Sqvs.f);
 #endif
 
@@ -277,7 +277,7 @@ inline void svd(float a11,
         Ss.f = __fadd_rn(Ss.f, Ss.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
+        printf("CPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
                Sch.f);
 #endif
 
@@ -342,7 +342,7 @@ inline void svd(float a11,
         Sqvvz.f = __fsub_rn(Sqvvz.f, Stmp2.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
+        printf("CPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
                Sqvs.f);
 #endif
 #if 1
@@ -384,7 +384,7 @@ inline void svd(float a11,
         Ss.f = __fadd_rn(Ss.f, Ss.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
+        printf("CPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
                Sch.f);
 #endif
 

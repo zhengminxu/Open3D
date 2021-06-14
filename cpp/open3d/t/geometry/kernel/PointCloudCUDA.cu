@@ -138,26 +138,29 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
         float* color_gradients_ptr,
         const int64_t max_nn,
         const int64_t n) {
-    const int k = threadIdx.x + blockIdx.x * blockDim.x;
-    if (k >= n) return;
+    const int64_t workload_idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (workload_idx >= n) return;
 
-    int64_t neighbour_start_idx = neighbour_row_splits_ptr[k];
+    int64_t neighbour_start_idx = neighbour_row_splits_ptr[workload_idx];
     int64_t neighbour_count =
-            neighbour_row_splits_ptr[k + 1] - neighbour_start_idx;
+            neighbour_row_splits_ptr[workload_idx + 1] - neighbour_start_idx;
     neighbour_count = neighbour_count < max_nn ? neighbour_count : max_nn;
 
-    if (neighbour_count >= 4) {
-        float vt[3] = {points_ptr[3 * k + 0], points_ptr[3 * k + 1],
-                       points_ptr[3 * k + 2]};
+    int64_t point_idx = 3 * workload_idx;
 
-        float nt[3] = {normals_ptr[3 * k + 0], normals_ptr[3 * k + 1],
-                       normals_ptr[3 * k + 2]};
-        float it = (colors_ptr[3 * k + 0] + colors_ptr[3 * k + 1] +
-                    colors_ptr[3 * k + 2]) /
+    if (neighbour_count >= 4) {
+        float vt[3] = {points_ptr[point_idx], points_ptr[point_idx + 1],
+                       points_ptr[point_idx + 2]};
+
+        float nt[3] = {normals_ptr[point_idx], normals_ptr[point_idx + 1],
+                       normals_ptr[point_idx + 2]};
+
+        float it = (colors_ptr[point_idx] + colors_ptr[point_idx + 1] +
+                    colors_ptr[point_idx + 2]) /
                    3.0;
 
-        float AtA_local[9] = {0};
-        float Atb_local[3] = {0};
+        float AtA[9] = {0};
+        float Atb[3] = {0};
 
         // approximate image gradient of vt's tangential plane
         // projection (p') of a point p on a plane defined by normal n,
@@ -170,15 +173,15 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
         int i = 1;
         for (i = 1; i < neighbour_count; i++) {
             int64_t neighbour_idx =
-                    neighbour_indices_ptr[neighbour_start_idx + i];
+                    3 * neighbour_indices_ptr[neighbour_start_idx + i];
 
             if (neighbour_idx == -1) {
                 break;
             }
 
-            float vt_adj[3] = {points_ptr[3 * neighbour_idx + 0],
-                               points_ptr[3 * neighbour_idx + 1],
-                               points_ptr[3 * neighbour_idx + 2]};
+            float vt_adj[3] = {points_ptr[neighbour_idx],
+                               points_ptr[neighbour_idx + 1],
+                               points_ptr[neighbour_idx + 2]};
 
             // p' = p - d * n [where d = p.dot(n) - s]
             // Computing the scalar d.
@@ -189,64 +192,52 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
             float vt_proj[3] = {vt_adj[0] - d * nt[0], vt_adj[1] - d * nt[1],
                                 vt_adj[2] - d * nt[2]};
 
-            float it_adj = (colors_ptr[3 * neighbour_idx + 0] +
-                            colors_ptr[3 * neighbour_idx + 1] +
-                            colors_ptr[3 * neighbour_idx + 2]) /
+            float it_adj = (colors_ptr[neighbour_idx + 0] +
+                            colors_ptr[neighbour_idx + 1] +
+                            colors_ptr[neighbour_idx + 2]) /
                            3.0;
 
             float A[3] = {vt_proj[0] - vt[0], vt_proj[1] - vt[1],
                           vt_proj[2] - vt[2]};
+
+            AtA[0] += A[0] * A[0];
+            AtA[1] += A[1] * A[0];
+            AtA[2] += A[2] * A[0];
+            AtA[4] += A[1] * A[1];
+            AtA[5] += A[2] * A[1];
+            AtA[8] += A[2] * A[2];
+
             float b = it_adj - it;
 
-            AtA_local[0] += A[0] * A[0];
-            AtA_local[1] += A[1] * A[0];
-            AtA_local[2] += A[2] * A[0];
-            AtA_local[4] += A[1] * A[1];
-            AtA_local[5] += A[2] * A[1];
-            AtA_local[8] += A[2] * A[2];
-
-            Atb_local[0] += A[0] * b;
-            Atb_local[1] += A[1] * b;
-            Atb_local[2] += A[2] * b;
+            Atb[0] += A[0] * b;
+            Atb[1] += A[1] * b;
+            Atb[2] += A[2] * b;
         }
 
         // Orthogonal constraint.
         float A[3] = {(i - 1) * nt[0], (i - 1) * nt[1], (i - 1) * nt[2]};
 
-        AtA_local[0] += A[0] * A[0];
-        AtA_local[1] += A[0] * A[1];
-        AtA_local[2] += A[0] * A[2];
-        AtA_local[4] += A[1] * A[1];
-        AtA_local[5] += A[1] * A[2];
-        AtA_local[8] += A[2] * A[2];
+        AtA[0] += A[0] * A[0];
+        AtA[1] += A[0] * A[1];
+        AtA[2] += A[0] * A[2];
+        AtA[4] += A[1] * A[1];
+        AtA[5] += A[1] * A[2];
+        AtA[8] += A[2] * A[2];
 
         // Symmetry.
-        AtA_local[3] = AtA_local[1];
-        AtA_local[6] = AtA_local[2];
-        AtA_local[7] = AtA_local[5];
+        AtA[3] = AtA[1];
+        AtA[6] = AtA[2];
+        AtA[7] = AtA[5];
 
-        solve_svd3x3(AtA_local[0], AtA_local[1], AtA_local[2], AtA_local[3],
-                     AtA_local[4], AtA_local[5], AtA_local[6], AtA_local[7],
-                     AtA_local[8], Atb_local[0], Atb_local[1], Atb_local[2],
-                     color_gradients_ptr[3 * k + 0],
-                     color_gradients_ptr[3 * k + 1],
-                     color_gradients_ptr[3 * k + 2]);
-
-        // DEBUG KERNEL.
-        // printf("\n AtA: \n %f, %f, %f \n %f, %f, %f \n %f, %f, %f",
-        //        AtA_local[0], AtA_local[1], AtA_local[2], AtA_local[3],
-        //        AtA_local[4], AtA_local[5], AtA_local[6], AtA_local[7],
-        //        AtA_local[8]);
-        // printf("\n Atb: \n %f, %f, %f", Atb_local[0], Atb_local[1],
-        //        Atb_local[2]);
-        // printf("\n X: \n %f, %f, %f", color_gradients_ptr[3 * k + 0],
-        //        color_gradients_ptr[3 * k + 1],
-        // color_gradients_ptr[3 * k + 2]);
-
+        solve_svd3x3(AtA[0], AtA[1], AtA[2], AtA[3], AtA[4], AtA[5], AtA[6],
+                     AtA[7], AtA[8], Atb[0], Atb[1], Atb[2],
+                     color_gradients_ptr[point_idx + 0],
+                     color_gradients_ptr[point_idx + 1],
+                     color_gradients_ptr[point_idx + 2]);
     } else {
-        color_gradients_ptr[3 * k] = 0;
-        color_gradients_ptr[3 * k + 1] = 0;
-        color_gradients_ptr[3 * k + 2] = 0;
+        color_gradients_ptr[point_idx] = 0;
+        color_gradients_ptr[point_idx + 1] = 0;
+        color_gradients_ptr[point_idx + 2] = 0;
     }
 }
 
