@@ -147,16 +147,12 @@ RegistrationResult RegistrationMultiScaleICP(
         device.GetType() == core::Device::DeviceType::CUDA) {
         utility::LogDebug("Use Float32 pointcloud for best performance.");
     }
-
     if (!(criterias.size() == voxel_sizes.size() &&
           criterias.size() == max_correspondence_distances.size())) {
         utility::LogError(
                 " [RegistrationMultiScaleICP]: Size of criterias, voxel_size,"
                 " max_correspondence_distances vectors must be same.");
     }
-
-    t::geometry::PointCloud target_local = target.Clone();
-
     if (estimation.GetTransformationEstimationType() ==
                 TransformationEstimationType::PointToPlane &&
         (!target.HasPointNormals())) {
@@ -165,6 +161,7 @@ RegistrationResult RegistrationMultiScaleICP(
                 "normal vectors for target PointCloud.");
     }
 
+    t::geometry::PointCloud target_local = target.Clone();
     int64_t num_iterations = int64_t(criterias.size());
 
     // ColoredICP requires pre-computed color_gradients for target points.
@@ -183,10 +180,10 @@ RegistrationResult RegistrationMultiScaleICP(
                     "ColoredICP requires source pointcloud to have colors.");
         }
         // Computing Color Gradients.
-        // if (!target.HasPointAttr("color_gradients")) {
-        target_local.EstimateColorGradients(
-                max_correspondence_distances[num_iterations - 1] * 2.0, 30);
-        // }
+        if (!target.HasPointAttr("color_gradients")) {
+            target_local.EstimateColorGradients(
+                    max_correspondence_distances[num_iterations - 1] * 2.0, 30);
+        }
     }
 
     if (max_correspondence_distances[0] <= 0.0) {

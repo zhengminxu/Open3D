@@ -138,14 +138,15 @@ core::Tensor TransformationEstimationPointToPlane::ComputeTransformation(
     return pipelines::kernel::PoseToTransformation(pose);
 }
 
-double TransformationEstimationColoredICP::ComputeRMSE(
+double TransformationEstimationForColoredICP::ComputeRMSE(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
         const core::Tensor &correspondences) const {
+    utility::LogError("Unimplemented.");
     return 0.0;
 }
 
-core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
+core::Tensor TransformationEstimationForColoredICP::ComputeTransformation(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
         const core::Tensor &correspondences,
@@ -159,10 +160,18 @@ core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
                 target.GetDevice().ToString(), device.ToString());
     }
 
-    if (!target.HasPointAttr("color_gradients")) {
+    if (!target.HasPointAttr("color_gradients") || !target.HasPointColors() ||
+        !target.HasPointNormals() || !source.HasPointColors()) {
         utility::LogError(
-                "ColoredICP::ComputeTransform requires pointcloud to have "
-                "pre-computed color_gradients.");
+                "ColoredICP::ComputeTransform requires source pointcloud to "
+                "have colors attributes and target pointcloud to have colors, "
+                "normals, and color_gradients attributes.");
+    }
+    if (target.GetPointColors().GetDtype() != core::Dtype::Float32 ||
+        source.GetPointColors().GetDtype() != core::Dtype::Float32) {
+        utility::LogError(
+                "Colors attributes of source and target pointcloud must be of "
+                "Float32 type.");
     }
 
     // Get pose {6} of type Float64 from correspondences indexed source and

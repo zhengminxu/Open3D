@@ -134,21 +134,24 @@ static void BenchmarkRegistrationICP(benchmark::State& state,
         source_pcd_filename = source_pointcloud_filename;
         target_pcd_filename = target_pointcloud_filename;
 
-        init_trans = core::Tensor(initial_transform_flat, {4, 4},
-                                  core::Dtype::Float32, device)
-                             .To(dtype);
+        init_trans = core::Tensor::Init<double>({{0.862, 0.011, -0.507, 0.5},
+                                                 {-0.139, 0.967, -0.215, 0.7},
+                                                 {0.487, 0.255, 0.835, -1.4},
+                                                 {0.0, 0.0, 0.0, 1.0}},
+                                                core::Device("CPU:0"));
 
     } else if (type == TransformationEstimationType::PointToPoint) {
         estimation = std::make_shared<TransformationEstimationPointToPoint>();
-        source_pcd_filename = source_colored_pcd_filename;
-        target_pcd_filename = target_colored_pcd_filename;
-        init_trans = core::Tensor::Eye(4, core::Dtype::Float64,
-                                       core::Device("CPU:0"));
-        // init_trans = core::Tensor(initial_transform_flat, {4, 4},
-        //                           core::Dtype::Float32, device)
-        //                      .To(dtype);
+        source_pcd_filename = source_pointcloud_filename;
+        target_pcd_filename = target_pointcloud_filename;
+
+        init_trans = core::Tensor::Init<double>({{0.862, 0.011, -0.507, 0.5},
+                                                 {-0.139, 0.967, -0.215, 0.7},
+                                                 {0.487, 0.255, 0.835, -1.4},
+                                                 {0.0, 0.0, 0.0, 1.0}},
+                                                core::Device("CPU:0"));
     } else if (type == TransformationEstimationType::ColoredICP) {
-        estimation = std::make_shared<TransformationEstimationColoredICP>();
+        estimation = std::make_shared<TransformationEstimationForColoredICP>();
         source_pcd_filename = source_colored_pcd_filename;
         target_pcd_filename = target_colored_pcd_filename;
 
@@ -224,14 +227,14 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   TransformationEstimationType::ColoredICP)
         ->Unit(benchmark::kMillisecond);
 
-// #ifdef BUILD_CUDA_MODULE
-// BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-//                   ColoredICP / CUDA32,
-//                   core::Device("CUDA:0"),
-//                   core::Dtype::Float32,
-//                   TransformationEstimationType::ColoredICP)
-//         ->Unit(benchmark::kMillisecond);
-// #endif
+#ifdef BUILD_CUDA_MODULE
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  ColoredICP / CUDA32,
+                  core::Device("CUDA:0"),
+                  core::Dtype::Float32,
+                  TransformationEstimationType::ColoredICP)
+        ->Unit(benchmark::kMillisecond);
+#endif
 
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   PointToPlane / CPU64,

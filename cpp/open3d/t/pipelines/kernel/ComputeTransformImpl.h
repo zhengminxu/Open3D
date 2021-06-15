@@ -222,7 +222,6 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
         float *J_I,
         float &r_G,
         float &r_I) {
-
     if (correspondence_indices[workload_idx] == -1) {
         return false;
     }
@@ -244,7 +243,7 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
 
     float d = (vs[0] - vt[0]) * nt[0] + (vs[1] - vt[1]) * nt[1] +
               (vs[2] - vt[2]) * nt[2];
-    
+
     J_G[0] = (-vs[2] * nt[1] + vs[1] * nt[2]);
     J_G[1] = (vs[2] * nt[0] - vs[0] * nt[2]);
     J_G[2] = (-vs[1] * nt[0] + vs[0] * nt[1]);

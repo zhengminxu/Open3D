@@ -214,12 +214,16 @@ private:
             TransformationEstimationType::PointToPlane;
 };
 
-class TransformationEstimationColoredICP : public TransformationEstimation {
+/// \class TransformationEstimationForColoredICP
+///
+/// Class to estimate a transformation of shape {4, 4} and dtype Float64 for
+/// point to plane distance.
+class TransformationEstimationForColoredICP : public TransformationEstimation {
 public:
-    ~TransformationEstimationColoredICP() override{};
+    ~TransformationEstimationForColoredICP() override{};
 
-    explicit TransformationEstimationColoredICP(
-            float lambda_geometric = 1.0,
+    explicit TransformationEstimationForColoredICP(
+            float lambda_geometric = 0.968,
             const RobustKernel &kernel =
                     RobustKernel(RobustKernelMethod::L2Loss, 1.0, 1.0))
         : lambda_geometric_(lambda_geometric), kernel_(kernel) {
@@ -234,17 +238,41 @@ public:
     };
 
 public:
+    /// \brief Computes RMSE (double) for PointToPlane method, between two
+    /// pointclouds of type Float32, given correspondences.
+    ///
+    /// \param source Source pointcloud of dtype Float32.
+    /// \param target Target pointcloud of dtype Float32. It must contain
+    /// normals.
+    /// \param correspondences Tensor of type Int64 containing indices of
+    /// corresponding target points, where the value is the target index and the
+    /// index of the value itself is the source index. It contains -1 as value
+    /// at index with no correspondence.
     double ComputeRMSE(const geometry::PointCloud &source,
                        const geometry::PointCloud &target,
                        const core::Tensor &correspondences) const override;
 
+    /// \brief Estimates the transformation matrix for PointToColor method,
+    /// a tensor of shape {4, 4}, and dtype Float64 on CPU device.
+    ///
+    /// \param source Source pointcloud of dtype Float32. It must contain colors
+    /// attributes of Float32 type.
+    /// \param target Target pointcloud of dtype Float32. It must contain
+    /// normals, colors, color_gradients attributes of Float32 type.
+    /// \param correspondences Tensor of type Int64 containing indices of
+    /// corresponding target points, where the value is the target index and the
+    /// index of the value itself is the source index. It contains -1 as value
+    /// at index with no correspondence.
+    /// \param inlier_count [Ouput] Number of valid correspondences.
+    /// \return transformation between source to target, a tensor of shape {4,
+    /// 4}, type Float64 on CPU device.
     core::Tensor ComputeTransformation(const geometry::PointCloud &source,
                                        const geometry::PointCloud &target,
                                        const core::Tensor &correspondences,
                                        int &inlier_count) const override;
 
 public:
-    float lambda_geometric_ = 1.0;
+    float lambda_geometric_ = 0.968;
     /// RobustKernel for outlier rejection.
     RobustKernel kernel_ = RobustKernel(RobustKernelMethod::L2Loss, 1.0, 1.0);
 

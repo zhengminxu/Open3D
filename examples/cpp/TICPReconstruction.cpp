@@ -321,6 +321,9 @@ protected:
         core::Device device = source.GetDevice();
         core::Dtype dtype = source.GetPoints().GetDtype();
 
+        // ---- Asserts START
+        init_source_to_target.AssertShape({4, 4});
+
         if (target.GetPoints().GetDtype() != dtype) {
             utility::LogError(
                     "Target Pointcloud dtype {} != Source Pointcloud's dtype "
@@ -333,8 +336,10 @@ protected:
                     "{}.",
                     target.GetDevice().ToString(), device.ToString());
         }
-
-        int64_t num_iterations = int64_t(criterias.size());
+        if (dtype == core::Dtype::Float64 &&
+            device.GetType() == core::Device::DeviceType::CUDA) {
+            utility::LogDebug("Use Float32 pointcloud for best performance.");
+        }
         if (!(criterias.size() == voxel_sizes.size() &&
               criterias.size() == max_correspondence_distances.size())) {
             utility::LogError(
@@ -342,17 +347,46 @@ protected:
                     "voxel_size,"
                     " max_correspondence_distances vectors must be same.");
         }
-
-        if ((estimation.GetTransformationEstimationType() ==
-                     TransformationEstimationType::PointToPlane ||
-             estimation.GetTransformationEstimationType() ==
-                     TransformationEstimationType::ColoredICP) &&
+        if (estimation.GetTransformationEstimationType() ==
+                    TransformationEstimationType::PointToPlane &&
             (!target.HasPointNormals())) {
             utility::LogError(
-                    "TransformationEstimationPointToPlane and "
-                    "TransformationEstimationColoredICP "
-                    "require pre-computed normal vectors for target "
-                    "PointCloud.");
+                    "TransformationEstimationPointToPlane require pre-computed "
+                    "normal vectors for target PointCloud.");
+        }
+
+        t::geometry::PointCloud target_local = target.Clone();
+        int64_t num_iterations = int64_t(criterias.size());
+
+        // ColoredICP requires pre-computed color_gradients for target points.
+        if (estimation.GetTransformationEstimationType() ==
+            TransformationEstimationType::ColoredICP) {
+            if (!target.HasPointNormals()) {
+                utility::LogError(
+                        "ColoredICP requires target pointcloud to have "
+                        "normals.");
+            }
+            if (!target.HasPointColors()) {
+                utility::LogError(
+                        "ColoredICP requires target pointcloud to have "
+                        "colors.");
+            }
+            if (!source.HasPointColors()) {
+                utility::LogError(
+                        "ColoredICP requires source pointcloud to have "
+                        "colors.");
+            }
+            // Computing Color Gradients.
+            if (!target.HasPointAttr("color_gradients")) {
+                utility::Timer time;
+                time.Start();
+                std::cout << " Estimating Color Gradients " << std::endl;
+                target_local.EstimateColorGradients(
+                        max_correspondence_distances[num_iterations - 1] * 2.0,
+                        30);
+                time.Stop();
+                std::cout << " Time: " << time.GetDuration() << std::endl;
+            }
         }
 
         if (max_correspondence_distances[0] <= 0.0) {
@@ -376,12 +410,9 @@ protected:
                         max_correspondence_distances[i], i);
             }
         }
+        // ---- Asserts END
 
-        init_source_to_target.AssertShape({4, 4});
-
-        core::Tensor transformation = init_source_to_target.To(
-                core::Device("CPU:0"), core::Dtype::Float64);
-
+        // ---- Creating pointcloud pyramid START
         std::vector<t::geometry::PointCloud> source_down_pyramid(
                 num_iterations);
         std::vector<t::geometry::PointCloud> target_down_pyramid(
@@ -389,13 +420,13 @@ protected:
 
         if (voxel_sizes[num_iterations - 1] == -1) {
             source_down_pyramid[num_iterations - 1] = source.Clone();
-            target_down_pyramid[num_iterations - 1] = target;
+            target_down_pyramid[num_iterations - 1] = target_local;
         } else {
             source_down_pyramid[num_iterations - 1] =
                     source.Clone().VoxelDownSample(
                             voxel_sizes[num_iterations - 1]);
             target_down_pyramid[num_iterations - 1] =
-                    target.Clone().VoxelDownSample(
+                    target_local.VoxelDownSample(
                             voxel_sizes[num_iterations - 1]);
         }
 
@@ -405,12 +436,17 @@ protected:
             target_down_pyramid[k] =
                     target_down_pyramid[k + 1].VoxelDownSample(voxel_sizes[k]);
         }
-
+        // ---- Creating pointcloud pyramid END
+        // Transformation tensor is always of shape {4,4}, type Float64 on
+        // CPU:0.
+        core::Tensor transformation = init_source_to_target.To(
+                core::Device("CPU:0"), core::Dtype::Float64);
         RegistrationResult result(transformation);
         int inlier_count = 0;
         double prev_fitness = 0;
         double prev_inlier_rmse = 0;
 
+        // ---- Iterating over different resolution scale START
         for (int64_t i = 0; i < num_iterations; i++) {
             source_down_pyramid[i].Transform(transformation.To(device, dtype));
             core::nns::NearestNeighborSearch target_nns(
@@ -423,22 +459,20 @@ protected:
                         "set.");
             }
 
-            core::Tensor distances;
-
+            // ---- ICP iterations START
             for (int j = 0; j < criterias[i].max_iteration_; j++) {
                 while (!is_started_ || !is_running_) {
                     // If we aren't running, sleep a little bit so that we don't
                     // use 100% of the CPU just checking if we need to run.
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
-
+                core::Tensor distances;
                 std::tie(result.correspondences_, distances) =
                         target_nns.HybridSearch(
                                 source_down_pyramid[i].GetPoints(),
                                 max_correspondence_distances[i], 1);
 
-                // ComputeTransformation returns transformation matrix of
-                // dtype Float64.
+                // ComputeTransformation returns transformation tensor.
                 core::Tensor update =
                         estimation
                                 .ComputeTransformation(source_down_pyramid[i],
@@ -687,6 +721,9 @@ private:
         } else if (registration_method_ == "PointToPlane") {
             estimation_ =
                     std::make_shared<TransformationEstimationPointToPlane>();
+        } else if (registration_method_ == "ColoredICP") {
+            estimation_ =
+                    std::make_shared<TransformationEstimationForColoredICP>();
         } else {
             utility::LogError(" Registration method {}, not implemented.",
                               registration_method_);
