@@ -289,7 +289,7 @@ void PointCloud::EstimateColorGradients(const double radius,
     std::tie(indices, distance, row_splits) =
             tree.FixedRadiusSearch(this->GetPoints(), radius, true);
 
-    // Compute and set `color_gradient` attribute.
+    // Compute and set `color_gradients` attribute.
     kernel::pointcloud::EstimatePointWiseColorGradient(
             this->GetPoints(), this->GetPointNormals(), this->GetPointColors(),
             indices, row_splits, this->GetPointAttr("color_gradients"),

@@ -49,10 +49,10 @@ static const double voxel_downsampling_factor = 0.05;
 // ICP ConvergenceCriteria.
 static const double relative_fitness = 1e-6;
 static const double relative_rmse = 1e-6;
-static const int max_iterations = 1;
+static const int max_iterations = 5;
 
 // NNS parameter.
-static const double max_correspondence_distance = 0.07;
+static const double max_correspondence_distance = 0.075;
 
 // Initial transformation guess for registation.
 static const std::vector<float> initial_transform_flat{
@@ -126,19 +126,34 @@ static void BenchmarkRegistrationICP(benchmark::State& state,
     std::string source_pcd_filename;
     std::string target_pcd_filename;
 
+    core::Tensor init_trans;
+
     std::shared_ptr<TransformationEstimation> estimation;
     if (type == TransformationEstimationType::PointToPlane) {
         estimation = std::make_shared<TransformationEstimationPointToPlane>();
         source_pcd_filename = source_pointcloud_filename;
         target_pcd_filename = target_pointcloud_filename;
+
+        init_trans = core::Tensor(initial_transform_flat, {4, 4},
+                                  core::Dtype::Float32, device)
+                             .To(dtype);
+
     } else if (type == TransformationEstimationType::PointToPoint) {
         estimation = std::make_shared<TransformationEstimationPointToPoint>();
-        source_pcd_filename = source_pointcloud_filename;
-        target_pcd_filename = target_pointcloud_filename;
+        source_pcd_filename = source_colored_pcd_filename;
+        target_pcd_filename = target_colored_pcd_filename;
+        init_trans = core::Tensor::Eye(4, core::Dtype::Float64,
+                                       core::Device("CPU:0"));
+        // init_trans = core::Tensor(initial_transform_flat, {4, 4},
+        //                           core::Dtype::Float32, device)
+        //                      .To(dtype);
     } else if (type == TransformationEstimationType::ColoredICP) {
         estimation = std::make_shared<TransformationEstimationColoredICP>();
         source_pcd_filename = source_colored_pcd_filename;
         target_pcd_filename = target_colored_pcd_filename;
+
+        init_trans = core::Tensor::Eye(4, core::Dtype::Float64,
+                                       core::Device("CPU:0"));
     }
 
     geometry::PointCloud source(device), target(device);
@@ -146,10 +161,6 @@ static void BenchmarkRegistrationICP(benchmark::State& state,
     std::tie(source, target) = LoadTensorPointCloudFromFile(
             source_pcd_filename, target_pcd_filename, voxel_downsampling_factor,
             dtype, device);
-
-    core::Tensor init_trans = core::Tensor(initial_transform_flat, {4, 4},
-                                           core::Dtype::Float32, device)
-                                      .To(dtype);
 
     RegistrationResult reg_result(init_trans);
 
@@ -213,14 +224,14 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   TransformationEstimationType::ColoredICP)
         ->Unit(benchmark::kMillisecond);
 
-#ifdef BUILD_CUDA_MODULE
-BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-                  ColoredICP / CUDA32,
-                  core::Device("CUDA:0"),
-                  core::Dtype::Float32,
-                  TransformationEstimationType::ColoredICP)
-        ->Unit(benchmark::kMillisecond);
-#endif
+// #ifdef BUILD_CUDA_MODULE
+// BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+//                   ColoredICP / CUDA32,
+//                   core::Device("CUDA:0"),
+//                   core::Dtype::Float32,
+//                   TransformationEstimationType::ColoredICP)
+//         ->Unit(benchmark::kMillisecond);
+// #endif
 
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   PointToPlane / CPU64,

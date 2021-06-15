@@ -170,7 +170,7 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICPLegacy,
 BENCHMARK_CAPTURE(BenchmarkRegistrationColoredICPLegacy,
                   ColoredICP / Legacy,
                   0.05,
-                  1)
+                  5)
         ->Unit(benchmark::kMillisecond);
 
 }  // namespace registration

@@ -183,10 +183,10 @@ RegistrationResult RegistrationMultiScaleICP(
                     "ColoredICP requires source pointcloud to have colors.");
         }
         // Computing Color Gradients.
-        if (!target.HasPointAttr("color_gradients")) {
-            target_local.EstimateColorGradients(
-                    max_correspondence_distances[num_iterations - 1] * 2.0, 30);
-        }
+        // if (!target.HasPointAttr("color_gradients")) {
+        target_local.EstimateColorGradients(
+                max_correspondence_distances[num_iterations - 1] * 2.0, 30);
+        // }
     }
 
     if (max_correspondence_distances[0] <= 0.0) {

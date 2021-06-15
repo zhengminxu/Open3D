@@ -151,7 +151,9 @@ void DecodeAndSolve6x6(const core::Tensor &A_reduction,
         inlier_count = static_cast<int>(A_1x29_ptr[28]);
     } catch (const std::runtime_error &) {
         utility::LogError(
-                "Singular 6x6 linear system detected, tracking failed.");
+                "Singular 6x6 linear system detected, tracking failed. \n AtA: "
+                "{} \n Atb: {}",
+                AtA.ToString(), Atb.Neg().ToString());
         delta.Fill(0);
         inlier_residual = 0;
         inlier_count = 0;

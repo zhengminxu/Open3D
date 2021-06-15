@@ -70,7 +70,7 @@ static void ComputePosePointToPlaneKernelCPU(
 #pragma omp parallel for reduction(+ : A[:29]) schedule(auto)
     for (int workload_idx = 0; workload_idx < n; workload_idx++) {
 #endif
-                    scalar_t J_ij[6];
+                    scalar_t J_ij[6] = {0};
                     scalar_t r = 0;
 
                     bool valid = kernel::GetJacobianPointToPlane<scalar_t>(
@@ -237,8 +237,8 @@ static void ComputePoseColoredICPKernelCPU(
                         A[22] += J_G[1] * w_G * r_G + J_I[1] * w_I * r_I;
                         A[23] += J_G[2] * w_G * r_G + J_I[2] * w_I * r_I;
                         A[24] += J_G[3] * w_G * r_G + J_I[3] * w_I * r_I;
-                        A[26] += J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
-                        A[25] += J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
+                        A[25] += J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
+                        A[26] += J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
 
                         A[27] += r_G * r_G + r_I * r_I;
                         A[28] += 1;
@@ -280,13 +280,11 @@ void ComputePoseColoredICPCPU(const core::Tensor &source_points,
     int n = source_points.GetLength();
 
     core::Tensor global_sum = core::Tensor::Zeros({29}, dtype, device);
-
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
         scalar_t sqrt_lambda_geometric =
                 static_cast<scalar_t>(sqrt(lambda_geometric));
         scalar_t sqrt_lambda_photometric =
                 static_cast<scalar_t>(sqrt(1.0 - lambda_geometric));
-
         DISPATCH_ROBUST_KERNEL_FUNCTION(
                 kernel.type_, scalar_t, kernel.scaling_parameter_,
                 kernel.shape_parameter_, [&]() {
@@ -302,7 +300,6 @@ void ComputePoseColoredICPCPU(const core::Tensor &source_points,
                             global_sum.GetDataPtr<scalar_t>(), func_t);
                 });
     });
-
     DecodeAndSolve6x6(global_sum, pose, residual, inlier_count);
 }
 

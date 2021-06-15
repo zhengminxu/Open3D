@@ -103,8 +103,8 @@ __global__ void ComputePosePointToPlaneKernelCUDA(
         reduction[22] += J_ij[1] * w * r;
         reduction[23] += J_ij[2] * w * r;
         reduction[24] += J_ij[3] * w * r;
-        reduction[26] += J_ij[5] * w * r;
         reduction[25] += J_ij[4] * w * r;
+        reduction[26] += J_ij[5] * w * r;
 
         reduction[27] += r * r;
         reduction[28] += 1;
@@ -219,8 +219,8 @@ __global__ void ComputePoseColoredICPKernelCUDA(
         reduction[22] = J_G[1] * w_G * r_G + J_I[1] * w_I * r_I;
         reduction[23] = J_G[2] * w_G * r_G + J_I[2] * w_I * r_I;
         reduction[24] = J_G[3] * w_G * r_G + J_I[3] * w_I * r_I;
-        reduction[26] = J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
-        reduction[25] = J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
+        reduction[25] = J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
+        reduction[26] = J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
 
         reduction[27] = r_G * r_G + r_I * r_I;
         reduction[28] = 1;

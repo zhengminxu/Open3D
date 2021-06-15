@@ -176,28 +176,6 @@ core::Tensor TransformationEstimationColoredICP::ComputeTransformation(
     // Get transformation {4,4} of type Float64 from pose {6}.
     core::Tensor transform = pipelines::kernel::PoseToTransformation(pose);
 
-    //     std::cout << " Output: \n " << transform.ToString() << std::endl;
-    /*
-    Legacy:
-         0.999993   0.00372512  0.000284199  -0.00639423
-      -0.0037256     0.999992   0.00170515   0.00485329
-    -0.000277845   -0.0017062     0.999999    0.0032935
-               0            0            0            1
-
-    CUDA:
-        [[0.0391050 0.997924 -0.0511781 -13.0404],
-        [0.0632854 -0.0535878 -0.996556 19.4114],
-        [-0.997229 0.0357315 -0.0652495 -9.56064],
-        [0.0 0.0 0.0 1.0]]
-
-    CPU:
-        [[0.0393034 0.997949 -0.0505279 -13.0397],
-        [0.0636685 -0.0529653 -0.996565 19.4103],
-        [-0.997197 0.0359513 -0.0656196 -9.5593],
-        [0.0 0.0 0.0 1.0]]
-
-    */
-
     return transform;
 }
 

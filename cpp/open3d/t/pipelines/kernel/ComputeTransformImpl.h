@@ -101,7 +101,7 @@ void ComputeRtPointToPointCPU(const core::Tensor &source_points,
 
 template <typename scalar_t>
 OPEN3D_HOST_DEVICE inline bool GetJacobianPointToPlane(
-        int64_t workload_idx,
+        const int64_t workload_idx,
         const scalar_t *source_points_ptr,
         const scalar_t *target_points_ptr,
         const scalar_t *target_normals_ptr,
@@ -113,7 +113,7 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianPointToPlane(
 
 template <>
 OPEN3D_HOST_DEVICE inline bool GetJacobianPointToPlane<float>(
-        int64_t workload_idx,
+        const int64_t workload_idx,
         const float *source_points_ptr,
         const float *target_points_ptr,
         const float *target_normals_ptr,
@@ -151,7 +151,7 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianPointToPlane<float>(
 
 template <>
 OPEN3D_HOST_DEVICE inline bool GetJacobianPointToPlane<double>(
-        int64_t workload_idx,
+        const int64_t workload_idx,
         const double *source_points_ptr,
         const double *target_points_ptr,
         const double *target_normals_ptr,
@@ -222,6 +222,7 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
         float *J_I,
         float &r_G,
         float &r_I) {
+
     if (correspondence_indices[workload_idx] == -1) {
         return false;
     }
@@ -243,14 +244,14 @@ OPEN3D_HOST_DEVICE inline bool GetJacobianColoredICP<float>(
 
     float d = (vs[0] - vt[0]) * nt[0] + (vs[1] - vt[1]) * nt[1] +
               (vs[2] - vt[2]) * nt[2];
-
-    J_G[0] = sqrt_lambda_geometric * (-vs[2] * nt[1] + vs[1] * nt[2]);
-    J_G[1] = sqrt_lambda_geometric * (vs[2] * nt[0] - vs[0] * nt[2]);
-    J_G[2] = sqrt_lambda_geometric * (-vs[1] * nt[0] + vs[0] * nt[1]);
-    J_G[3] = sqrt_lambda_geometric * nt[0];
-    J_G[4] = sqrt_lambda_geometric * nt[1];
-    J_G[5] = sqrt_lambda_geometric * nt[2];
-    r_G = sqrt_lambda_geometric * d;
+    
+    J_G[0] = (-vs[2] * nt[1] + vs[1] * nt[2]);
+    J_G[1] = (vs[2] * nt[0] - vs[0] * nt[2]);
+    J_G[2] = (-vs[1] * nt[0] + vs[0] * nt[1]);
+    J_G[3] = nt[0];
+    J_G[4] = nt[1];
+    J_G[5] = nt[2];
+    r_G = d;
 
     float vs_proj[3] = {vs[0] - d * nt[0], vs[1] - d * nt[1],
                         vs[2] - d * nt[2]};
