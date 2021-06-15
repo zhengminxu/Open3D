@@ -60,9 +60,8 @@ void Project(
 void EstimatePointWiseColorGradient(const core::Tensor& points,
                                     const core::Tensor& normals,
                                     const core::Tensor& colors,
-                                    const core::Tensor& neighbour_indices,
-                                    const core::Tensor& neighbour_count,
                                     core::Tensor& color_gradient,
+                                    const double& radius,
                                     const int64_t& max_nn);
 
 // --------------- CPU Kernel --------------------------- //
@@ -91,9 +90,8 @@ void ProjectCPU(
 void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
                                        const core::Tensor& normals,
                                        const core::Tensor& colors,
-                                       const core::Tensor& neighbour_indices,
-                                       const core::Tensor& neighbour_count,
                                        core::Tensor& color_gradient,
+                                       const double& radius,
                                        const int64_t& max_nn);
 // ------------------------------------------------------ //
 
@@ -123,9 +121,8 @@ void ProjectCUDA(
 void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
                                         const core::Tensor& normals,
                                         const core::Tensor& colors,
-                                        const core::Tensor& neighbour_indices,
-                                        const core::Tensor& neighbour_count,
                                         core::Tensor& color_gradient,
+                                        const double& radius,
                                         const int64_t& max_nn);
 #endif
 

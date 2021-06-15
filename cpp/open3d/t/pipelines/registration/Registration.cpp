@@ -162,9 +162,6 @@ RegistrationResult RegistrationMultiScaleICP(
                 "normal vectors for target PointCloud.");
     }
 
-    t::geometry::PointCloud target_local = target.Clone();
-    int64_t num_iterations = int64_t(criterias.size());
-
     // ColoredICP requires pre-computed color_gradients for target points.
     if (estimation.GetTransformationEstimationType() ==
         TransformationEstimationType::ColoredICP) {
@@ -180,11 +177,6 @@ RegistrationResult RegistrationMultiScaleICP(
             utility::LogError(
                     "ColoredICP requires source pointcloud to have colors.");
         }
-        // Computing Color Gradients.
-        if (!target.HasPointAttr("color_gradients")) {
-            target_local.EstimateColorGradients(
-                    max_correspondence_distances[num_iterations - 1] * 2.0, 30);
-        }
     }
 
     if (max_correspondence_distances[0] <= 0.0) {
@@ -193,6 +185,8 @@ RegistrationResult RegistrationMultiScaleICP(
                 " got {} in scale: {}.",
                 max_correspondence_distances[0], 0);
     }
+
+    int64_t num_iterations = int64_t(criterias.size());
 
     for (int64_t i = 1; i < num_iterations; i++) {
         if (voxel_sizes[i] >= voxel_sizes[i - 1]) {
@@ -215,12 +209,20 @@ RegistrationResult RegistrationMultiScaleICP(
 
     if (voxel_sizes[num_iterations - 1] == -1) {
         source_down_pyramid[num_iterations - 1] = source.Clone();
-        target_down_pyramid[num_iterations - 1] = target_local;
+        target_down_pyramid[num_iterations - 1] = target;
     } else {
         source_down_pyramid[num_iterations - 1] =
-                source.Clone().VoxelDownSample(voxel_sizes[num_iterations - 1]);
+                source.VoxelDownSample(voxel_sizes[num_iterations - 1]);
         target_down_pyramid[num_iterations - 1] =
-                target_local.VoxelDownSample(voxel_sizes[num_iterations - 1]);
+                target.VoxelDownSample(voxel_sizes[num_iterations - 1]);
+    }
+
+    // Computing Color Gradients.
+    if (estimation.GetTransformationEstimationType() ==
+                TransformationEstimationType::ColoredICP &&
+        !target.HasPointAttr("color_gradients")) {
+        target_down_pyramid[num_iterations - 1].EstimateColorGradients(
+                max_correspondence_distances[num_iterations - 1] * 2.0, 30);
     }
 
     for (int k = num_iterations - 2; k >= 0; k--) {

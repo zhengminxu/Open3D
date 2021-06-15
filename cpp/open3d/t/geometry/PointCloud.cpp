@@ -268,32 +268,16 @@ void PointCloud::EstimateColorGradients(const double radius,
                 "Only Float32 type color attribute supported for "
                 "estimating color gradient.");
     }
-
-    core::nns::NearestNeighborSearch tree(this->GetPoints());
     core::Device device(GetDevice());
 
     int64_t length = GetPoints().GetLength();
     this->SetPointAttr("color_gradients",
                        core::Tensor::Empty({length, 3}, dtype, device));
 
-    // TODO: Move NNS inside kernel, and use Open3D::RadiusSearch for CUDA, and
-    // integrated Point-wise NanoFlann::RadiusSearch for CPU.
-    bool check = tree.FixedRadiusIndex(radius);
-    if (!check) {
-        utility::LogError(
-                "NearestNeighborSearch::FixedRadiusIndex "
-                "Index is not set.");
-    }
-
-    core::Tensor indices, distance, row_splits;
-    std::tie(indices, distance, row_splits) =
-            tree.FixedRadiusSearch(this->GetPoints(), radius, true);
-
     // Compute and set `color_gradients` attribute.
     kernel::pointcloud::EstimatePointWiseColorGradient(
             this->GetPoints(), this->GetPointNormals(), this->GetPointColors(),
-            indices, row_splits, this->GetPointAttr("color_gradients"),
-            max_knn);
+            this->GetPointAttr("color_gradients"), radius, max_knn);
 }
 
 static PointCloud CreatePointCloudWithNormals(
