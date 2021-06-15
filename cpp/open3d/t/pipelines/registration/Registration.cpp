@@ -68,9 +68,10 @@ static RegistrationResult GetRegistrationResultAndCorrespondences(
         utility::LogError("HybridSearch Index is not set.");
     }
 
-    core::Tensor distances;
-    std::tie(result.correspondences_, distances) = target_nns.HybridSearch(
-            source.GetPoints(), max_correspondence_distance, 1);
+    core::Tensor distances, counts;
+    std::tie(result.correspondences_, distances, counts) =
+            target_nns.HybridSearch(source.GetPoints(),
+                                    max_correspondence_distance, 1);
 
     // Counting the numbers of non -1 values in the correspondence
     // tensor returned by NNS.
@@ -251,8 +252,8 @@ RegistrationResult RegistrationMultiScaleICP(
 
         // ---- ICP iterations START ------------------------------------------
         for (int j = 0; j < criterias[i].max_iteration_; j++) {
-            core::Tensor distances;
-            std::tie(result.correspondences_, distances) =
+            core::Tensor distances, count;
+            std::tie(result.correspondences_, distances, count) =
                     target_nns.HybridSearch(source_down_pyramid[i].GetPoints(),
                                             max_correspondence_distances[i], 1);
 

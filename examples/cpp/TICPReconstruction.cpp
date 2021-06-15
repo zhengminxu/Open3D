@@ -358,37 +358,6 @@ protected:
         t::geometry::PointCloud target_local = target.Clone();
         int64_t num_iterations = int64_t(criterias.size());
 
-        // ColoredICP requires pre-computed color_gradients for target points.
-        if (estimation.GetTransformationEstimationType() ==
-            TransformationEstimationType::ColoredICP) {
-            if (!target.HasPointNormals()) {
-                utility::LogError(
-                        "ColoredICP requires target pointcloud to have "
-                        "normals.");
-            }
-            if (!target.HasPointColors()) {
-                utility::LogError(
-                        "ColoredICP requires target pointcloud to have "
-                        "colors.");
-            }
-            if (!source.HasPointColors()) {
-                utility::LogError(
-                        "ColoredICP requires source pointcloud to have "
-                        "colors.");
-            }
-            // Computing Color Gradients.
-            if (!target.HasPointAttr("color_gradients")) {
-                utility::Timer time;
-                time.Start();
-                std::cout << " Estimating Color Gradients " << std::endl;
-                target_local.EstimateColorGradients(
-                        max_correspondence_distances[num_iterations - 1] * 2.0,
-                        30);
-                time.Stop();
-                std::cout << " Time: " << time.GetDuration() << std::endl;
-            }
-        }
-
         if (max_correspondence_distances[0] <= 0.0) {
             utility::LogError(
                     " Max correspondence distance must be greater than 0, but"
@@ -430,6 +399,37 @@ protected:
                             voxel_sizes[num_iterations - 1]);
         }
 
+        // ColoredICP requires pre-computed color_gradients for target points.
+        if (estimation.GetTransformationEstimationType() ==
+            TransformationEstimationType::ColoredICP) {
+            if (!target.HasPointNormals()) {
+                utility::LogError(
+                        "ColoredICP requires target pointcloud to have "
+                        "normals.");
+            }
+            if (!target.HasPointColors()) {
+                utility::LogError(
+                        "ColoredICP requires target pointcloud to have "
+                        "colors.");
+            }
+            if (!source.HasPointColors()) {
+                utility::LogError(
+                        "ColoredICP requires source pointcloud to have "
+                        "colors.");
+            }
+            // Computing Color Gradients.
+            if (!target.HasPointAttr("color_gradients")) {
+                utility::Timer time;
+                time.Start();
+                std::cout << " Estimating Color Gradients " << std::endl;
+                target_down_pyramid[num_iterations - 1].EstimateColorGradients(
+                        max_correspondence_distances[num_iterations - 1] * 2.0,
+                        30);
+                time.Stop();
+                std::cout << " Time: " << time.GetDuration() << std::endl;
+            }
+        }
+
         for (int k = num_iterations - 2; k >= 0; k--) {
             source_down_pyramid[k] =
                     source_down_pyramid[k + 1].VoxelDownSample(voxel_sizes[k]);
@@ -466,8 +466,8 @@ protected:
                     // use 100% of the CPU just checking if we need to run.
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
-                core::Tensor distances;
-                std::tie(result.correspondences_, distances) =
+                core::Tensor distances, count;
+                std::tie(result.correspondences_, distances, count) =
                         target_nns.HybridSearch(
                                 source_down_pyramid[i].GetPoints(),
                                 max_correspondence_distances[i], 1);
@@ -495,7 +495,8 @@ protected:
 
                 result.fitness_ =
                         static_cast<double>(inlier_count) /
-                        static_cast<double>(source.GetPoints().GetLength());
+                        static_cast<double>(
+                                source_down_pyramid[i].GetPoints().GetLength());
                 result.inlier_rmse_ = std::sqrt(
                         squared_error / static_cast<double>(inlier_count));
 
