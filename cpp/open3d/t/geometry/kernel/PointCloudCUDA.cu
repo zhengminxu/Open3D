@@ -246,23 +246,21 @@ void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
                                         const double& radius,
                                         const int64_t& max_nn) {
     // core::Dtype dtype = points.GetDtype();
-
     const int64_t n = points.GetLength();
 
+    // TODO: perform in kernel point-wise neighbour search.
     core::nns::NearestNeighborSearch tree(points);
-
     bool check = tree.HybridIndex(radius);
     if (!check) {
         utility::LogError(
                 "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
     }
-
     core::Tensor indices, distance, counts;
     std::tie(indices, distance, counts) =
             tree.HybridSearch(points, radius, max_nn);
 
-    const dim3 blocks((n + 1024 - 1) / 1024);
-    const dim3 threads(1024);
+    const dim3 blocks((n + 512 - 1) / 512);
+    const dim3 threads(512);
 
     EstimatePointWiseColorGradientCUDAKernel<<<blocks, threads>>>(
             points.GetDataPtr<float>(), normals.GetDataPtr<float>(),
