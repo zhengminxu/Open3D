@@ -64,6 +64,11 @@ void EstimatePointWiseColorGradient(const core::Tensor& points,
                                     const double& radius,
                                     const int64_t& max_nn);
 
+void EstimatePointWiseCovariance(const core::Tensor& points,
+                                 core::Tensor& covariances,
+                                 const double& radius,
+                                 const int64_t& max_nn);
+
 // --------------- CPU Kernel --------------------------- //
 void UnprojectCPU(
         const core::Tensor& depth,
@@ -93,6 +98,11 @@ void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
                                        core::Tensor& color_gradient,
                                        const double& radius,
                                        const int64_t& max_nn);
+
+void EstimatePointWiseCovarianceCPU(const core::Tensor& points,
+                                    core::Tensor& covariances,
+                                    const double& radius,
+                                    const int64_t& max_nn);
 // ------------------------------------------------------ //
 
 #ifdef BUILD_CUDA_MODULE
@@ -124,6 +134,11 @@ void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
                                         core::Tensor& color_gradient,
                                         const double& radius,
                                         const int64_t& max_nn);
+
+void EstimatePointWiseCovarianceCUDA(const core::Tensor& points,
+                                     core::Tensor& covariances,
+                                     const double& radius,
+                                     const int64_t& max_nn);
 #endif
 
 }  // namespace pointcloud

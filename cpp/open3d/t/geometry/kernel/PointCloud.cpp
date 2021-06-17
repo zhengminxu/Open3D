@@ -124,6 +124,23 @@ void EstimatePointWiseColorGradient(const core::Tensor& points,
     }
 }
 
+void EstimatePointWiseCovariance(const core::Tensor& points,
+                                 core::Tensor& covariances,
+                                 const double& radius,
+                                 const int64_t& max_nn) {
+    core::Device device = points.GetDevice();
+
+    core::Device::DeviceType device_type = device.GetType();
+    if (device_type == core::Device::DeviceType::CPU) {
+        EstimatePointWiseCovarianceCPU(points, covariances, radius, max_nn);
+    } else if (device_type == core::Device::DeviceType::CUDA) {
+        CUDA_CALL(EstimatePointWiseCovarianceCUDA, points, covariances,
+                  radius, max_nn);
+    } else {
+        utility::LogError("Unimplemented device");
+    }
+}
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry

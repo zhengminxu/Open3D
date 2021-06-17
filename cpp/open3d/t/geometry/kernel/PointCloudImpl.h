@@ -150,14 +150,17 @@ void UnprojectCPU
 }
 
 template <typename T>
-OPEN3D_HOST_DEVICE void EstimatePointWiseCovariance(const T* points_ptr,
-                                                    const int64_t* indices_ptr,
-                                                    const int64_t indices_size,
-                                                    T* covariance_ptr) {
+OPEN3D_HOST_DEVICE void EstimatePointWiseCovarianceKernel(
+        const T* points_ptr,
+        const int64_t* indices_ptr,
+        const int64_t indices_count,
+        T* covariance_ptr,
+        const int64_t indices_offset,
+        const int64_t covariance_offset) {
     T cumulants[9] = {0};
 
-    for (int64_t i = 0; i < indices_size; i++) {
-        int64_t idx = indices_ptr[i];
+    for (int64_t i = 0; i < indices_count; i++) {
+        int64_t idx = 3 * indices_ptr[indices_offset + i];
         cumulants[0] += points_ptr[idx];
         cumulants[1] += points_ptr[idx + 1];
         cumulants[2] += points_ptr[idx + 2];
@@ -169,7 +172,7 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseCovariance(const T* points_ptr,
         cumulants[8] += points_ptr[idx + 2] * points_ptr[idx + 2];
     }
 
-    T num_indices = static_cast<T>(indices_size);
+    T num_indices = static_cast<T>(indices_count);
     cumulants[0] /= num_indices;
     cumulants[1] /= num_indices;
     cumulants[2] /= num_indices;
@@ -180,15 +183,24 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseCovariance(const T* points_ptr,
     cumulants[7] /= num_indices;
     cumulants[8] /= num_indices;
 
-    covariance_ptr[0] = cumulants[3] - cumulants[0] * cumulants[0];
-    covariance_ptr[1] = cumulants[6] - cumulants[1] * cumulants[1];
-    covariance_ptr[2] = cumulants[8] - cumulants[2] * cumulants[2];
-    covariance_ptr[3] = cumulants[4] - cumulants[0] * cumulants[1];
-    covariance_ptr[4] = covariance_ptr[1];
-    covariance_ptr[5] = cumulants[5] - cumulants[0] * cumulants[2];
-    covariance_ptr[6] = covariance_ptr[2];
-    covariance_ptr[7] = cumulants[7] - cumulants[1] * cumulants[2];
-    covariance_ptr[8] = covariance_ptr[5];
+    covariance_ptr[covariance_offset + 0] =
+            cumulants[3] - cumulants[0] * cumulants[0];
+    covariance_ptr[covariance_offset + 1] =
+            cumulants[6] - cumulants[1] * cumulants[1];
+    covariance_ptr[covariance_offset + 2] =
+            cumulants[8] - cumulants[2] * cumulants[2];
+    covariance_ptr[covariance_offset + 3] =
+            cumulants[4] - cumulants[0] * cumulants[1];
+    covariance_ptr[covariance_offset + 4] =
+            covariance_ptr[covariance_offset + 1];
+    covariance_ptr[covariance_offset + 5] =
+            cumulants[5] - cumulants[0] * cumulants[2];
+    covariance_ptr[covariance_offset + 6] =
+            covariance_ptr[covariance_offset + 2];
+    covariance_ptr[covariance_offset + 7] =
+            cumulants[7] - cumulants[1] * cumulants[2];
+    covariance_ptr[covariance_offset + 8] =
+            covariance_ptr[covariance_offset + 5];
 }
 
 template <typename scalar_t>
@@ -466,16 +478,22 @@ void OPEN3D_HOST_DEVICE EstimatePointWiseNormalsWithFastEigen3x3(
     }
 }
 
-template void EstimatePointWiseCovariance(const float* points_ptr,
-                                          const int64_t* indices_ptr,
-                                          const int64_t indices_size,
-                                          float* covariance_ptr);
+template void EstimatePointWiseCovarianceKernel(
+        const float* points_ptr,
+        const int64_t* indices_ptr,
+        const int64_t indices_count,
+        float* covariance_ptr,
+        const int64_t indices_offset,
+        const int64_t covariance_offset);
 
-template void EstimatePointWiseCovariance(const double* points_ptr,
-                                          const int64_t* indices_ptr,
-                                          const int64_t indices_size,
-                                          double* covariance_ptr);
-
+template void EstimatePointWiseCovarianceKernel(
+        const double* points_ptr,
+        const int64_t* indices_ptr,
+        const int64_t indices_count,
+        double* covariance_ptr,
+        const int64_t indices_offset,
+        const int64_t covariance_offset);
+        
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry

@@ -659,14 +659,6 @@ void PointCloud::EstimateColorGradients(
                 "to compute color gradients.");
     }
 
-    // // TO TEST t::PointCloud::EstimateColorGradients:
-    // auto tpcd = t::geometry::PointCloud::FromLegacyPointCloud(
-    //         *this, core::Dtype::Float32, core::Device("CPU:0"));
-    // tpcd.EstimateColorGradients(search_param.radius_, search_param.max_nn_);
-    // auto color_gradients(core::eigen_converter::TensorToEigenVector3dVector(
-    //         tpcd.GetPointAttr("color_gradients")));
-    // this->color_gradients_ = color_gradients;
-
     geometry::KDTreeFlann tree;
     tree.SetGeometry(*this);
 

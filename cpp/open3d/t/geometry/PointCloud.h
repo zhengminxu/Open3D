@@ -326,10 +326,14 @@ public:
     core::Device GetDevice() const { return device_; }
 
 public:
+    /// \brief Function to compute the covariance matrix for each point of a
+    /// point cloud.
+    void EstimateCovariances(const double radius, const int max_knn = 30);
+
     /// \brief Function to compute point color gradients.
     /// Reference: Park, Q.-Y. Zhou, and V. Koltun,
     /// Colored Point Cloud Registration Revisited, ICCV, 2017.
-    void EstimateColorGradients(const double radius, const int max_knn_ = 30);
+    void EstimateColorGradients(const double radius, const int max_knn = 30);
 
     /// \brief Function to compute point normals.
     void EstimateNormals() { utility::LogError("Unimplemented."); }

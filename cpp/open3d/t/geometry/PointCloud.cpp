@@ -251,6 +251,26 @@ PointCloud PointCloud::VoxelDownSample(
     return pcd_down;
 }
 
+void PointCloud::EstimateCovariances(const double radius,
+                                     const int max_knn /* = 30*/) {
+    core::Dtype dtype = this->GetPointColors().GetDtype();
+
+    // TODO: Support Float64.
+    if (dtype != core::Dtype::Float32) {
+        utility::LogError(
+                "Only Float32 type color attribute supported for "
+                "estimating color gradient.");
+    }
+    core::Device device(GetDevice());
+
+    int64_t length = GetPoints().GetLength();
+    this->SetPointAttr("covariances",
+                       core::Tensor::Empty({length, 3, 3}, dtype, device));
+
+    // kernel::pointcloud::EstimatePointWiseCovariance(
+    // );
+}
+
 void PointCloud::EstimateColorGradients(const double radius,
                                         const int max_knn /*= 30*/) {
     if (!HasPointColors() || !HasPointNormals()) {
