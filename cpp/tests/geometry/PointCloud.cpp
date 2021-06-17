@@ -768,11 +768,23 @@ TEST(PointCloud, UniformDownSample) {
             6.0 * Eigen::Matrix3d::Identity(),
             7.0 * Eigen::Matrix3d::Identity(),
     });
+    std::vector<Eigen::Vector3d> colors_gradients({
+            {0.0, 0.0, 0.0},
+            {0.0333333, 0.0, 0.0},
+            {0.0333333, 0.0, 0.0},
+            {0.0333333, 0.0, 0.0},
+            {0.0333333, 0.0, 0.0},
+            {0.0333333, 0.0, 0.0},
+            {0.0333333, 0.0, 0.0},
+            {0.0, 0.0, 0.0},
+    });
+
     geometry::PointCloud pcd;
     pcd.points_ = points;
     pcd.normals_ = normals;
     pcd.colors_ = colors;
     pcd.covariances_ = covariances;
+    pcd.color_gradients_ = colors_gradients;
 
     std::shared_ptr<geometry::PointCloud> pc_down = pcd.UniformDownSample(3);
     ExpectEQ(pc_down->points_, std::vector<Eigen::Vector3d>({
@@ -796,6 +808,11 @@ TEST(PointCloud, UniformDownSample) {
                                             3.0 * Eigen::Matrix3d::Identity(),
                                             6.0 * Eigen::Matrix3d::Identity(),
                                     }));
+    ExpectEQ(pc_down->color_gradients_, std::vector<Eigen::Vector3d>({
+                                                {0.0, 0.0, 0.0},
+                                                {0.0333333, 0.0, 0.0},
+                                                {0.0333333, 0.0, 0.0},
+                                        }));
 }
 
 TEST(PointCloud, Crop_AxisAlignedBoundingBox) {
@@ -918,6 +935,85 @@ TEST(PointCloud, EstimateNormals) {
                                                          {v, -v, v},
                                                          {-v, -v, v},
                                                          {v, v, v}}));
+}
+
+TEST(PointCloud, EstimateColorGradients) {
+    std::vector<Eigen::Vector3d> points({
+            {0.75, 2.25, 1.5},
+            {0.75, 1.5, 0.75},
+            {0.75, 2.25, 0.75},
+            {0.75, 0.75, 0.75},
+            {1.5, 2.25, 0.75},
+            {1.5, 0.75, 0.75},
+            {1.5, 1.5, 0.75},
+            {1.5, 0.75, 0.0},
+            {1.5, 1.5, 0.0},
+            {2.25, 1.5, 0.75},
+            {2.25, 2.25, 0.75},
+            {2.25, 0.75, 0.0},
+            {2.25, 1.5, 0.0},
+            {2.25, 2.25, 0.0},
+    });
+    std::vector<Eigen::Vector3d> normals({
+            {-0.435478, 0.466954, -0.769619},
+            {-0.403040, 0.112531, -0.908238},
+            {-0.421751, 0.0991626, -0.901273},
+            {-0.404136, 0.0643637, -0.912432},
+            {-0.583083, 0.147488, -0.798913},
+            {-0.0428316, 0.159639, -0.986246},
+            {-0.455269, 0.0907715, -0.885715},
+            {-0.335764, 0.0840475, -0.938189},
+            {-0.462742, 0.120499, -0.878265},
+            {-0.35769, 0.111411, -0.927171},
+            {-0.505571, 0.106140, -0.856231},
+            {-0.499807, 0.0552894, -0.86437},
+            {-0.439232, 0.126053, -0.889486},
+            {-0.415196, 0.154319, -0.896548},
+    });
+    std::vector<Eigen::Vector3d> colors({
+            {0.470588, 0.450980, 0.447059},
+            {0.568627, 0.52549, 0.549020},
+            {0.537255, 0.501961, 0.521569},
+            {0.619608, 0.552941, 0.603922},
+            {0.647059, 0.596078, 0.635294},
+            {0.576471, 0.52549, 0.533333},
+            {0.686275, 0.6, 0.631373},
+            {0.662745, 0.584314, 0.6},
+            {0.741176, 0.647059, 0.658824},
+            {0.831373, 0.749020, 0.768627},
+            {0.752941, 0.690196, 0.752941},
+            {0.647059, 0.584314, 0.584314},
+            {0.713726, 0.627451, 0.654902},
+            {0.682353, 0.627451, 0.72549},
+    });
+    geometry::PointCloud pcd;
+    pcd.points_ = points;
+    pcd.normals_ = normals;
+    pcd.colors_ = colors;
+
+    pcd.EstimateColorGradients(geometry::KDTreeSearchParamHybrid(4.0, 5));
+
+    //     std::cout << " Color Gradients: " << std::endl;
+    //     for (auto dt : pcd.color_gradients_) std::cout << dt.transpose() <<
+    //     std::endl;
+
+    ExpectEQ(pcd.color_gradients_,
+             std::vector<Eigen::Vector3d>(
+                     {{0.131324, -0.0267384, -0.0905307},
+                      {0.125401, -0.0522312, -0.0621196},
+                      {0.139459, -0.0288079, -0.0684292},
+                      {0.0121474, -0.00480714, -0.00571943},
+                      {0.134049, -0.0159085, -0.100772},
+                      {-0.00373883, 0.0542774, 0.00894801},
+                      {0.122143, 0.0540167, -0.0572473},
+                      {0.0251254, 0.0802212, -0.00180540},
+                      {0.0840946, 0.0771583, -0.0337217},
+                      {0.128448, -0.0614929, -0.0569425},
+                      {0.100397, -0.0141007, -0.0610287},
+                      {0.0276574, 0.103951, -0.00934317},
+                      {-0.0773035, 0.0566428, 0.0461999},
+                      {0.0189995, -9.72361e-05, -0.00881549}}),
+             1e-5);
 }
 
 TEST(PointCloud, OrientNormalsToAlignWithDirection) {

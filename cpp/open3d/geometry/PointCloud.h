@@ -98,6 +98,10 @@ public:
     bool HasCovariances() const {
         return !points_.empty() && covariances_.size() == points_.size();
     }
+    /// Returns `true` if the point cloud contains point colors.
+    bool HasColorGradients() const {
+        return points_.size() > 0 && color_gradients_.size() == points_.size();
+    }
 
     /// Normalize point normals to length 1.
     PointCloud &NormalizeNormals() {
@@ -210,6 +214,14 @@ public:
     /// \param std_ratio Standard deviation ratio.
     std::tuple<std::shared_ptr<PointCloud>, std::vector<size_t>>
     RemoveStatisticalOutliers(size_t nb_neighbors, double std_ratio) const;
+
+    /// \brief Function to compute the color_gradients of a point cloud.
+    /// Ref: This function is used in ColoredICP.
+    ///
+    /// \param search_param The KDTree search parameters for `hybrid`
+    /// neighborhood search.
+    void EstimateColorGradients(const KDTreeSearchParamHybrid &search_param =
+                                        KDTreeSearchParamHybrid(0.5, 30));
 
     /// \brief Function to compute the normals of a point cloud.
     ///
@@ -405,6 +417,8 @@ public:
     std::vector<Eigen::Vector3d> colors_;
     /// Covariance Matrix for each point
     std::vector<Eigen::Matrix3d> covariances_;
+    /// Color gradients of points, required for Colored Registration.
+    std::vector<Eigen::Vector3d> color_gradients_;
 };
 
 }  // namespace geometry

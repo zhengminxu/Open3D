@@ -36,8 +36,10 @@
 #include "open3d/core/Tensor.h"
 #include "open3d/core/hashmap/Hashmap.h"
 #include "open3d/core/linalg/Matmul.h"
+#include "open3d/core/nns/NearestNeighborSearch.h"
 #include "open3d/t/geometry/TensorMap.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -247,6 +249,51 @@ PointCloud PointCloud::VoxelDownSample(
     }
 
     return pcd_down;
+}
+
+void PointCloud::EstimateColorGradients(const double radius,
+                                        const int max_knn /*= 30*/) {
+    if (!HasPointColors() || !HasPointNormals()) {
+        utility::LogError(
+                "PointCloud must have colors and normals attribute "
+                "to compute color gradients.");
+    }
+
+    core::Dtype dtype = this->GetPointColors().GetDtype();
+
+    // TODO: Support Float64.
+    // Only SVD solver used currently does not support F64.
+    if (dtype != core::Dtype::Float32) {
+        utility::LogError(
+                "Only Float32 type color attribute supported for "
+                "estimating color gradient.");
+    }
+
+    core::nns::NearestNeighborSearch tree(this->GetPoints());
+    core::Device device(GetDevice());
+
+    int64_t length = GetPoints().GetLength();
+    this->SetPointAttr("color_gradients",
+                       core::Tensor::Empty({length, 3}, dtype, device));
+
+    // TODO: Move NNS inside kernel, and use Open3D::RadiusSearch for CUDA, and
+    // integrated Point-wise NanoFlann::RadiusSearch for CPU.
+    bool check = tree.FixedRadiusIndex(radius);
+    if (!check) {
+        utility::LogError(
+                "NearestNeighborSearch::FixedRadiusIndex "
+                "Index is not set.");
+    }
+
+    core::Tensor indices, distance, row_splits;
+    std::tie(indices, distance, row_splits) =
+            tree.FixedRadiusSearch(this->GetPoints(), radius, true);
+
+    // Compute and set `color_gradients` attribute.
+    kernel::pointcloud::EstimatePointWiseColorGradient(
+            this->GetPoints(), this->GetPointNormals(), this->GetPointColors(),
+            indices, row_splits, this->GetPointAttr("color_gradients"),
+            max_knn);
 }
 
 static PointCloud CreatePointCloudWithNormals(

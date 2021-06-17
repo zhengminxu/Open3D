@@ -8,7 +8,7 @@
 **  with minimal branching and elementary floating point operations,
 **  University of Wisconsin - Madison technical report TR1690, May 2011
 **
-**	Identical GPU version
+**	Identical CPU version
 ** 	Implementated by: Kui Wu
 **	kwu@cs.utah.edu
 **  Simply modified back to CPU by: Wei Dong
@@ -172,7 +172,7 @@ inline void svd(float a11,
         Ss.f = __fadd_rn(Ss.f, Ss.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
+        printf("CPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
                Sch.f);
 #endif
         //###########################################################
@@ -236,7 +236,7 @@ inline void svd(float a11,
         Sqvvy.f = __fsub_rn(Sqvvy.f, Stmp1.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
+        printf("CPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
                Sqvs.f);
 #endif
 
@@ -277,7 +277,7 @@ inline void svd(float a11,
         Ss.f = __fadd_rn(Ss.f, Ss.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
+        printf("CPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
                Sch.f);
 #endif
 
@@ -342,7 +342,7 @@ inline void svd(float a11,
         Sqvvz.f = __fsub_rn(Sqvvz.f, Stmp2.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
+        printf("CPU q %.20g %.20g %.20g %.20g\n", Sqvvx.f, Sqvvy.f, Sqvvz.f,
                Sqvs.f);
 #endif
 #if 1
@@ -384,7 +384,7 @@ inline void svd(float a11,
         Ss.f = __fadd_rn(Ss.f, Ss.f);
 
 #ifdef DEBUG_JACOBI_CONJUGATE
-        printf("GPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
+        printf("CPU s %.20g, c %.20g, sh %.20g, ch %.20g\n", Ss.f, Sc.f, Ssh.f,
                Sch.f);
 #endif
 
@@ -1101,4 +1101,116 @@ inline void svd(float a11,
     s22 = Sa22.f;
     // s23 = Sa23.f; s31 = Sa31.f; s32 = Sa32.f;
     s33 = Sa33.f;
+}
+
+template <typename T>
+inline T det3x3(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22) {
+    return m00 * (m11 * m22 - m12 * m21) - m10 * (m01 * m22 - m02 - m21) +
+           m20 * (m01 * m12 - m02 * m11);
+}
+
+template <typename T>
+inline void matmul3x3_3x1(T m00,
+                          T m01,
+                          T m02,
+                          T m10,
+                          T m11,
+                          T m12,
+                          T m20,
+                          T m21,
+                          T m22,
+                          T v0,
+                          T v1,
+                          T v2,
+                          T &o0,
+                          T &o1,
+                          T &o2) {
+    o0 = m00 * v0 + m01 * v1 + m02 * v2;
+    o1 = m10 * v0 + m11 * v1 + m12 * v2;
+    o2 = m20 * v0 + m21 * v1 + m22 * v2;
+}
+
+template <typename T>
+inline void matmul3x3_3x3(T a00,
+                          T a01,
+                          T a02,
+                          T a10,
+                          T a11,
+                          T a12,
+                          T a20,
+                          T a21,
+                          T a22,
+                          T b00,
+                          T b01,
+                          T b02,
+                          T b10,
+                          T b11,
+                          T b12,
+                          T b20,
+                          T b21,
+                          T b22,
+                          T &c00,
+                          T &c01,
+                          T &c02,
+                          T &c10,
+                          T &c11,
+                          T &c12,
+                          T &c20,
+                          T &c21,
+                          T &c22) {
+    matmul3x3_3x1(a00, a01, a02, a10, a11, a12, a20, a21, a22, b00, b10, b20,
+                  c00, c10, c20);
+    matmul3x3_3x1(a00, a01, a02, a10, a11, a12, a20, a21, a22, b01, b11, b21,
+                  c01, c11, c21);
+    matmul3x3_3x1(a00, a01, a02, a10, a11, a12, a20, a21, a22, b02, b12, b22,
+                  c02, c12, c22);
+}
+
+template <typename T>
+inline void solve_svd3x3(T &a11,
+                         T &a12,
+                         T &a13,
+                         T &a21,
+                         T &a22,
+                         T &a23,
+                         T &a31,
+                         T &a32,
+                         T &a33,  // input A {3,3}
+                         T &b1,
+                         T &b2,
+                         T &b3,  // input b {3,1}
+                         T &x1,
+                         T &x2,
+                         T &x3)  // output x {3,1}
+{
+    T U[9];
+    T V[9];
+    T S[3];
+    svd(a11, a12, a13, a21, a22, a23, a31, a32, a33, U[0], U[1], U[2], U[3],
+        U[4], U[5], U[6], U[7], U[8], S[0], S[1], S[2], V[0], V[1], V[2], V[3],
+        V[4], V[5], V[6], V[7], V[8]);
+
+    //###########################################################
+    // Sigma^+
+    //###########################################################
+    const T epsilon = 1e-6;
+    S[0] = S[0] < epsilon ? 0 : 1.0 / S[0];
+    S[1] = S[1] < epsilon ? 0 : 1.0 / S[1];
+    S[2] = S[2] < epsilon ? 0 : 1.0 / S[2];
+
+    //###########################################################
+    // Ainv = V * [(Sigma^+) * UT]
+    //###########################################################
+    T Ainv[9] = {0};
+    matmul3x3_3x3(V[0], V[1], V[2], V[3], V[4], V[5], V[6], V[7], V[8],
+                  U[0] * S[0], U[3] * S[0], U[6] * S[0], U[1] * S[1],
+                  U[4] * S[1], U[7] * S[1], U[2] * S[2], U[5] * S[2],
+                  U[8] * S[2], Ainv[0], Ainv[1], Ainv[2], Ainv[3], Ainv[4],
+                  Ainv[5], Ainv[6], Ainv[7], Ainv[8]);
+
+    //###########################################################
+    // x = Ainv * b
+    //###########################################################
+    matmul3x3_3x1(Ainv[0], Ainv[1], Ainv[2], Ainv[3], Ainv[4], Ainv[5], Ainv[6],
+                  Ainv[7], Ainv[8], b1, b2, b3, x1, x2, x3);
 }
