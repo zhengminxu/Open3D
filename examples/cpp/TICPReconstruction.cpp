@@ -355,8 +355,25 @@ protected:
                     "normal vectors for target PointCloud.");
         }
 
-        t::geometry::PointCloud target_local = target.Clone();
-        int64_t num_iterations = int64_t(criterias.size());
+        // ColoredICP requires pre-computed color_gradients for target points.
+        if (estimation.GetTransformationEstimationType() ==
+            TransformationEstimationType::ColoredICP) {
+            if (!target.HasPointNormals()) {
+                utility::LogError(
+                        "ColoredICP requires target pointcloud to have "
+                        "normals.");
+            }
+            if (!target.HasPointColors()) {
+                utility::LogError(
+                        "ColoredICP requires target pointcloud to have "
+                        "colors.");
+            }
+            if (!source.HasPointColors()) {
+                utility::LogError(
+                        "ColoredICP requires source pointcloud to have "
+                        "colors.");
+            }
+        }
 
         if (max_correspondence_distances[0] <= 0.0) {
             utility::LogError(
@@ -364,6 +381,8 @@ protected:
                     " got {} in scale: {}.",
                     max_correspondence_distances[0], 0);
         }
+
+        int64_t num_iterations = int64_t(criterias.size());
 
         for (int64_t i = 1; i < num_iterations; i++) {
             if (voxel_sizes[i] >= voxel_sizes[i - 1]) {
@@ -389,45 +408,20 @@ protected:
 
         if (voxel_sizes[num_iterations - 1] == -1) {
             source_down_pyramid[num_iterations - 1] = source.Clone();
-            target_down_pyramid[num_iterations - 1] = target_local;
+            target_down_pyramid[num_iterations - 1] = target;
         } else {
             source_down_pyramid[num_iterations - 1] =
-                    source.Clone().VoxelDownSample(
-                            voxel_sizes[num_iterations - 1]);
+                    source.VoxelDownSample(voxel_sizes[num_iterations - 1]);
             target_down_pyramid[num_iterations - 1] =
-                    target_local.VoxelDownSample(
-                            voxel_sizes[num_iterations - 1]);
+                    target.VoxelDownSample(voxel_sizes[num_iterations - 1]);
         }
 
-        // ColoredICP requires pre-computed color_gradients for target points.
+        // Computing Color Gradients.
         if (estimation.GetTransformationEstimationType() ==
-            TransformationEstimationType::ColoredICP) {
-            if (!target.HasPointNormals()) {
-                utility::LogError(
-                        "ColoredICP requires target pointcloud to have "
-                        "normals.");
-            }
-            if (!target.HasPointColors()) {
-                utility::LogError(
-                        "ColoredICP requires target pointcloud to have "
-                        "colors.");
-            }
-            if (!source.HasPointColors()) {
-                utility::LogError(
-                        "ColoredICP requires source pointcloud to have "
-                        "colors.");
-            }
-            // Computing Color Gradients.
-            if (!target.HasPointAttr("color_gradients")) {
-                utility::Timer time;
-                time.Start();
-                std::cout << " Estimating Color Gradients " << std::endl;
-                target_down_pyramid[num_iterations - 1].EstimateColorGradients(
-                        max_correspondence_distances[num_iterations - 1] * 2.0,
-                        30);
-                time.Stop();
-                std::cout << " Time: " << time.GetDuration() << std::endl;
-            }
+                    TransformationEstimationType::ColoredICP &&
+            !target.HasPointAttr("color_gradients")) {
+            target_down_pyramid[num_iterations - 1].EstimateColorGradients(
+                    max_correspondence_distances[num_iterations - 1] * 2.0, 30);
         }
 
         for (int k = num_iterations - 2; k >= 0; k--) {
@@ -437,6 +431,7 @@ protected:
                     target_down_pyramid[k + 1].VoxelDownSample(voxel_sizes[k]);
         }
         // ---- Creating pointcloud pyramid END
+
         // Transformation tensor is always of shape {4,4}, type Float64 on
         // CPU:0.
         core::Tensor transformation = init_source_to_target.To(

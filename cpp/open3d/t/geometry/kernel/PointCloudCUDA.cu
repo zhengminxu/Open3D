@@ -30,6 +30,7 @@
 #include "open3d/core/SizeVector.h"
 #include "open3d/core/Tensor.h"
 #include "open3d/core/kernel/CUDALauncher.cuh"
+#include "open3d/core/nns/NearestNeighborSearch.h"
 #include "open3d/t/geometry/kernel/GeometryIndexer.h"
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
@@ -134,18 +135,15 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
         const float* normals_ptr,
         const float* colors_ptr,
         const int64_t* neighbour_indices_ptr,
-        const int64_t* neighbour_row_splits_ptr,
+        const int64_t* neighbour_counts_ptr,
         float* color_gradients_ptr,
         const int64_t max_nn,
         const int64_t n) {
     const int64_t workload_idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (workload_idx >= n) return;
 
-    int64_t neighbour_start_idx = neighbour_row_splits_ptr[workload_idx];
-    int64_t neighbour_count =
-            neighbour_row_splits_ptr[workload_idx + 1] - neighbour_start_idx;
-    neighbour_count = neighbour_count < max_nn ? neighbour_count : max_nn;
-
+    int64_t neighbour_offset = max_nn * workload_idx;
+    int64_t neighbour_count = neighbour_counts_ptr[workload_idx];
     int64_t point_idx = 3 * workload_idx;
 
     if (neighbour_count >= 4) {
@@ -173,7 +171,7 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
         int i = 1;
         for (i = 1; i < neighbour_count; i++) {
             int64_t neighbour_idx =
-                    3 * neighbour_indices_ptr[neighbour_start_idx + i];
+                    3 * neighbour_indices_ptr[neighbour_offset + i];
 
             if (neighbour_idx == -1) {
                 break;
@@ -241,25 +239,34 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
     }
 }
 
-void EstimatePointWiseColorGradientCUDA(
-        const core::Tensor& points,
-        const core::Tensor& normals,
-        const core::Tensor& colors,
-        const core::Tensor& neighbour_indices,
-        const core::Tensor& neighbour_row_splits,
-        core::Tensor& color_gradients,
-        const int64_t& max_nn) {
+void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
+                                        const core::Tensor& normals,
+                                        const core::Tensor& colors,
+                                        core::Tensor& color_gradients,
+                                        const double& radius,
+                                        const int64_t& max_nn) {
     // core::Dtype dtype = points.GetDtype();
-
     const int64_t n = points.GetLength();
-    const dim3 blocks((n + 1024 - 1) / 1024);
-    const dim3 threads(1024);
+
+    // TODO: perform in kernel point-wise neighbour search.
+    core::nns::NearestNeighborSearch tree(points);
+    bool check = tree.HybridIndex(radius);
+    if (!check) {
+        utility::LogError(
+                "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
+    }
+    core::Tensor indices, distance, counts;
+    std::tie(indices, distance, counts) =
+            tree.HybridSearch(points, radius, max_nn);
+
+    const dim3 blocks((n + 512 - 1) / 512);
+    const dim3 threads(512);
 
     EstimatePointWiseColorGradientCUDAKernel<<<blocks, threads>>>(
             points.GetDataPtr<float>(), normals.GetDataPtr<float>(),
-            colors.GetDataPtr<float>(), neighbour_indices.GetDataPtr<int64_t>(),
-            neighbour_row_splits.GetDataPtr<int64_t>(),
-            color_gradients.GetDataPtr<float>(), max_nn, n);
+            colors.GetDataPtr<float>(), indices.GetDataPtr<int64_t>(),
+            counts.GetDataPtr<int64_t>(), color_gradients.GetDataPtr<float>(),
+            max_nn, n);
 
     OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
 }

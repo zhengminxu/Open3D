@@ -30,6 +30,7 @@
 #include "open3d/core/SizeVector.h"
 #include "open3d/core/Tensor.h"
 #include "open3d/core/kernel/CPULauncher.h"
+#include "open3d/core/nns/NearestNeighborSearch.h"
 #include "open3d/t/geometry/kernel/GeometryIndexer.h"
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
@@ -118,30 +119,36 @@ void ProjectCPU(
 void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
                                        const core::Tensor& normals,
                                        const core::Tensor& colors,
-                                       const core::Tensor& neighbour_indices,
-                                       const core::Tensor& neighbour_row_splits,
                                        core::Tensor& color_gradients,
+                                       const double& radius,
                                        const int64_t& max_nn) {
     int64_t n = points.GetLength();
+
+    core::nns::NearestNeighborSearch tree(points);
+
+    bool check = tree.HybridIndex(radius);
+    if (!check) {
+        utility::LogError(
+                "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
+    }
+
+    core::Tensor indices, distance, counts;
+    std::tie(indices, distance, counts) =
+            tree.HybridSearch(points, radius, max_nn);
 
     const float* points_ptr = points.GetDataPtr<float>();
     const float* normals_ptr = normals.GetDataPtr<float>();
     const float* colors_ptr = colors.GetDataPtr<float>();
-    const int64_t* neighbour_indices_ptr =
-            neighbour_indices.GetDataPtr<int64_t>();
-    const int64_t* neighbour_row_splits_ptr =
-            neighbour_row_splits.GetDataPtr<int64_t>();
+    const int64_t* neighbour_indices_ptr = indices.GetDataPtr<int64_t>();
+    const int64_t* neighbour_counts_ptr = counts.GetDataPtr<int64_t>();
 
     float* color_gradients_ptr = color_gradients.GetDataPtr<float>();
 
 #pragma omp parallel for schedule(static)
     for (int64_t workload_idx = 0; workload_idx < n; workload_idx++) {
         // NNS.
-        int64_t neighbour_start_idx = neighbour_row_splits_ptr[workload_idx];
-        int64_t neighbour_count = neighbour_row_splits_ptr[workload_idx + 1] -
-                                  neighbour_start_idx;
-        neighbour_count = neighbour_count < max_nn ? neighbour_count : max_nn;
-
+        int64_t neighbour_offset = max_nn * workload_idx;
+        int64_t neighbour_count = neighbour_counts_ptr[workload_idx];
         int64_t point_idx = 3 * workload_idx;
 
         if (neighbour_count >= 4) {
@@ -169,7 +176,7 @@ void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
             int i = 1;
             for (i = 1; i < neighbour_count; i++) {
                 int64_t neighbour_idx =
-                        3 * neighbour_indices_ptr[neighbour_start_idx + i];
+                        3 * neighbour_indices_ptr[neighbour_offset + i];
 
                 if (neighbour_idx == -1) {
                     break;
