@@ -112,6 +112,7 @@ void ProjectCPU(
                 }
             });
 }
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry
