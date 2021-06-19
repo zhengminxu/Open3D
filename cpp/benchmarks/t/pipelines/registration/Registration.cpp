@@ -195,30 +195,12 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   TransformationEstimationType::PointToPlane)
         ->Unit(benchmark::kMillisecond);
 
-#ifdef BUILD_CUDA_MODULE
-BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-                  PointToPlane / CUDA32,
-                  core::Device("CUDA:0"),
-                  core::Dtype::Float32,
-                  TransformationEstimationType::PointToPlane)
-        ->Unit(benchmark::kMillisecond);
-#endif
-
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   PointToPoint / CPU32,
                   core::Device("CPU:0"),
                   core::Dtype::Float32,
                   TransformationEstimationType::PointToPoint)
         ->Unit(benchmark::kMillisecond);
-
-#ifdef BUILD_CUDA_MODULE
-BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-                  PointToPoint / CUDA32,
-                  core::Device("CUDA:0"),
-                  core::Dtype::Float32,
-                  TransformationEstimationType::PointToPoint)
-        ->Unit(benchmark::kMillisecond);
-#endif
 
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   ColoredICP / CPU32,
@@ -227,30 +209,12 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   TransformationEstimationType::ColoredICP)
         ->Unit(benchmark::kMillisecond);
 
-#ifdef BUILD_CUDA_MODULE
-BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-                  ColoredICP / CUDA32,
-                  core::Device("CUDA:0"),
-                  core::Dtype::Float32,
-                  TransformationEstimationType::ColoredICP)
-        ->Unit(benchmark::kMillisecond);
-#endif
-
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   PointToPlane / CPU64,
                   core::Device("CPU:0"),
                   core::Dtype::Float64,
                   TransformationEstimationType::PointToPlane)
         ->Unit(benchmark::kMillisecond);
-
-#ifdef BUILD_CUDA_MODULE
-BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
-                  PointToPlane / CUDA64,
-                  core::Device("CUDA:0"),
-                  core::Dtype::Float64,
-                  TransformationEstimationType::PointToPlane)
-        ->Unit(benchmark::kMillisecond);
-#endif
 
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   PointToPoint / CPU64,
@@ -259,12 +223,54 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   TransformationEstimationType::PointToPoint)
         ->Unit(benchmark::kMillisecond);
 
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  ColoredICP / CPU64,
+                  core::Device("CPU:0"),
+                  core::Dtype::Float64,
+                  TransformationEstimationType::ColoredICP)
+        ->Unit(benchmark::kMillisecond);
+
 #ifdef BUILD_CUDA_MODULE
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  PointToPlane / CUDA32,
+                  core::Device("CUDA:0"),
+                  core::Dtype::Float32,
+                  TransformationEstimationType::PointToPlane)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  PointToPoint / CUDA32,
+                  core::Device("CUDA:0"),
+                  core::Dtype::Float32,
+                  TransformationEstimationType::PointToPoint)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  ColoredICP / CUDA32,
+                  core::Device("CUDA:0"),
+                  core::Dtype::Float32,
+                  TransformationEstimationType::ColoredICP)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  PointToPlane / CUDA64,
+                  core::Device("CUDA:0"),
+                  core::Dtype::Float64,
+                  TransformationEstimationType::PointToPlane)
+        ->Unit(benchmark::kMillisecond);
+
 BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
                   PointToPoint / CUDA64,
                   core::Device("CUDA:0"),
                   core::Dtype::Float64,
                   TransformationEstimationType::PointToPoint)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(BenchmarkRegistrationICP,
+                  ColoredICP / CUDA64,
+                  core::Device("CUDA:0"),
+                  core::Dtype::Float64,
+                  TransformationEstimationType::ColoredICP)
         ->Unit(benchmark::kMillisecond);
 #endif
 

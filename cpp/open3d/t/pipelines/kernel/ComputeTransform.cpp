@@ -53,6 +53,7 @@ core::Tensor ComputePosePointToPlane(const core::Tensor &source_points,
 
     float residual = 0;
     int inlier_count = 0;
+
     core::Device::DeviceType device_type = device.GetType();
     if (device_type == core::Device::DeviceType::CPU) {
         ComputePosePointToPlaneCPU(
@@ -78,7 +79,6 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
                                    const core::Tensor &target_colors,
                                    const core::Tensor &target_color_gradients,
                                    const core::Tensor &correspondence_indices,
-                                   int &inlier_count,
                                    const registration::RobustKernel &kernel,
                                    const float &lambda_geometric) {
     // Get dtype and device.
@@ -98,6 +98,8 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
     core::Tensor corres_contiguous = correspondence_indices.Contiguous();
 
     float residual = 0;
+    int inlier_count = 0;
+
     core::Device::DeviceType device_type = device.GetType();
     if (device_type == core::Device::DeviceType::CPU) {
         ComputePoseColoredICPCPU(

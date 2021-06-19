@@ -493,7 +493,7 @@ template void EstimatePointWiseCovarianceKernel(
         double* covariance_ptr,
         const int64_t indices_offset,
         const int64_t covariance_offset);
-        
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry

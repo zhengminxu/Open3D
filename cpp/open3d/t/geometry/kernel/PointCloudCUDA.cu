@@ -129,14 +129,14 @@ void ProjectCUDA(
             });
 }
 
-// template <typename T>
+template <typename scalar_t>
 __global__ void EstimatePointWiseColorGradientCUDAKernel(
-        const float* points_ptr,
-        const float* normals_ptr,
-        const float* colors_ptr,
+        const scalar_t* points_ptr,
+        const scalar_t* normals_ptr,
+        const scalar_t* colors_ptr,
         const int64_t* neighbour_indices_ptr,
         const int64_t* neighbour_counts_ptr,
-        float* color_gradients_ptr,
+        scalar_t* color_gradients_ptr,
         const int64_t max_nn,
         const int64_t n) {
     const int64_t workload_idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -147,18 +147,18 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
     int64_t point_idx = 3 * workload_idx;
 
     if (neighbour_count >= 4) {
-        float vt[3] = {points_ptr[point_idx], points_ptr[point_idx + 1],
-                       points_ptr[point_idx + 2]};
+        scalar_t vt[3] = {points_ptr[point_idx], points_ptr[point_idx + 1],
+                          points_ptr[point_idx + 2]};
 
-        float nt[3] = {normals_ptr[point_idx], normals_ptr[point_idx + 1],
-                       normals_ptr[point_idx + 2]};
+        scalar_t nt[3] = {normals_ptr[point_idx], normals_ptr[point_idx + 1],
+                          normals_ptr[point_idx + 2]};
 
-        float it = (colors_ptr[point_idx] + colors_ptr[point_idx + 1] +
-                    colors_ptr[point_idx + 2]) /
-                   3.0;
+        scalar_t it = (colors_ptr[point_idx] + colors_ptr[point_idx + 1] +
+                       colors_ptr[point_idx + 2]) /
+                      3.0;
 
-        float AtA[9] = {0};
-        float Atb[3] = {0};
+        scalar_t AtA[9] = {0};
+        scalar_t Atb[3] = {0};
 
         // approximate image gradient of vt's tangential plane
         // projection (p') of a point p on a plane defined by normal n,
@@ -166,7 +166,7 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
         // p' = p - [(p - o).dot(n)] * n
         // p' = p - [(p.dot(n) - s)] * n [where s = o.dot(n)]
         // Computing the scalar s.
-        float s = vt[0] * nt[0] + vt[1] * nt[1] + vt[2] * nt[2];
+        scalar_t s = vt[0] * nt[0] + vt[1] * nt[1] + vt[2] * nt[2];
 
         int i = 1;
         for (i = 1; i < neighbour_count; i++) {
@@ -177,26 +177,26 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
                 break;
             }
 
-            float vt_adj[3] = {points_ptr[neighbour_idx],
-                               points_ptr[neighbour_idx + 1],
-                               points_ptr[neighbour_idx + 2]};
+            scalar_t vt_adj[3] = {points_ptr[neighbour_idx],
+                                  points_ptr[neighbour_idx + 1],
+                                  points_ptr[neighbour_idx + 2]};
 
             // p' = p - d * n [where d = p.dot(n) - s]
             // Computing the scalar d.
-            float d = vt_adj[0] * nt[0] + vt_adj[1] * nt[1] +
-                      vt_adj[2] * nt[2] - s;
+            scalar_t d = vt_adj[0] * nt[0] + vt_adj[1] * nt[1] +
+                         vt_adj[2] * nt[2] - s;
 
             // Computing the p' (projection of the point).
-            float vt_proj[3] = {vt_adj[0] - d * nt[0], vt_adj[1] - d * nt[1],
-                                vt_adj[2] - d * nt[2]};
+            scalar_t vt_proj[3] = {vt_adj[0] - d * nt[0], vt_adj[1] - d * nt[1],
+                                   vt_adj[2] - d * nt[2]};
 
-            float it_adj = (colors_ptr[neighbour_idx + 0] +
-                            colors_ptr[neighbour_idx + 1] +
-                            colors_ptr[neighbour_idx + 2]) /
-                           3.0;
+            scalar_t it_adj = (colors_ptr[neighbour_idx + 0] +
+                               colors_ptr[neighbour_idx + 1] +
+                               colors_ptr[neighbour_idx + 2]) /
+                              3.0;
 
-            float A[3] = {vt_proj[0] - vt[0], vt_proj[1] - vt[1],
-                          vt_proj[2] - vt[2]};
+            scalar_t A[3] = {vt_proj[0] - vt[0], vt_proj[1] - vt[1],
+                             vt_proj[2] - vt[2]};
 
             AtA[0] += A[0] * A[0];
             AtA[1] += A[1] * A[0];
@@ -205,7 +205,7 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
             AtA[5] += A[2] * A[1];
             AtA[8] += A[2] * A[2];
 
-            float b = it_adj - it;
+            scalar_t b = it_adj - it;
 
             Atb[0] += A[0] * b;
             Atb[1] += A[1] * b;
@@ -213,7 +213,7 @@ __global__ void EstimatePointWiseColorGradientCUDAKernel(
         }
 
         // Orthogonal constraint.
-        float A[3] = {(i - 1) * nt[0], (i - 1) * nt[1], (i - 1) * nt[2]};
+        scalar_t A[3] = {(i - 1) * nt[0], (i - 1) * nt[1], (i - 1) * nt[2]};
 
         AtA[0] += A[0] * A[0];
         AtA[1] += A[0] * A[1];
@@ -245,7 +245,7 @@ void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
                                         core::Tensor& color_gradients,
                                         const double& radius,
                                         const int64_t& max_nn) {
-    // core::Dtype dtype = points.GetDtype();
+    core::Dtype dtype = points.GetDtype();
     const int64_t n = points.GetLength();
 
     // TODO: perform in kernel point-wise neighbour search.
@@ -262,19 +262,21 @@ void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
     const dim3 blocks((n + 512 - 1) / 512);
     const dim3 threads(512);
 
-    EstimatePointWiseColorGradientCUDAKernel<<<blocks, threads>>>(
-            points.GetDataPtr<float>(), normals.GetDataPtr<float>(),
-            colors.GetDataPtr<float>(), indices.GetDataPtr<int64_t>(),
-            counts.GetDataPtr<int64_t>(), color_gradients.GetDataPtr<float>(),
-            max_nn, n);
+    DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        EstimatePointWiseColorGradientCUDAKernel<<<blocks, threads>>>(
+                points.GetDataPtr<scalar_t>(), normals.GetDataPtr<scalar_t>(),
+                colors.GetDataPtr<scalar_t>(), indices.GetDataPtr<int64_t>(),
+                counts.GetDataPtr<int64_t>(),
+                color_gradients.GetDataPtr<scalar_t>(), max_nn, n);
+    });
 
     OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 void EstimatePointWiseCovarianceCUDA(const core::Tensor& points,
-                                    core::Tensor& covariances,
-                                    const double& radius,
-                                    const int64_t& max_nn) {
+                                     core::Tensor& covariances,
+                                     const double& radius,
+                                     const int64_t& max_nn) {
     int64_t n = points.GetLength();
 
     core::nns::NearestNeighborSearch tree(points);
@@ -295,7 +297,7 @@ void EstimatePointWiseCovarianceCUDA(const core::Tensor& points,
 
     float* covariances_ptr = covariances.GetDataPtr<float>();
 
-// #pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)
     for (int64_t workload_idx = 0; workload_idx < n; workload_idx++) {
         // NNS.
         int64_t neighbour_offset = max_nn * workload_idx;

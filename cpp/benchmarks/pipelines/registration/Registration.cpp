@@ -126,35 +126,35 @@ static void BenchmarkRegistrationICPLegacy(
                       reg_result.inlier_rmse_);
 }
 
-static void BenchmarkRegistrationColoredICPLegacy(
-        benchmark::State& state, const TransformationEstimationType& type) {
-    geometry::PointCloud source;
-    geometry::PointCloud target;
+// static void BenchmarkRegistrationColoredICPLegacy(
+//         benchmark::State& state, const TransformationEstimationType& type) {
+//     geometry::PointCloud source;
+//     geometry::PointCloud target;
 
-    std::tie(source, target) = LoadPointCloud(source_colored_pcd_filename,
-                                              target_colored_pcd_filename,
-                                              voxel_downsampling_factor);
+//     std::tie(source, target) = LoadPointCloud(source_colored_pcd_filename,
+//                                               target_colored_pcd_filename,
+//                                               voxel_downsampling_factor);
 
-    // TODO (@rishabh) Add MultiScale ColoredICP to Benchmarks.
-    // std::vector<double> voxel_sizes = {0.05, 0.05 / 2, 0.05 / 4};
-    // std::vector<int> iterations = {50, 30, 14};
-    Eigen::Matrix4d trans = Eigen::Matrix4d::Identity();
+//     // TODO (@rishabh) Add MultiScale ColoredICP to Benchmarks.
+//     // std::vector<double> voxel_sizes = {0.05, 0.05 / 2, 0.05 / 4};
+//     // std::vector<int> iterations = {50, 30, 14};
+//     Eigen::Matrix4d trans = Eigen::Matrix4d::Identity();
 
-    source.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(
-            voxel_downsampling_factor * 2.0, 30));
-    target.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(
-            voxel_downsampling_factor * 2.0, 30));
+//     source.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(
+//             voxel_downsampling_factor * 2.0, 30));
+//     target.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(
+//             voxel_downsampling_factor * 2.0, 30));
 
-    for (auto _ : state) {
-        auto result = pipelines::registration::RegistrationICP(
-                source, target, 0.07, trans,
-                pipelines::registration::
-                        TransformationEstimationForColoredICP(),
-                pipelines::registration::ICPConvergenceCriteria(
-                        1e-6, 1e-6, max_iterations));
-        trans = result.transformation_;
-    }
-}
+//     for (auto _ : state) {
+//         auto result = pipelines::registration::RegistrationICP(
+//                 source, target, 0.07, trans,
+//                 pipelines::registration::
+//                         TransformationEstimationForColoredICP(),
+//                 pipelines::registration::ICPConvergenceCriteria(
+//                         1e-6, 1e-6, max_iterations));
+//         trans = result.transformation_;
+//     }
+// }
 
 BENCHMARK_CAPTURE(BenchmarkRegistrationICPLegacy,
                   PointToPlane / Legacy,
@@ -166,10 +166,10 @@ BENCHMARK_CAPTURE(BenchmarkRegistrationICPLegacy,
                   TransformationEstimationType::PointToPoint)
         ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BenchmarkRegistrationColoredICPLegacy,
-                  ColoredICP / Legacy,
-                  TransformationEstimationType::ColoredICP)
-        ->Unit(benchmark::kMillisecond);
+// BENCHMARK_CAPTURE(BenchmarkRegistrationColoredICPLegacy,
+//                   ColoredICP / Legacy,
+//                   TransformationEstimationType::ColoredICP)
+//         ->Unit(benchmark::kMillisecond);
 
 }  // namespace registration
 }  // namespace pipelines

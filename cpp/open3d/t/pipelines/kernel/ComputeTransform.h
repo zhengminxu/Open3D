@@ -55,7 +55,6 @@ core::Tensor ComputePoseColoredICP(const core::Tensor &source_points,
                                    const core::Tensor &target_colors,
                                    const core::Tensor &target_color_gradients,
                                    const core::Tensor &correspondence_indices,
-                                   int &inlier_count,
                                    const registration::RobustKernel &kernel,
                                    const float &lambda_geometric);
 

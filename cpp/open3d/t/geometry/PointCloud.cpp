@@ -281,11 +281,9 @@ void PointCloud::EstimateColorGradients(const double radius,
 
     core::Dtype dtype = this->GetPointColors().GetDtype();
 
-    // TODO: Support Float64.
-    // Only SVD solver used currently does not support F64.
-    if (dtype != core::Dtype::Float32) {
+    if (dtype != core::Dtype::Float32 && dtype != core::Dtype::Float64) {
         utility::LogError(
-                "Only Float32 type color attribute supported for "
+                "Only Float32 and Float64 type color attribute supported for "
                 "estimating color gradient.");
     }
     core::Device device(GetDevice());

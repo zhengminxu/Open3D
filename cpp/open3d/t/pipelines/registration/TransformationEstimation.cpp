@@ -146,8 +146,7 @@ double TransformationEstimationForColoredICP::ComputeRMSE(
 core::Tensor TransformationEstimationForColoredICP::ComputeTransformation(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
-        const core::Tensor &correspondences,
-        int &inlier_cout) const {
+        const core::Tensor &correspondences) const {
     core::Device device = source.GetDevice();
 
     if (target.GetDevice() != device) {
@@ -164,11 +163,13 @@ core::Tensor TransformationEstimationForColoredICP::ComputeTransformation(
                 "have colors attributes and target pointcloud to have colors, "
                 "normals, and color_gradients attributes.");
     }
-    if (target.GetPointColors().GetDtype() != core::Dtype::Float32 ||
-        source.GetPointColors().GetDtype() != core::Dtype::Float32) {
+    if ((target.GetPointColors().GetDtype() != core::Dtype::Float32 &&
+         target.GetPointColors().GetDtype() != core::Dtype::Float64) ||
+        (source.GetPointColors().GetDtype() != core::Dtype::Float32 &&
+         source.GetPointColors().GetDtype() != core::Dtype::Float64)) {
         utility::LogError(
                 "Colors attributes of source and target pointcloud must be of "
-                "Float32 type.");
+                "Float32 or Float64 type.");
     }
 
     // Get pose {6} of type Float64 from correspondences indexed source and
@@ -177,7 +178,7 @@ core::Tensor TransformationEstimationForColoredICP::ComputeTransformation(
             source.GetPoints(), source.GetPointColors(), target.GetPoints(),
             target.GetPointNormals(), target.GetPointColors(),
             target.GetPointAttr("color_gradients"), correspondences,
-            inlier_cout, this->kernel_, this->lambda_geometric_);
+            this->kernel_, this->lambda_geometric_);
 
     // Get transformation {4,4} of type Float64 from pose {6}.
     core::Tensor transform = pipelines::kernel::PoseToTransformation(pose);

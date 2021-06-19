@@ -134,8 +134,8 @@ void EstimatePointWiseCovariance(const core::Tensor& points,
     if (device_type == core::Device::DeviceType::CPU) {
         EstimatePointWiseCovarianceCPU(points, covariances, radius, max_nn);
     } else if (device_type == core::Device::DeviceType::CUDA) {
-        CUDA_CALL(EstimatePointWiseCovarianceCUDA, points, covariances,
-                  radius, max_nn);
+        CUDA_CALL(EstimatePointWiseCovarianceCUDA, points, covariances, radius,
+                  max_nn);
     } else {
         utility::LogError("Unimplemented device");
     }

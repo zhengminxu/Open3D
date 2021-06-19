@@ -437,7 +437,7 @@ protected:
         core::Tensor transformation = init_source_to_target.To(
                 core::Device("CPU:0"), core::Dtype::Float64);
         RegistrationResult result(transformation);
-        int inlier_count = 0;
+
         double prev_fitness = 0;
         double prev_inlier_rmse = 0;
 
