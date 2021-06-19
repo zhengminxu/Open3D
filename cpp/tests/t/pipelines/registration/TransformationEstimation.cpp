@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License (MIT)
 //
-// Copyright (c) 2018 www.open3d.org
+// Copyright (c) 2018-2021 www.open3d.org
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -137,10 +137,9 @@ TEST_P(TransformationEstimationPermuteDevices,
         t::pipelines::registration::TransformationEstimationPointToPoint
                 estimation_p2p;
 
-        int inlier_count = 0;
         // Get transfrom.
         core::Tensor p2p_transform = estimation_p2p.ComputeTransformation(
-                source_pcd, target_pcd, corres, inlier_count);
+                source_pcd, target_pcd, corres);
         // Apply transform.
         t::geometry::PointCloud source_transformed_p2p = source_pcd.Clone();
         source_transformed_p2p.Transform(p2p_transform.To(device, dtype));
@@ -183,11 +182,10 @@ TEST_P(TransformationEstimationPermuteDevices,
         t::pipelines::registration::TransformationEstimationPointToPlane
                 estimation_p2plane;
 
-        int inlier_count = 0;
         // Get transfrom.
         core::Tensor p2plane_transform =
                 estimation_p2plane.ComputeTransformation(source_pcd, target_pcd,
-                                                         corres, inlier_count);
+                                                         corres);
         // Apply transform.
         t::geometry::PointCloud source_transformed_p2plane = source_pcd.Clone();
         source_transformed_p2plane.Transform(

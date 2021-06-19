@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 www.open3d.org
+// Copyright (c) 2018-2021 www.open3d.org
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -461,19 +461,38 @@ protected:
                     // use 100% of the CPU just checking if we need to run.
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
-                core::Tensor distances, count;
-                std::tie(result.correspondences_, distances, count) =
+
+                // NNS Search: Getting Correspondences, Inlier Fitness and RMSE.
+                core::Tensor distances, counts;
+                std::tie(result.correspondences_, distances, counts) =
                         target_nns.HybridSearch(
                                 source_down_pyramid[i].GetPoints(),
                                 max_correspondence_distances[i], 1);
+                double num_correspondences =
+                        counts.Sum({0}).To(core::Dtype::Float64).Item<double>();
 
-                // ComputeTransformation returns transformation tensor.
+                // Reduction sum of "distances" for error.
+                double squared_error = distances.Sum({0})
+                                               .To(core::Dtype::Float64)
+                                               .Item<double>();
+
+                result.fitness_ =
+                        num_correspondences /
+                        static_cast<double>(source.GetPoints().GetLength());
+                result.inlier_rmse_ =
+                        std::sqrt(squared_error / num_correspondences);
+                // ---- NNS End ----
+
+                // ----
+                // Computing Transform between source and target, given
+                // correspondences. ComputeTransformation returns {4,4} shaped
+                // Float64 transformation tensor on CPU device.
+                // ----
                 core::Tensor update =
                         estimation
                                 .ComputeTransformation(source_down_pyramid[i],
                                                        target_down_pyramid[i],
-                                                       result.correspondences_,
-                                                       inlier_count)
+                                                       result.correspondences_)
                                 .To(core::Dtype::Float64);
 
                 // Multiply the transform to the cumulative transformation
@@ -482,18 +501,6 @@ protected:
 
                 // Apply the transform on source pointcloud.
                 source_down_pyramid[i].Transform(update.To(device, dtype));
-
-                // Reduction sum of "distances" for error.
-                double squared_error = distances.Sum({0})
-                                               .To(core::Dtype::Float64)
-                                               .Item<double>();
-
-                result.fitness_ =
-                        static_cast<double>(inlier_count) /
-                        static_cast<double>(
-                                source_down_pyramid[i].GetPoints().GetLength());
-                result.inlier_rmse_ = std::sqrt(
-                        squared_error / static_cast<double>(inlier_count));
 
                 utility::LogDebug(
                         " ICP Scale #{:d} Iteration #{:d}: Fitness {:.4f}, "
