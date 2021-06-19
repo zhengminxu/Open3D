@@ -708,13 +708,11 @@ void PointCloud::EstimateColorGradients(
             A(nn - 1, 1) = (nn - 1) * nt(1);
             A(nn - 1, 2) = (nn - 1) * nt(2);
             b(nn - 1, 0) = 0;
-
             // solving linear equation
             bool is_success = false;
             Eigen::MatrixXd x;
             std::tie(is_success, x) = utility::SolveLinearSystemPSD(
                     A.transpose() * A, A.transpose() * b);
-
             if (is_success) {
                 this->color_gradients_[k] = x;
             }
