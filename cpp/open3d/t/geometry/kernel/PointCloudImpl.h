@@ -149,15 +149,17 @@ void UnprojectCPU
     }
 }
 
-template <typename T>
+template <typename scalar_t>
 OPEN3D_HOST_DEVICE void EstimatePointWiseCovarianceKernel(
-        const T* points_ptr,
+        const scalar_t* points_ptr,
         const int64_t* indices_ptr,
-        const int64_t indices_count,
-        T* covariance_ptr,
-        const int64_t indices_offset,
-        const int64_t covariance_offset) {
-    T cumulants[9] = {0};
+        const int64_t& indices_count,
+        scalar_t* covariance_ptr,
+        const int64_t& indices_offset,
+        const int64_t& covariance_offset) {
+    scalar_t cumulants[9] = {0};
+
+    //    printf("\n inside compute kernel ");
 
     for (int64_t i = 0; i < indices_count; i++) {
         int64_t idx = 3 * indices_ptr[indices_offset + i];
@@ -172,7 +174,7 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseCovarianceKernel(
         cumulants[8] += points_ptr[idx + 2] * points_ptr[idx + 2];
     }
 
-    T num_indices = static_cast<T>(indices_count);
+    scalar_t num_indices = static_cast<scalar_t>(indices_count);
     cumulants[0] /= num_indices;
     cumulants[1] /= num_indices;
     cumulants[2] /= num_indices;
@@ -183,28 +185,39 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseCovarianceKernel(
     cumulants[7] /= num_indices;
     cumulants[8] /= num_indices;
 
+    // Covariances(0, 0)
     covariance_ptr[covariance_offset + 0] =
             cumulants[3] - cumulants[0] * cumulants[0];
-    covariance_ptr[covariance_offset + 1] =
-            cumulants[6] - cumulants[1] * cumulants[1];
-    covariance_ptr[covariance_offset + 2] =
-            cumulants[8] - cumulants[2] * cumulants[2];
-    covariance_ptr[covariance_offset + 3] =
-            cumulants[4] - cumulants[0] * cumulants[1];
+    // Covariances(1, 1)
     covariance_ptr[covariance_offset + 4] =
+            cumulants[6] - cumulants[1] * cumulants[1];
+    // Covariances(2, 2)
+    covariance_ptr[covariance_offset + 8] =
+            cumulants[8] - cumulants[2] * cumulants[2];
+
+    // Covariances(0, 1) = Covariances(1, 0)
+    covariance_ptr[covariance_offset + 1] =
+            cumulants[4] - cumulants[0] * cumulants[1];
+    covariance_ptr[covariance_offset + 3] =
             covariance_ptr[covariance_offset + 1];
-    covariance_ptr[covariance_offset + 5] =
+
+    // Covariances(0, 2) = Covariances(2, 0)
+    covariance_ptr[covariance_offset + 2] =
             cumulants[5] - cumulants[0] * cumulants[2];
     covariance_ptr[covariance_offset + 6] =
             covariance_ptr[covariance_offset + 2];
-    covariance_ptr[covariance_offset + 7] =
+
+    // Covariances(1, 2) = Covariances(2, 1)
+    covariance_ptr[covariance_offset + 5] =
             cumulants[7] - cumulants[1] * cumulants[2];
-    covariance_ptr[covariance_offset + 8] =
+    covariance_ptr[covariance_offset + 7] =
             covariance_ptr[covariance_offset + 5];
+
+    return;
 }
 
 template <typename scalar_t>
-void OPEN3D_HOST_DEVICE ComputeEigenvector0(const scalar_t* A,
+OPEN3D_HOST_DEVICE void ComputeEigenvector0(const scalar_t* A,
                                             const scalar_t eval0,
                                             scalar_t* eigen_vector0) {
     scalar_t row0[3] = {A[0] - eval0, A[1], A[2]};
@@ -260,7 +273,7 @@ void OPEN3D_HOST_DEVICE ComputeEigenvector0(const scalar_t* A,
 }
 
 template <typename scalar_t>
-void OPEN3D_HOST_DEVICE ComputeEigenvector1(const scalar_t* A,
+OPEN3D_HOST_DEVICE void ComputeEigenvector1(const scalar_t* A,
                                             const scalar_t* evec0,
                                             const scalar_t eval1,
                                             scalar_t* eigen_vector1) {
@@ -347,7 +360,7 @@ void OPEN3D_HOST_DEVICE ComputeEigenvector1(const scalar_t* A,
 }
 
 template <typename scalar_t>
-void OPEN3D_HOST_DEVICE EstimatePointWiseNormalsWithFastEigen3x3(
+OPEN3D_HOST_DEVICE void EstimatePointWiseNormalsWithFastEigen3x3(
         const scalar_t* covariance_ptr, scalar_t* normals_ptr) {
     // Based on:
     // https://www.geometrictools.com/Documentation/RobustEigenSymmetric3x3.pdf
@@ -477,22 +490,6 @@ void OPEN3D_HOST_DEVICE EstimatePointWiseNormalsWithFastEigen3x3(
         }
     }
 }
-
-template void EstimatePointWiseCovarianceKernel(
-        const float* points_ptr,
-        const int64_t* indices_ptr,
-        const int64_t indices_count,
-        float* covariance_ptr,
-        const int64_t indices_offset,
-        const int64_t covariance_offset);
-
-template void EstimatePointWiseCovarianceKernel(
-        const double* points_ptr,
-        const int64_t* indices_ptr,
-        const int64_t indices_count,
-        double* covariance_ptr,
-        const int64_t indices_offset,
-        const int64_t covariance_offset);
 
 }  // namespace pointcloud
 }  // namespace kernel

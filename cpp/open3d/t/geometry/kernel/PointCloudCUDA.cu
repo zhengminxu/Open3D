@@ -273,10 +273,47 @@ void EstimatePointWiseColorGradientCUDA(const core::Tensor& points,
     OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
 }
 
+template <typename scalar_t>
+__global__ void EstimatePointWiseCovarianceCUDAKernel(
+        const scalar_t* points_ptr,
+        const int64_t* neighbour_indices_ptr,
+        const int64_t* neighbour_counts_ptr,
+        scalar_t* covariances_ptr,
+        const int64_t max_nn,
+        const int64_t n) {
+    const int64_t workload_idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (workload_idx >= n) return;
+
+    // NNS.
+    int64_t neighbour_offset = max_nn * workload_idx;
+    int64_t neighbour_count = neighbour_counts_ptr[workload_idx];
+    // int64_t point_idx = 3 * workload_idx;
+    int64_t covariances_offset = 9 * workload_idx;
+
+    if (neighbour_count >= 3) {
+        EstimatePointWiseCovarianceKernel(points_ptr, neighbour_indices_ptr,
+                                          neighbour_count, covariances_ptr,
+                                          neighbour_offset, covariances_offset);
+    } else {
+        // Identity.
+        covariances_ptr[covariances_offset] = 1.0;
+        covariances_ptr[covariances_offset + 1] = 0.0;
+        covariances_ptr[covariances_offset + 2] = 0.0;
+        covariances_ptr[covariances_offset + 3] = 0.0;
+        covariances_ptr[covariances_offset + 4] = 1.0;
+        covariances_ptr[covariances_offset + 5] = 0.0;
+        covariances_ptr[covariances_offset + 6] = 0.0;
+        covariances_ptr[covariances_offset + 7] = 0.0;
+        covariances_ptr[covariances_offset + 8] = 1.0;
+    }
+    return;
+}
+
 void EstimatePointWiseCovarianceCUDA(const core::Tensor& points,
                                      core::Tensor& covariances,
                                      const double& radius,
                                      const int64_t& max_nn) {
+    core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
     core::nns::NearestNeighborSearch tree(points);
@@ -291,37 +328,18 @@ void EstimatePointWiseCovarianceCUDA(const core::Tensor& points,
     std::tie(indices, distance, counts) =
             tree.HybridSearch(points, radius, max_nn);
 
-    const float* points_ptr = points.GetDataPtr<float>();
-    const int64_t* neighbour_indices_ptr = indices.GetDataPtr<int64_t>();
-    const int64_t* neighbour_counts_ptr = counts.GetDataPtr<int64_t>();
+    const dim3 blocks((n + 512 - 1) / 512);
+    const dim3 threads(512);
 
-    float* covariances_ptr = covariances.GetDataPtr<float>();
+    DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        EstimatePointWiseCovarianceCUDAKernel<<<blocks, threads>>>(
+                points.GetDataPtr<scalar_t>(), indices.GetDataPtr<int64_t>(),
+                counts.GetDataPtr<int64_t>(),
+                covariances.GetDataPtr<scalar_t>(), max_nn, n);
+    });
 
-    // #pragma omp parallel for schedule(static)
-    for (int64_t workload_idx = 0; workload_idx < n; workload_idx++) {
-        // NNS.
-        int64_t neighbour_offset = max_nn * workload_idx;
-        int64_t neighbour_count = neighbour_counts_ptr[workload_idx];
-        // int64_t point_idx = 3 * workload_idx;
-        int64_t covariances_offset = 9 * workload_idx;
-
-        if (neighbour_count >= 3) {
-            EstimatePointWiseCovarianceKernel(
-                    points_ptr, neighbour_indices_ptr, neighbour_count,
-                    covariances_ptr, neighbour_offset, covariances_offset);
-        } else {
-            // Identity.
-            covariances_ptr[covariances_offset] = 1.0;
-            covariances_ptr[covariances_offset + 1] = 0.0;
-            covariances_ptr[covariances_offset + 2] = 0.0;
-            covariances_ptr[covariances_offset + 3] = 0.0;
-            covariances_ptr[covariances_offset + 4] = 1.0;
-            covariances_ptr[covariances_offset + 5] = 0.0;
-            covariances_ptr[covariances_offset + 6] = 0.0;
-            covariances_ptr[covariances_offset + 7] = 0.0;
-            covariances_ptr[covariances_offset + 8] = 1.0;
-        }
-    }
+    OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
+    return;
 }
 
 }  // namespace pointcloud

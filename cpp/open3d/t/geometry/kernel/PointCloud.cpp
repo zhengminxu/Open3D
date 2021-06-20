@@ -114,11 +114,13 @@ void EstimatePointWiseColorGradient(const core::Tensor& points,
 
     core::Device::DeviceType device_type = device.GetType();
     if (device_type == core::Device::DeviceType::CPU) {
-        EstimatePointWiseColorGradientCPU(points, normals, colors,
-                                          color_gradient, radius, max_nn);
+        EstimatePointWiseColorGradientCPU(
+                points.Contiguous(), normals.Contiguous(), colors.Contiguous(),
+                color_gradient, radius, max_nn);
     } else if (device_type == core::Device::DeviceType::CUDA) {
-        CUDA_CALL(EstimatePointWiseColorGradientCUDA, points, normals, colors,
-                  color_gradient, radius, max_nn);
+        CUDA_CALL(EstimatePointWiseColorGradientCUDA, points.Contiguous(),
+                  normals.Contiguous(), colors.Contiguous(), color_gradient,
+                  radius, max_nn);
     } else {
         utility::LogError("Unimplemented device");
     }
@@ -132,10 +134,11 @@ void EstimatePointWiseCovariance(const core::Tensor& points,
 
     core::Device::DeviceType device_type = device.GetType();
     if (device_type == core::Device::DeviceType::CPU) {
-        EstimatePointWiseCovarianceCPU(points, covariances, radius, max_nn);
+        EstimatePointWiseCovarianceCPU(points.Contiguous(), covariances, radius,
+                                       max_nn);
     } else if (device_type == core::Device::DeviceType::CUDA) {
-        CUDA_CALL(EstimatePointWiseCovarianceCUDA, points, covariances, radius,
-                  max_nn);
+        CUDA_CALL(EstimatePointWiseCovarianceCUDA, points.Contiguous(),
+                  covariances, radius, max_nn);
     } else {
         utility::LogError("Unimplemented device");
     }

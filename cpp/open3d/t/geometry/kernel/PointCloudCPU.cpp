@@ -258,30 +258,13 @@ void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
     });
 }
 
-void EstimatePointWiseCovarianceCPU(const core::Tensor& points,
-                                    core::Tensor& covariances,
-                                    const double& radius,
-                                    const int64_t& max_nn) {
-    int64_t n = points.GetLength();
-
-    core::nns::NearestNeighborSearch tree(points);
-
-    bool check = tree.HybridIndex(radius);
-    if (!check) {
-        utility::LogError(
-                "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
-    }
-
-    core::Tensor indices, distance, counts;
-    std::tie(indices, distance, counts) =
-            tree.HybridSearch(points, radius, max_nn);
-
-    const float* points_ptr = points.GetDataPtr<float>();
-    const int64_t* neighbour_indices_ptr = indices.GetDataPtr<int64_t>();
-    const int64_t* neighbour_counts_ptr = counts.GetDataPtr<int64_t>();
-
-    float* covariances_ptr = covariances.GetDataPtr<float>();
-
+template <typename scalar_t>
+void EstimatePointWiseCovarianceCPUKernel(const scalar_t* points_ptr,
+                                          const int64_t* neighbour_indices_ptr,
+                                          const int64_t* neighbour_counts_ptr,
+                                          scalar_t* covariances_ptr,
+                                          const int64_t& max_nn,
+                                          const int64_t& n) {
 #pragma omp parallel for schedule(static)
     for (int64_t workload_idx = 0; workload_idx < n; workload_idx++) {
         // NNS.
@@ -307,6 +290,34 @@ void EstimatePointWiseCovarianceCPU(const core::Tensor& points,
             covariances_ptr[covariances_offset + 8] = 1.0;
         }
     }
+    return;
+}
+
+void EstimatePointWiseCovarianceCPU(const core::Tensor& points,
+                                    core::Tensor& covariances,
+                                    const double& radius,
+                                    const int64_t& max_nn) {
+    core::Dtype dtype = points.GetDtype();
+    int64_t n = points.GetLength();
+
+    core::nns::NearestNeighborSearch tree(points);
+
+    bool check = tree.HybridIndex(radius);
+    if (!check) {
+        utility::LogError(
+                "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
+    }
+
+    core::Tensor indices, distance, counts;
+    std::tie(indices, distance, counts) =
+            tree.HybridSearch(points, radius, max_nn);
+
+    DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        EstimatePointWiseCovarianceCPUKernel(
+                points.GetDataPtr<scalar_t>(), indices.GetDataPtr<int64_t>(),
+                counts.GetDataPtr<int64_t>(),
+                covariances.GetDataPtr<scalar_t>(), max_nn, n);
+    });
 }
 
 }  // namespace pointcloud

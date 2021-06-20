@@ -521,6 +521,7 @@ std::shared_ptr<PointCloud> PointCloud::Crop(
     }
     return SelectByIndex(bbox.GetPointIndicesWithinBoundingBox(points_));
 }
+
 std::shared_ptr<PointCloud> PointCloud::Crop(
         const OrientedBoundingBox &bbox) const {
     if (bbox.IsEmpty()) {

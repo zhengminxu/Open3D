@@ -252,6 +252,27 @@ TEST_P(PointCloudPermuteDevices, Rotate) {
               std::vector<float>({2, 2, 1}));
 }
 
+TEST_P(PointCloudPermuteDevices, EstimateCovariances) {
+    core::Device device = GetParam();
+
+    core::Tensor points = core::Tensor::Init<float>({{0, 0, 0},
+                                                     {0, 0, 1},
+                                                     {0, 1, 0},
+                                                     {0, 1, 1},
+                                                     {1, 0, 0},
+                                                     {1, 0, 1},
+                                                     {1, 1, 0},
+                                                     {1, 1, 1}},
+                                                    device);
+    t::geometry::PointCloud pcd(points);
+
+    std::cout << " tests " << std::endl;
+    pcd.EstimateCovariances(2.0, 30);
+
+    utility::LogInfo(" Covariances: \n {}",
+                     pcd.GetPointAttr("covariances").ToString());
+}
+
 TEST_P(PointCloudPermuteDevices, DISABLED_EstimateColorGradient) {
     core::Device device = GetParam();
 
