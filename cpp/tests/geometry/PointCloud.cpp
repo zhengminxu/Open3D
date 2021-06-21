@@ -925,13 +925,7 @@ TEST(PointCloud, EstimateNormals) {
             {1, 1, 1},
     });
 
-    pcd.EstimateCovariances(geometry::KDTreeSearchParamKNN(/*knn=*/4));
-
     pcd.EstimateNormals(geometry::KDTreeSearchParamKNN(/*knn=*/4), true);
-
-    std::cout << " Legacy Normals " << std::endl;
-    for (auto norm : pcd.normals_) std::cout << norm.transpose() << std::endl;
-
 
     pcd.NormalizeNormals();
     double v = 1.0 / std::sqrt(3.0);
