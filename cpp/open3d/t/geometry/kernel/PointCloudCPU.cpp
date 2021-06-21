@@ -24,6 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <atomic>
+#include <vector>
+
 #include "open3d/core/Dispatch.h"
 #include "open3d/core/Dtype.h"
 #include "open3d/core/MemoryManager.h"
@@ -31,6 +34,7 @@
 #include "open3d/core/Tensor.h"
 #include "open3d/core/kernel/CPULauncher.h"
 #include "open3d/core/nns/NearestNeighborSearch.h"
+#include "open3d/t/geometry/Utility.h"
 #include "open3d/t/geometry/kernel/GeometryIndexer.h"
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
@@ -116,8 +120,88 @@ void ProjectCPU(
             });
 }
 
+void UnprojectCPU(
+        const core::Tensor& depth,
+        utility::optional<std::reference_wrapper<const core::Tensor>>
+                image_colors,
+        core::Tensor& points,
+        utility::optional<std::reference_wrapper<core::Tensor>> colors,
+        const core::Tensor& intrinsics,
+        const core::Tensor& extrinsics,
+        float depth_scale,
+        float depth_max,
+        int64_t stride) {
+    const bool have_colors = image_colors.has_value();
+    NDArrayIndexer depth_indexer(depth, 2);
+    NDArrayIndexer image_colors_indexer;
+
+    core::Tensor pose = t::geometry::InverseTransformation(extrinsics);
+    TransformIndexer ti(intrinsics, pose, 1.0f);
+
+    // Output
+    int64_t rows_strided = depth_indexer.GetShape(0) / stride;
+    int64_t cols_strided = depth_indexer.GetShape(1) / stride;
+
+    points = core::Tensor({rows_strided * cols_strided, 3},
+                          core::Dtype::Float32, depth.GetDevice());
+    NDArrayIndexer point_indexer(points, 1);
+    NDArrayIndexer colors_indexer;
+    if (have_colors) {
+        const auto& imcol = image_colors.value().get();
+        image_colors_indexer = NDArrayIndexer{imcol, 2};
+        colors.value().get() =
+                core::Tensor({rows_strided * cols_strided, 3},
+                             core::Dtype::Float32, imcol.GetDevice());
+        colors_indexer = NDArrayIndexer(colors.value().get(), 1);
+    }
+
+    // Counter
+    std::atomic<int> count_atomic(0);
+    std::atomic<int>* count_ptr = &count_atomic;
+
+    int64_t n = rows_strided * cols_strided;
+
+    core::kernel::CPULauncher launcher;
+
+    DISPATCH_DTYPE_TO_TEMPLATE(depth.GetDtype(), [&]() {
+        launcher.LaunchGeneralKernel(n, [=] OPEN3D_DEVICE(
+                                                int64_t workload_idx) {
+            int64_t y = (workload_idx / cols_strided) * stride;
+            int64_t x = (workload_idx % cols_strided) * stride;
+
+            float d = *depth_indexer.GetDataPtr<scalar_t>(x, y) / depth_scale;
+            if (d > 0 && d < depth_max) {
+                int idx = OPEN3D_ATOMIC_ADD(count_ptr, 1);
+
+                float x_c = 0, y_c = 0, z_c = 0;
+                ti.Unproject(static_cast<float>(x), static_cast<float>(y), d,
+                             &x_c, &y_c, &z_c);
+
+                float* vertex = point_indexer.GetDataPtr<float>(idx);
+                ti.RigidTransform(x_c, y_c, z_c, vertex + 0, vertex + 1,
+                                  vertex + 2);
+                if (have_colors) {
+                    float* pcd_pixel = colors_indexer.GetDataPtr<float>(idx);
+                    float* image_pixel =
+                            image_colors_indexer.GetDataPtr<float>(x, y);
+                    *pcd_pixel = *image_pixel;
+                    *(pcd_pixel + 1) = *(image_pixel + 1);
+                    *(pcd_pixel + 2) = *(image_pixel + 2);
+                }
+            }
+        });
+    });
+    int total_pts_count = (*count_ptr).load();
+
+    points = points.Slice(0, 0, total_pts_count);
+    if (have_colors) {
+        colors.value().get() =
+                colors.value().get().Slice(0, 0, total_pts_count);
+    }
+}
+
 template <typename scalar_t>
-static void EstimatePointWiseColorGradientCPUKernel(
+static void EstimateColorGradientsCPUKernel(
         const scalar_t* points_ptr,
         const scalar_t* normals_ptr,
         const scalar_t* colors_ptr,
@@ -228,12 +312,12 @@ static void EstimatePointWiseColorGradientCPUKernel(
     }
 }
 
-void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
-                                       const core::Tensor& normals,
-                                       const core::Tensor& colors,
-                                       core::Tensor& color_gradients,
-                                       const double& radius,
-                                       const int64_t& max_nn) {
+void EstimateColorGradientsCPU(const core::Tensor& points,
+                               const core::Tensor& normals,
+                               const core::Tensor& colors,
+                               core::Tensor& color_gradients,
+                               const double& radius,
+                               const int64_t& max_nn) {
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
@@ -250,7 +334,7 @@ void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
             tree.HybridSearch(points, radius, max_nn);
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        EstimatePointWiseColorGradientCPUKernel(
+        EstimateColorGradientsCPUKernel(
                 points.GetDataPtr<scalar_t>(), normals.GetDataPtr<scalar_t>(),
                 colors.GetDataPtr<scalar_t>(), indices.GetDataPtr<int64_t>(),
                 counts.GetDataPtr<int64_t>(),
@@ -259,24 +343,26 @@ void EstimatePointWiseColorGradientCPU(const core::Tensor& points,
 }
 
 template <typename scalar_t>
-void EstimatePointWiseCovarianceCPUKernel(const scalar_t* points_ptr,
-                                          const int64_t* neighbour_indices_ptr,
-                                          const int64_t* neighbour_counts_ptr,
-                                          scalar_t* covariances_ptr,
-                                          const int64_t& max_nn,
-                                          const int64_t& n) {
+void EstimateCovariancesCPUKernel(const scalar_t* points_ptr,
+                                  const int64_t* neighbour_indices_ptr,
+                                  const int64_t* neighbour_counts_ptr,
+                                  scalar_t* covariances_ptr,
+                                  const int64_t& max_nn,
+                                  const int64_t& n) {
 #pragma omp parallel for schedule(static)
     for (int64_t workload_idx = 0; workload_idx < n; workload_idx++) {
-        // NNS.
+        // NNS [Hybrid Search].
         int64_t neighbour_offset = max_nn * workload_idx;
+        // Count of valid correspondences per point.
         int64_t neighbour_count = neighbour_counts_ptr[workload_idx];
-        // int64_t point_idx = 3 * workload_idx;
+        // Covariance is of shape {3, 3}, so it has an offset factor of
+        // 9 x workload_idx.
         int64_t covariances_offset = 9 * workload_idx;
 
         if (neighbour_count >= 3) {
             EstimatePointWiseCovarianceKernel(
-                    points_ptr, neighbour_indices_ptr, neighbour_count,
-                    covariances_ptr, neighbour_offset, covariances_offset);
+                    points_ptr, neighbour_indices_ptr + neighbour_offset,
+                    neighbour_count, covariances_ptr + covariances_offset);
         } else {
             // Identity.
             covariances_ptr[covariances_offset] = 1.0;
@@ -293,10 +379,10 @@ void EstimatePointWiseCovarianceCPUKernel(const scalar_t* points_ptr,
     return;
 }
 
-void EstimatePointWiseCovarianceCPU(const core::Tensor& points,
-                                    core::Tensor& covariances,
-                                    const double& radius,
-                                    const int64_t& max_nn) {
+void EstimateCovariancesCPU(const core::Tensor& points,
+                            core::Tensor& covariances,
+                            const double& radius,
+                            const int64_t& max_nn) {
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
@@ -313,10 +399,60 @@ void EstimatePointWiseCovarianceCPU(const core::Tensor& points,
             tree.HybridSearch(points, radius, max_nn);
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        EstimatePointWiseCovarianceCPUKernel(
+        EstimateCovariancesCPUKernel(
                 points.GetDataPtr<scalar_t>(), indices.GetDataPtr<int64_t>(),
                 counts.GetDataPtr<int64_t>(),
                 covariances.GetDataPtr<scalar_t>(), max_nn, n);
+    });
+}
+
+template <typename scalar_t>
+void EstimateNormalsCPUKernel(const scalar_t* covariances_ptr,
+                              scalar_t* normals_ptr,
+                              const bool has_normals,
+                              const int64_t& n) {
+#pragma omp parallel for schedule(static)
+    for (int64_t workload_idx = 0; workload_idx < n; workload_idx++) {
+        int64_t covariances_offset = 9 * workload_idx;
+        int64_t normals_offset = 3 * workload_idx;
+        scalar_t normals_output[3] = {0};
+        EstimatePointWiseNormalsWithFastEigen3x3(
+                covariances_ptr + covariances_offset, normals_output);
+
+        if ((normals_output[0] * normals_output[0] +
+             normals_output[1] * normals_output[1] +
+             normals_output[2] * normals_output[2]) == 0.0 &&
+            !has_normals) {
+            normals_output[0] = 0.0;
+            normals_output[1] = 0.0;
+            normals_output[2] = 1.0;
+        }
+        if (has_normals) {
+            if ((normals_ptr[normals_offset] * normals_output[0] +
+                 normals_ptr[normals_offset + 1] * normals_output[1] +
+                 normals_ptr[normals_offset + 2] * normals_output[2]) < 0.0) {
+                normals_output[0] *= -1;
+                normals_output[1] *= -1;
+                normals_output[2] *= -1;
+            }
+        }
+
+        normals_ptr[normals_offset] = normals_output[0];
+        normals_ptr[normals_offset + 1] = normals_output[1];
+        normals_ptr[normals_offset + 2] = normals_output[2];
+    }
+}
+
+void EstimateNormalsCPU(const core::Tensor& covariances,
+                        core::Tensor& normals,
+                        const bool& has_normals) {
+    core::Dtype dtype = covariances.GetDtype();
+    int64_t n = covariances.GetLength();
+
+    DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        EstimateNormalsCPUKernel(covariances.GetDataPtr<scalar_t>(),
+                                 normals.GetDataPtr<scalar_t>(), has_normals,
+                                 n);
     });
 }
 

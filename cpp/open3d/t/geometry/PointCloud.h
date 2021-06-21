@@ -330,13 +330,13 @@ public:
     /// point cloud.
     void EstimateCovariances(const double radius, const int max_knn = 30);
 
+    /// \brief Function to compute point normals.
+    void EstimateNormals(const double radius, const int max_knn = 30);
+
     /// \brief Function to compute point color gradients.
     /// Reference: Park, Q.-Y. Zhou, and V. Koltun,
     /// Colored Point Cloud Registration Revisited, ICCV, 2017.
     void EstimateColorGradients(const double radius, const int max_knn = 30);
-
-    /// \brief Function to compute point normals.
-    void EstimateNormals() { utility::LogError("Unimplemented."); }
 
 public:
     /// \brief Factory function to create a pointcloud from a depth image and a

@@ -252,25 +252,70 @@ TEST_P(PointCloudPermuteDevices, Rotate) {
               std::vector<float>({2, 2, 1}));
 }
 
-TEST_P(PointCloudPermuteDevices, EstimateCovariances) {
+TEST_P(PointCloudPermuteDevices, EstimateNormalsAndCovariances) {
     core::Device device = GetParam();
 
-    core::Tensor points = core::Tensor::Init<float>({{0, 0, 0},
-                                                     {0, 0, 1},
-                                                     {0, 1, 0},
-                                                     {0, 1, 1},
-                                                     {1, 0, 0},
-                                                     {1, 0, 1},
-                                                     {1, 1, 0},
-                                                     {1, 1, 1}},
-                                                    device);
-    t::geometry::PointCloud pcd(points);
+    for (core::Dtype dtype : {core::Dtype::Float32, core::Dtype::Float64}) {
+        core::Tensor points = core::Tensor::Init<float>({{0, 0, 0},
+                                                         {0, 0, 1},
+                                                         {0, 1, 0},
+                                                         {0, 1, 1},
+                                                         {1, 0, 0},
+                                                         {1, 0, 1},
+                                                         {1, 1, 0},
+                                                         {1, 1, 1}},
+                                                        device)
+                                      .To(dtype);
+        t::geometry::PointCloud pcd(points);
 
-    std::cout << " tests " << std::endl;
-    pcd.EstimateCovariances(2.0, 30);
+        pcd.EstimateNormals(2.0, 4);
 
-    utility::LogInfo(" Covariances: \n {}",
-                     pcd.GetPointAttr("covariances").ToString());
+        core::Tensor normals =
+                core::Tensor::Init<float>({{0.57735, 0.57735, 0.57735},
+                                           {-0.57735, -0.57735, 0.57735},
+                                           {0.57735, -0.57735, 0.57735},
+                                           {-0.57735, 0.57735, 0.57735},
+                                           {-0.57735, 0.57735, 0.57735},
+                                           {0.57735, -0.57735, 0.57735},
+                                           {-0.57735, -0.57735, 0.57735},
+                                           {0.57735, 0.57735, 0.57735}},
+                                          device)
+                        .To(dtype);
+
+        EXPECT_TRUE(pcd.GetPointAttr("normals").AllClose(normals, 1e-4, 1e-4));
+
+        // When computing normals, covariances are also computed by default.
+        core::Tensor covariances =
+                core::Tensor::Init<float>({{{0.1875, -0.0625, -0.0625},
+                                            {-0.0625, 0.1875, -0.0625},
+                                            {-0.0625, -0.0625, 0.1875}},
+                                           {{0.1875, -0.0625, 0.0625},
+                                            {-0.0625, 0.1875, 0.0625},
+                                            {0.0625, 0.0625, 0.1875}},
+                                           {{0.1875, 0.0625, -0.0625},
+                                            {0.0625, 0.1875, 0.0625},
+                                            {-0.0625, 0.0625, 0.1875}},
+                                           {{0.1875, 0.0625, 0.0625},
+                                            {0.0625, 0.1875, -0.0625},
+                                            {0.0625, -0.0625, 0.1875}},
+                                           {{0.1875, 0.0625, 0.0625},
+                                            {0.0625, 0.1875, -0.0625},
+                                            {0.0625, -0.0625, 0.1875}},
+                                           {{0.1875, 0.0625, -0.0625},
+                                            {0.0625, 0.1875, 0.0625},
+                                            {-0.0625, 0.0625, 0.1875}},
+                                           {{0.1875, -0.0625, 0.0625},
+                                            {-0.0625, 0.1875, 0.0625},
+                                            {0.0625, 0.0625, 0.1875}},
+                                           {{0.1875, -0.0625, -0.0625},
+                                            {-0.0625, 0.1875, -0.0625},
+                                            {-0.0625, -0.0625, 0.1875}}},
+                                          device)
+                        .To(dtype);
+
+        EXPECT_TRUE(pcd.GetPointAttr("covariances")
+                            .AllClose(covariances, 1e-4, 1e-4));
+    }
 }
 
 TEST_P(PointCloudPermuteDevices, DISABLED_EstimateColorGradient) {
@@ -493,8 +538,8 @@ TEST_P(PointCloudPermuteDevices, Append) {
     pcd2.SetPointAttr("labels", labels);
 
     // Here pcd2 is being added to pcd, therefore it must have all the
-    // attributes present in pcd and the resulting pointcloud will contain the
-    // attributes of pcd only.
+    // attributes present in pcd and the resulting pointcloud will contain
+    // the attributes of pcd only.
     t::geometry::PointCloud pcd3(device);
     pcd3 = pcd + pcd2;
 
@@ -505,8 +550,9 @@ TEST_P(PointCloudPermuteDevices, Append) {
 
     EXPECT_ANY_THROW(pcd3.GetPointAttr("labels"));
 
-    // pcd2 has an extra attribute "labels" which is missing in pcd, therefore
-    // adding pcd to pcd2 will throw an error for missing attribute "labels"
+    // pcd2 has an extra attribute "labels" which is missing in pcd,
+    // therefore adding pcd to pcd2 will throw an error for missing
+    // attribute "labels"
     EXPECT_ANY_THROW(pcd2 + pcd);
 }
 

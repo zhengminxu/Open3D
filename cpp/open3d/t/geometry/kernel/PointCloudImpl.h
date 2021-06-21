@@ -24,20 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include <atomic>
-#include <vector>
-
-#include "open3d/core/Dispatch.h"
-#include "open3d/core/Dtype.h"
-#include "open3d/core/MemoryManager.h"
-#include "open3d/core/SizeVector.h"
-#include "open3d/core/Tensor.h"
-#include "open3d/t/geometry/Utility.h"
-#include "open3d/t/geometry/kernel/GeometryIndexer.h"
-#include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
-#include "open3d/utility/Console.h"
-#include "open3d/utility/Timer.h"
 
 #define O3D_MIN(a, b) a < b ? a : b
 #define O3D_MAX(a, b) a > b ? a : b
@@ -48,121 +35,96 @@ namespace geometry {
 namespace kernel {
 namespace pointcloud {
 
-#if defined(__CUDACC__)
-void UnprojectCUDA
-#else
-void UnprojectCPU
-#endif
-        (const core::Tensor& depth,
-         utility::optional<std::reference_wrapper<const core::Tensor>>
-                 image_colors,
-         core::Tensor& points,
-         utility::optional<std::reference_wrapper<core::Tensor>> colors,
-         const core::Tensor& intrinsics,
-         const core::Tensor& extrinsics,
-         float depth_scale,
-         float depth_max,
-         int64_t stride) {
+void UnprojectCPU(
+        const core::Tensor& depth,
+        utility::optional<std::reference_wrapper<const core::Tensor>>
+                image_colors,
+        core::Tensor& points,
+        utility::optional<std::reference_wrapper<core::Tensor>> colors,
+        const core::Tensor& intrinsics,
+        const core::Tensor& extrinsics,
+        float depth_scale,
+        float depth_max,
+        int64_t stride);
 
-    const bool have_colors = image_colors.has_value();
-    NDArrayIndexer depth_indexer(depth, 2);
-    NDArrayIndexer image_colors_indexer;
+void ProjectCPU(
+        core::Tensor& depth,
+        utility::optional<std::reference_wrapper<core::Tensor>> image_colors,
+        const core::Tensor& points,
+        utility::optional<std::reference_wrapper<const core::Tensor>> colors,
+        const core::Tensor& intrinsics,
+        const core::Tensor& extrinsics,
+        float depth_scale,
+        float depth_max);
 
-    core::Tensor pose = t::geometry::InverseTransformation(extrinsics);
-    TransformIndexer ti(intrinsics, pose, 1.0f);
+#ifdef BUILD_CUDA_MODULE
+void UnprojectCUDA(
+        const core::Tensor& depth,
+        utility::optional<std::reference_wrapper<const core::Tensor>>
+                image_colors,
+        core::Tensor& points,
+        utility::optional<std::reference_wrapper<core::Tensor>> colors,
+        const core::Tensor& intrinsics,
+        const core::Tensor& extrinsics,
+        float depth_scale,
+        float depth_max,
+        int64_t stride);
 
-    // Output
-    int64_t rows_strided = depth_indexer.GetShape(0) / stride;
-    int64_t cols_strided = depth_indexer.GetShape(1) / stride;
-
-    points = core::Tensor({rows_strided * cols_strided, 3},
-                          core::Dtype::Float32, depth.GetDevice());
-    NDArrayIndexer point_indexer(points, 1);
-    NDArrayIndexer colors_indexer;
-    if (have_colors) {
-        const auto& imcol = image_colors.value().get();
-        image_colors_indexer = NDArrayIndexer{imcol, 2};
-        colors.value().get() =
-                core::Tensor({rows_strided * cols_strided, 3},
-                             core::Dtype::Float32, imcol.GetDevice());
-        colors_indexer = NDArrayIndexer(colors.value().get(), 1);
-    }
-
-    // Counter
-#if defined(__CUDACC__)
-    core::Tensor count(std::vector<int>{0}, {}, core::Dtype::Int32,
-                       depth.GetDevice());
-    int* count_ptr = count.GetDataPtr<int>();
-#else
-    std::atomic<int> count_atomic(0);
-    std::atomic<int>* count_ptr = &count_atomic;
+void ProjectCUDA(
+        core::Tensor& depth,
+        utility::optional<std::reference_wrapper<core::Tensor>> image_colors,
+        const core::Tensor& points,
+        utility::optional<std::reference_wrapper<const core::Tensor>> colors,
+        const core::Tensor& intrinsics,
+        const core::Tensor& extrinsics,
+        float depth_scale,
+        float depth_max);
 #endif
 
-    int64_t n = rows_strided * cols_strided;
-#if defined(__CUDACC__)
-    core::kernel::CUDALauncher launcher;
-#else
-    core::kernel::CPULauncher launcher;
+void EstimateColorGradientsCPU(const core::Tensor& points,
+                               const core::Tensor& normals,
+                               const core::Tensor& colors,
+                               core::Tensor& color_gradient,
+                               const double& radius,
+                               const int64_t& max_nn);
+
+void EstimateCovariancesCPU(const core::Tensor& points,
+                            core::Tensor& covariances,
+                            const double& radius,
+                            const int64_t& max_nn);
+
+void EstimateNormalsCPU(const core::Tensor& covariances,
+                        core::Tensor& normals,
+                        const bool& has_normals);
+
+#ifdef BUILD_CUDA_MODULE
+void EstimateColorGradientsCUDA(const core::Tensor& points,
+                                const core::Tensor& normals,
+                                const core::Tensor& colors,
+                                core::Tensor& color_gradient,
+                                const double& radius,
+                                const int64_t& max_nn);
+
+void EstimateCovariancesCUDA(const core::Tensor& points,
+                             core::Tensor& covariances,
+                             const double& radius,
+                             const int64_t& max_nn);
+
+void EstimateNormalsCUDA(const core::Tensor& covariances,
+                         core::Tensor& normals,
+                         const bool& has_normals);
 #endif
-
-    DISPATCH_DTYPE_TO_TEMPLATE(depth.GetDtype(), [&]() {
-        launcher.LaunchGeneralKernel(n, [=] OPEN3D_DEVICE(
-                                                int64_t workload_idx) {
-            int64_t y = (workload_idx / cols_strided) * stride;
-            int64_t x = (workload_idx % cols_strided) * stride;
-
-            float d = *depth_indexer.GetDataPtr<scalar_t>(x, y) / depth_scale;
-            if (d > 0 && d < depth_max) {
-                int idx = OPEN3D_ATOMIC_ADD(count_ptr, 1);
-
-                float x_c = 0, y_c = 0, z_c = 0;
-                ti.Unproject(static_cast<float>(x), static_cast<float>(y), d,
-                             &x_c, &y_c, &z_c);
-
-                float* vertex = point_indexer.GetDataPtr<float>(idx);
-                ti.RigidTransform(x_c, y_c, z_c, vertex + 0, vertex + 1,
-                                  vertex + 2);
-                if (have_colors) {
-                    float* pcd_pixel = colors_indexer.GetDataPtr<float>(idx);
-                    float* image_pixel =
-                            image_colors_indexer.GetDataPtr<float>(x, y);
-                    *pcd_pixel = *image_pixel;
-                    *(pcd_pixel + 1) = *(image_pixel + 1);
-                    *(pcd_pixel + 2) = *(image_pixel + 2);
-                }
-            }
-        });
-    });
-#if defined(__CUDACC__)
-    int total_pts_count = count.Item<int>();
-#else
-    int total_pts_count = (*count_ptr).load();
-#endif
-
-#ifdef __CUDACC__
-    OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
-#endif
-    points = points.Slice(0, 0, total_pts_count);
-    if (have_colors) {
-        colors.value().get() =
-                colors.value().get().Slice(0, 0, total_pts_count);
-    }
-}
 
 template <typename scalar_t>
 OPEN3D_HOST_DEVICE void EstimatePointWiseCovarianceKernel(
         const scalar_t* points_ptr,
         const int64_t* indices_ptr,
         const int64_t& indices_count,
-        scalar_t* covariance_ptr,
-        const int64_t& indices_offset,
-        const int64_t& covariance_offset) {
+        scalar_t* covariance_ptr) {
     scalar_t cumulants[9] = {0};
 
-    //    printf("\n inside compute kernel ");
-
     for (int64_t i = 0; i < indices_count; i++) {
-        int64_t idx = 3 * indices_ptr[indices_offset + i];
+        int64_t idx = 3 * indices_ptr[i];
         cumulants[0] += points_ptr[idx];
         cumulants[1] += points_ptr[idx + 1];
         cumulants[2] += points_ptr[idx + 2];
@@ -186,32 +148,23 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseCovarianceKernel(
     cumulants[8] /= num_indices;
 
     // Covariances(0, 0)
-    covariance_ptr[covariance_offset + 0] =
-            cumulants[3] - cumulants[0] * cumulants[0];
+    covariance_ptr[0] = cumulants[3] - cumulants[0] * cumulants[0];
     // Covariances(1, 1)
-    covariance_ptr[covariance_offset + 4] =
-            cumulants[6] - cumulants[1] * cumulants[1];
+    covariance_ptr[4] = cumulants[6] - cumulants[1] * cumulants[1];
     // Covariances(2, 2)
-    covariance_ptr[covariance_offset + 8] =
-            cumulants[8] - cumulants[2] * cumulants[2];
+    covariance_ptr[8] = cumulants[8] - cumulants[2] * cumulants[2];
 
     // Covariances(0, 1) = Covariances(1, 0)
-    covariance_ptr[covariance_offset + 1] =
-            cumulants[4] - cumulants[0] * cumulants[1];
-    covariance_ptr[covariance_offset + 3] =
-            covariance_ptr[covariance_offset + 1];
+    covariance_ptr[1] = cumulants[4] - cumulants[0] * cumulants[1];
+    covariance_ptr[3] = covariance_ptr[1];
 
     // Covariances(0, 2) = Covariances(2, 0)
-    covariance_ptr[covariance_offset + 2] =
-            cumulants[5] - cumulants[0] * cumulants[2];
-    covariance_ptr[covariance_offset + 6] =
-            covariance_ptr[covariance_offset + 2];
+    covariance_ptr[2] = cumulants[5] - cumulants[0] * cumulants[2];
+    covariance_ptr[6] = covariance_ptr[2];
 
     // Covariances(1, 2) = Covariances(2, 1)
-    covariance_ptr[covariance_offset + 5] =
-            cumulants[7] - cumulants[1] * cumulants[2];
-    covariance_ptr[covariance_offset + 7] =
-            covariance_ptr[covariance_offset + 5];
+    covariance_ptr[5] = cumulants[7] - cumulants[1] * cumulants[2];
+    covariance_ptr[7] = covariance_ptr[5];
 
     return;
 }
@@ -367,8 +320,9 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseNormalsWithFastEigen3x3(
     // which handles edge cases like points on a plane.
 
     scalar_t max_coeff = covariance_ptr[0];
+
     for (int i = 1; i < 9; i++) {
-        if (max_coeff > covariance_ptr[i]) {
+        if (max_coeff < covariance_ptr[i]) {
             max_coeff = covariance_ptr[i];
         }
     }
@@ -423,30 +377,33 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseNormalsWithFastEigen3x3(
         eval[2] = q + p * beta2;
 
         if (half_det >= 0) {
-            ComputeEigenvector0(&A, eval[2], &evec2);
+            ComputeEigenvector0(A, eval[2], evec2);
 
             if (eval[2] < eval[0] && eval[2] < eval[1]) {
                 normals_ptr[0] = evec2[0];
                 normals_ptr[1] = evec2[1];
                 normals_ptr[2] = evec2[2];
+
                 return;
             }
 
-            ComputeEigenvector1(&A, &evec2, eval[1], &evec1);
+            ComputeEigenvector1(A, evec2, eval[1], evec1);
 
             if (eval[1] < eval[0] && eval[1] < eval[2]) {
                 normals_ptr[0] = evec1[0];
                 normals_ptr[1] = evec1[1];
                 normals_ptr[2] = evec1[2];
+
                 return;
             }
 
             normals_ptr[0] = evec1[1] * evec2[2] - evec1[2] * evec2[1];
             normals_ptr[1] = evec1[2] * evec2[0] - evec1[0] * evec2[2];
             normals_ptr[2] = evec1[0] * evec2[1] - evec1[1] * evec2[0];
+
             return;
         } else {
-            ComputeEigenvector0(&A, eval[0], &evec0);
+            ComputeEigenvector0(A, eval[0], evec0);
 
             if (eval[0] < eval[1] && eval[0] < eval[2]) {
                 normals_ptr[0] = evec0[0];
@@ -455,7 +412,7 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseNormalsWithFastEigen3x3(
                 return;
             }
 
-            ComputeEigenvector1(&A, &evec0, eval[1], &evec1);
+            ComputeEigenvector1(A, evec0, eval[1], evec1);
 
             if (eval[1] < eval[0] && eval[1] < eval[2]) {
                 normals_ptr[0] = evec1[0];

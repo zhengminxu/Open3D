@@ -147,9 +147,11 @@ Eigen::Vector3d FastEigen3x3(const Eigen::Matrix3d &covariance) {
     if (max_coeff == 0) {
         return Eigen::Vector3d::Zero();
     }
+
     A /= max_coeff;
 
     double norm = A(0, 1) * A(0, 1) + A(0, 2) * A(0, 2) + A(1, 2) * A(1, 2);
+
     if (norm > 0) {
         Eigen::Vector3d eval;
         Eigen::Vector3d evec0;
@@ -187,14 +189,17 @@ Eigen::Vector3d FastEigen3x3(const Eigen::Matrix3d &covariance) {
             evec2 = ComputeEigenvector0(A, eval(2));
             if (eval(2) < eval(0) && eval(2) < eval(1)) {
                 A *= max_coeff;
+
                 return evec2;
             }
             evec1 = ComputeEigenvector1(A, evec2, eval(1));
             A *= max_coeff;
             if (eval(1) < eval(0) && eval(1) < eval(2)) {
+
                 return evec1;
             }
             evec0 = evec1.cross(evec2);
+
             return evec0;
         } else {
             evec0 = ComputeEigenvector0(A, eval(0));
@@ -316,7 +321,7 @@ void PointCloud::EstimateNormals(
     } else {
         covariances = covariances_;
     }
-#pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)
     for (int i = 0; i < (int)covariances.size(); i++) {
         auto normal = ComputeNormal(covariances[i], fast_normal_computation);
         if (normal.norm() == 0.0) {
