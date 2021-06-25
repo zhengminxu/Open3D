@@ -257,6 +257,19 @@ void WebRTCWindowSystem::StartWebRTCServer() {
             // CivetWeb server is used for WebRTC handshake. This is enabled
             // when running as a standalone application, and is disabled when
             // running in Jupyter.
+            //
+            // Civet server does to things:
+            // 1. Serving localhost:8888/index.html
+            //    Not needed for TensorBoard plugin.
+            // 2. Lising to REST APIs in URIs, e.g.
+            //    localhost:8888/api/getMediaList
+            //    localhost:8888/api/call
+            //    localhost:8888/api/getIceCandidate
+            //    ...
+            //    This is needed for TensorBoard plugin.
+            //
+            // Jupyter, both 1. and 2. are disabled.
+            // APIs are called by: WebRTCWindowSystem::CallHttpAPI().
             if (impl_->http_handshake_enabled_) {
                 utility::LogInfo("WebRTC HTTP server handshake mode enabled.");
                 std::vector<std::string> options{"document_root",
