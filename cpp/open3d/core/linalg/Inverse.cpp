@@ -93,11 +93,10 @@ void Inverse(const Tensor &A, Tensor &output) {
         void *ipiv_data = ipiv.GetDataPtr();
 
         // LAPACKE supports getri, A is in-place modified as output.
-        Tensor A_T = A.T().To(device, /*copy=*/true);
-        void *A_data = A_T.GetDataPtr();
+        output = A.Clone();
+        void *A_data = output.GetDataPtr();
 
         InverseCPU(A_data, ipiv_data, nullptr, n, dtype, device);
-        output = A_T.T();
     }
 }
 }  // namespace core
