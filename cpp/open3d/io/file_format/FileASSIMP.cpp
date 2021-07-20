@@ -61,12 +61,6 @@ const unsigned int kPostProcessFlags =
         aiProcess_Triangulate | aiProcess_GenUVCoords | aiProcess_SortByPType |
         aiProcess_OptimizeMeshes | aiProcess_PreTransformVertices;
 
-/*aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
-aiProcess_ImproveCacheLocality | aiProcess_RemoveRedundantMaterials |
-aiProcess_Triangulate | aiProcess_GenUVCoords | aiProcess_SortByPType |
-aiProcess_FindDegenerates | aiProcess_OptimizeMeshes |
-aiProcess_PreTransformVertices;*/
-
 struct TextureImages {
     std::shared_ptr<geometry::Image> albedo;
     std::shared_ptr<geometry::Image> normal;
