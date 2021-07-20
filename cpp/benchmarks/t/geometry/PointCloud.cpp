@@ -73,7 +73,11 @@ void ToLegacyPointCloud(benchmark::State& state, const core::Device& device) {
     }
 }
 
-static const std::string path = std::string(TEST_DATA_DIR) + "/fragment.ply";
+static const std::string path =
+        "/home/rey/Datasets/io_exp/pointcloud/ply_with_normals/"
+        "bedroom_tpcd.ply";
+static const std::string path_pcd =
+        std::string(TEST_DATA_DIR) + "/ICP/cloud_bin_0.pcd";
 
 void LegacyVoxelDownSample(benchmark::State& state, float voxel_size) {
     auto pcd = open3d::io::CreatePointCloudFromFile(path);
@@ -97,6 +101,27 @@ void VoxelDownSample(benchmark::State& state,
 
     for (auto _ : state) {
         pcd.VoxelDownSample(voxel_size, backend);
+    }
+}
+
+void ReadTensorPointCloud(benchmark::State& state,
+                          const std::string& file_path) {
+    t::geometry::PointCloud pcd;
+    t::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
+
+    for (auto _ : state) {
+        t::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
+    }
+}
+
+void ReadLegacyPointCloud(benchmark::State& state,
+                          const std::string& file_path) {
+    open3d::geometry::PointCloud pcd;
+    open3d::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
+
+    for (auto _ : state) {
+        open3d::io::ReadPointCloud(file_path, pcd,
+                                   {"auto", false, false, false});
     }
 }
 
@@ -151,6 +176,18 @@ BENCHMARK_CAPTURE(LegacyVoxelDownSample, Legacy_0_16, 0.16)
 BENCHMARK_CAPTURE(LegacyVoxelDownSample, Legacy_0_32, 0.32)
         ->Unit(benchmark::kMillisecond);
 ENUM_VOXELDOWNSAMPLE_BACKEND()
+
+BENCHMARK_CAPTURE(ReadTensorPointCloud, PLY, path)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(ReadLegacyPointCloud, PLY, path)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(ReadTensorPointCloud, PCD, path_pcd)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(ReadLegacyPointCloud, PCD, path_pcd)
+        ->Unit(benchmark::kMillisecond);
 
 }  // namespace geometry
 }  // namespace t

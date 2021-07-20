@@ -421,18 +421,18 @@ bool WritePointCloudToPLY(const std::string &filename,
         DISPATCH_DTYPE_TO_TEMPLATE(pointcloud.GetPoints().GetDtype(), [&]() {
             const scalar_t *data_ptr =
                     GetValue<scalar_t>(pointcloud.GetPoints()[i], 0);
-            ply_write(ply_file, double(data_ptr[0]));
-            ply_write(ply_file, double(data_ptr[1]));
-            ply_write(ply_file, double(data_ptr[2]));
+            ply_write(ply_file, data_ptr[0]);
+            ply_write(ply_file, data_ptr[1]);
+            ply_write(ply_file, data_ptr[2]);
         });
         if (pointcloud.HasPointNormals()) {
             DISPATCH_DTYPE_TO_TEMPLATE(
                     pointcloud.GetPointNormals().GetDtype(), [&]() {
                         const scalar_t *data_ptr = GetValue<scalar_t>(
                                 pointcloud.GetPointNormals()[i], 0);
-                        ply_write(ply_file, double(data_ptr[0]));
-                        ply_write(ply_file, double(data_ptr[1]));
-                        ply_write(ply_file, double(data_ptr[2]));
+                        ply_write(ply_file, data_ptr[0]);
+                        ply_write(ply_file, data_ptr[1]);
+                        ply_write(ply_file, data_ptr[2]);
                     });
         }
         if (pointcloud.HasPointColors()) {
@@ -440,9 +440,9 @@ bool WritePointCloudToPLY(const std::string &filename,
                     pointcloud.GetPointColors().GetDtype(), [&]() {
                         const scalar_t *data_ptr = GetValue<scalar_t>(
                                 pointcloud.GetPointColors()[i], 0);
-                        ply_write(ply_file, double(data_ptr[0]));
-                        ply_write(ply_file, double(data_ptr[1]));
-                        ply_write(ply_file, double(data_ptr[2]));
+                        ply_write(ply_file, data_ptr[0]);
+                        ply_write(ply_file, data_ptr[1]);
+                        ply_write(ply_file, data_ptr[2]);
                     });
         }
 
@@ -452,7 +452,7 @@ bool WritePointCloudToPLY(const std::string &filename,
                 DISPATCH_DTYPE_TO_TEMPLATE(it.second.GetDtype(), [&]() {
                     const scalar_t *data_ptr =
                             GetValue<scalar_t>(it.second[i], 0);
-                    ply_write(ply_file, double(data_ptr[0]));
+                    ply_write(ply_file, data_ptr[0]);
                 });
             }
         }

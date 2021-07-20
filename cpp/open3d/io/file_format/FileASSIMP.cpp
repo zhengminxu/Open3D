@@ -40,6 +40,7 @@
 #include "open3d/utility/FileSystem.h"
 #include "open3d/utility/Logging.h"
 #include "open3d/utility/ProgressReporters.h"
+#include "open3d/utility/Timer.h"
 #include "open3d/visualization/rendering/Material.h"
 #include "open3d/visualization/rendering/Model.h"
 
@@ -56,11 +57,15 @@ FileGeometry ReadFileGeometryTypeFBX(const std::string& path) {
 }
 
 const unsigned int kPostProcessFlags =
-        aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
-        aiProcess_ImproveCacheLocality | aiProcess_RemoveRedundantMaterials |
+        aiProcess_GenNormals | aiProcess_RemoveRedundantMaterials |
         aiProcess_Triangulate | aiProcess_GenUVCoords | aiProcess_SortByPType |
-        aiProcess_FindDegenerates | aiProcess_OptimizeMeshes |
-        aiProcess_PreTransformVertices;
+        aiProcess_OptimizeMeshes | aiProcess_PreTransformVertices;
+
+/*aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
+aiProcess_ImproveCacheLocality | aiProcess_RemoveRedundantMaterials |
+aiProcess_Triangulate | aiProcess_GenUVCoords | aiProcess_SortByPType |
+aiProcess_FindDegenerates | aiProcess_OptimizeMeshes |
+aiProcess_PreTransformVertices;*/
 
 struct TextureImages {
     std::shared_ptr<geometry::Image> albedo;
@@ -277,6 +282,8 @@ bool ReadTriangleMeshUsingASSIMP(
 bool ReadModelUsingAssimp(const std::string& filename,
                           visualization::rendering::TriangleMeshModel& model,
                           const ReadTriangleModelOptions& params /*={}*/) {
+    utility::Timer time0, time1, time2, time3, time4, time5, time6, time7;
+
     int64_t progress_total = 100;  // 70: ReadFile(), 10: mesh, 20: textures
     float readfile_total = 70.0f;
     float mesh_total = 10.0f;
@@ -302,12 +309,16 @@ bool ReadModelUsingAssimp(const std::string& filename,
         float scaling_;
     };
 
+    time0.Start();
     Assimp::Importer importer;
     // The importer takes ownership of the pointer (the documentation
     // is silent on this salient point).
     importer.SetProgressHandler(
             new AssimpProgress(params, readfile_total / progress_total));
     const auto* scene = importer.ReadFile(filename.c_str(), kPostProcessFlags);
+    time0.Stop();
+    utility::LogInfo(" ---- ReadModelASSIMP Time 0 : {}", time0.GetDuration());
+
     if (!scene) {
         utility::LogWarning("Unable to load file {} with ASSIMP", filename);
         return false;
@@ -316,6 +327,7 @@ bool ReadModelUsingAssimp(const std::string& filename,
     progress = int64_t(readfile_total);
     reporter.Update(progress);
 
+    time1.Start();
     // Process each Assimp mesh into a geometry::TriangleMesh
     for (size_t midx = 0; midx < scene->mNumMeshes; ++midx) {
         const auto* assimp_mesh = scene->mMeshes[midx];
@@ -379,6 +391,10 @@ bool ReadModelUsingAssimp(const std::string& filename,
                                  assimp_mesh->mMaterialIndex});
     }
 
+    time1.Stop();
+    utility::LogInfo(" ---- ReadModelASSIMP Time 1 : {}", time1.GetDuration());
+
+    time2.Start();
     progress = int64_t(readfile_total + mesh_total);
     reporter.Update(progress);
 
@@ -437,6 +453,8 @@ bool ReadModelUsingAssimp(const std::string& filename,
                                    float(scene->mNumMaterials));
         reporter.Update(progress);
     }
+    time2.Stop();
+    utility::LogInfo(" ---- ReadModelASSIMP Time 2 : {}", time2.GetDuration());
 
     reporter.Update(progress_total);
 

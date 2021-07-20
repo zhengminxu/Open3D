@@ -41,6 +41,7 @@
 #include "open3d/io/TriangleMeshIO.h"
 #include "open3d/utility/FileSystem.h"
 #include "open3d/utility/Logging.h"
+#include "open3d/utility/Timer.h"
 #include "open3d/visualization/gui/Application.h"
 #include "open3d/visualization/gui/Button.h"
 #include "open3d/visualization/gui/Checkbox.h"
@@ -953,8 +954,10 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
         impl_->loaded_model_.meshes_.clear();
         impl_->loaded_model_.materials_.clear();
 
-        auto geometry_type = io::ReadFileGeometryType(path);
+        utility::Timer time_read_geometry;
+        time_read_geometry.Start();
 
+        auto geometry_type = io::ReadFileGeometryType(path);
         bool model_success = false;
         if (geometry_type & io::CONTAINS_TRIANGLES) {
             const float ioProgressAmount = 1.0f;
@@ -965,8 +968,14 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
                     UpdateProgress(ioProgressAmount * float(percent / 100.0));
                     return true;
                 };
+
+                utility::Timer time_read_triangle_model;
+                time_read_triangle_model.Start();
                 model_success =
                         io::ReadTriangleModel(path, impl_->loaded_model_, opt);
+                time_read_triangle_model.Stop();
+                utility::LogInfo(" -- ReadTriangleModel: {}",
+                                 time_read_triangle_model.GetDuration());
             } catch (...) {
                 model_success = false;
             }
@@ -987,18 +996,36 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
                     UpdateProgress(ioProgressAmount * float(percent / 100.0));
                     return true;
                 };
+                utility::Timer time_read_pcd;
+                time_read_pcd.Start();
                 success = io::ReadPointCloud(path, *cloud, opt);
+                time_read_pcd.Stop();
+                utility::LogInfo(" -- ReadPointCloud: {}",
+                                 time_read_pcd.GetDuration());
             } catch (...) {
                 success = false;
             }
             if (success) {
                 utility::LogInfo("Successfully read {}", path.c_str());
                 UpdateProgress(ioProgressAmount);
+
+                utility::Timer time_estimate_normals, time_normalize_normals;
+                time_estimate_normals.Start();
                 if (!cloud->HasNormals()) {
                     cloud->EstimateNormals();
                 }
+                time_estimate_normals.Stop();
+                utility::LogInfo(" -- EstimateNormals: {}",
+                                 time_estimate_normals.GetDuration());
+
                 UpdateProgress(0.666f);
+
+                time_normalize_normals.Start();
                 cloud->NormalizeNormals();
+                time_normalize_normals.Stop();
+                utility::LogInfo(" -- NormalizeNormals: {}",
+                                 time_normalize_normals.GetDuration());
+
                 UpdateProgress(0.75f);
                 geometry = cloud;
             } else {
@@ -1006,6 +1033,9 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
                 cloud.reset();
             }
         }
+        time_read_geometry.Stop();
+        utility::LogInfo(" - READ GEOMETRY: {}",
+                         time_read_geometry.GetDuration());
 
         if (model_success || geometry) {
             gui::Application::GetInstance().PostToMainThread(
