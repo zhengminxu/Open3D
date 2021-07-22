@@ -48,6 +48,21 @@ void ComputePosePointToPlaneCPU(const core::Tensor &source_points,
                                 const core::Device &device,
                                 const registration::RobustKernel &kernel);
 
+void ComputePoseColoredICPCPU(const core::Tensor &source_points,
+                              const core::Tensor &source_colors,
+                              const core::Tensor &target_points,
+                              const core::Tensor &target_normals,
+                              const core::Tensor &target_colors,
+                              const core::Tensor &target_color_gradients,
+                              const core::Tensor &correspondence_indices,
+                              core::Tensor &pose,
+                              float &residual,
+                              int &inlier_count,
+                              const core::Dtype &dtype,
+                              const core::Device &device,
+                              const registration::RobustKernel &kernel,
+                              const float &lambda_geometric);
+                              
 #ifdef BUILD_CUDA_MODULE
 void ComputePosePointToPlaneCUDA(const core::Tensor &source_points,
                                  const core::Tensor &target_points,

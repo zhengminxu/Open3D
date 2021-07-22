@@ -149,9 +149,21 @@ static void AssertInputMultiScaleICP(
                 "normal vectors for target PointCloud.");
     }
 
+    // ColoredICP requires pre-computed color_gradients for target points.
     if (estimation.GetTransformationEstimationType() ==
         TransformationEstimationType::ColoredICP) {
-        utility::LogError("Tensor PointCloud ColoredICP is not implemented.");
+        if (!target.HasPointNormals()) {
+            utility::LogError(
+                    "ColoredICP requires target pointcloud to have normals.");
+        }
+        if (!target.HasPointColors()) {
+            utility::LogError(
+                    "ColoredICP requires target pointcloud to have colors.");
+        }
+        if (!source.HasPointColors()) {
+            utility::LogError(
+                    "ColoredICP requires source pointcloud to have colors.");
+        }
     }
 
     if (max_correspondence_distances[0] <= 0.0) {
