@@ -143,7 +143,7 @@ __global__ void ComputePoseColoredICPKernelCUDA(
         const scalar_t sqrt_lambda_photometric,
         const int n,
         scalar_t *global_sum,
-        funct_t op) {
+        funct_t GetWeightFromRobustKernel) {
     __shared__ scalar_t local_sum0[kThread1DUnit];
     __shared__ scalar_t local_sum1[kThread1DUnit];
     __shared__ scalar_t local_sum2[kThread1DUnit];
@@ -167,42 +167,21 @@ __global__ void ComputePoseColoredICPKernelCUDA(
             target_color_gradients_ptr, correspondence_indices,
             sqrt_lambda_geometric, sqrt_lambda_photometric, J_G, J_I, r_G, r_I);
 
-    scalar_t w_G = 1.0;  // op(r_G);
-    scalar_t w_I = 1.0;  // op(r_I);
+    scalar_t w_G = GetWeightFromRobustKernel(r_G);
+    scalar_t w_I = GetWeightFromRobustKernel(r_I);
 
     if (valid) {
         // Dump J, r into JtJ and Jtr
-        reduction[0] = J_G[0] * w_G * J_G[0] + J_I[0] * w_I * J_I[0];
-        reduction[1] = J_G[1] * w_G * J_G[0] + J_I[1] * w_I * J_I[0];
-        reduction[2] = J_G[1] * w_G * J_G[1] + J_I[1] * w_I * J_I[1];
-        reduction[3] = J_G[2] * w_G * J_G[0] + J_I[2] * w_I * J_I[0];
-        reduction[4] = J_G[2] * w_G * J_G[1] + J_I[2] * w_I * J_I[1];
-        reduction[5] = J_G[2] * w_G * J_G[2] + J_I[2] * w_I * J_I[2];
-        reduction[6] = J_G[3] * w_G * J_G[0] + J_I[3] * w_I * J_I[0];
-        reduction[7] = J_G[3] * w_G * J_G[1] + J_I[3] * w_I * J_I[1];
-        reduction[8] = J_G[3] * w_G * J_G[2] + J_I[3] * w_I * J_I[2];
-        reduction[9] = J_G[3] * w_G * J_G[3] + J_I[3] * w_I * J_I[3];
-        reduction[10] = J_G[4] * w_G * J_G[0] + J_I[4] * w_I * J_I[0];
-        reduction[11] = J_G[4] * w_G * J_G[1] + J_I[4] * w_I * J_I[1];
-        reduction[12] = J_G[4] * w_G * J_G[2] + J_I[4] * w_I * J_I[2];
-        reduction[13] = J_G[4] * w_G * J_G[3] + J_I[4] * w_I * J_I[3];
-        reduction[14] = J_G[4] * w_G * J_G[4] + J_I[4] * w_I * J_I[4];
-        reduction[15] = J_G[5] * w_G * J_G[0] + J_I[5] * w_I * J_I[0];
-        reduction[16] = J_G[5] * w_G * J_G[1] + J_I[5] * w_I * J_I[1];
-        reduction[17] = J_G[5] * w_G * J_G[2] + J_I[5] * w_I * J_I[2];
-        reduction[18] = J_G[5] * w_G * J_G[3] + J_I[5] * w_I * J_I[3];
-        reduction[19] = J_G[5] * w_G * J_G[4] + J_I[5] * w_I * J_I[4];
-        reduction[20] = J_G[5] * w_G * J_G[5] + J_I[5] * w_I * J_I[5];
-
-        reduction[21] = J_G[0] * w_G * r_G + J_I[0] * w_I * r_I;
-        reduction[22] = J_G[1] * w_G * r_G + J_I[1] * w_I * r_I;
-        reduction[23] = J_G[2] * w_G * r_G + J_I[2] * w_I * r_I;
-        reduction[24] = J_G[3] * w_G * r_G + J_I[3] * w_I * r_I;
-        reduction[25] = J_G[4] * w_G * r_G + J_I[4] * w_I * r_I;
-        reduction[26] = J_G[5] * w_G * r_G + J_I[5] * w_I * r_I;
-
-        reduction[27] = r_G * r_G + r_I * r_I;
-        reduction[28] = 1;
+        int i = 0;
+        for (int j = 0; j < 6; ++j) {
+            for (int k = 0; k <= j; ++k) {
+                reduction[i] += J_G[j] * w_G * J_G[k] + J_I[j] * w_I * J_I[k];
+                ++i;
+            }
+            reduction[21 + j] += J_G[j] * w_G * r_G + J_I[j] * w_I * r_I;
+        }
+        reduction[27] += r_G * r_G + r_I * r_I;
+        reduction[28] += 1;
     }
 
     ReduceSum6x6LinearSystem<scalar_t, kThread1DUnit>(tid, valid, reduction,
@@ -248,7 +227,8 @@ void ComputePoseColoredICPCUDA(const core::Tensor &source_points,
                             target_color_gradients.GetDataPtr<scalar_t>(),
                             correspondence_indices.GetDataPtr<int64_t>(),
                             sqrt_lambda_geometric, sqrt_lambda_photometric, n,
-                            global_sum.GetDataPtr<scalar_t>(), func_t);
+                            global_sum.GetDataPtr<scalar_t>(),
+                            GetWeightFromRobustKernel);
                 });
     });
 

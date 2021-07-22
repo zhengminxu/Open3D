@@ -194,6 +194,7 @@ InitializePointCloudPyramidForMultiScaleICP(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
         const std::vector<double> &voxel_sizes,
+        const std::vector<double> &max_correspondence_distances,
         const TransformationEstimation &estimation,
         const int64_t &num_iterations) {
     std::vector<t::geometry::PointCloud> source_down_pyramid(num_iterations);
@@ -209,13 +210,15 @@ InitializePointCloudPyramidForMultiScaleICP(
                 target.VoxelDownSample(voxel_sizes[num_iterations - 1]);
     }
 
-    // TODO(@rishabh): Estimate Color-Gradient here, for ColoredICP.
+    // Computing Color Gradients.
     if (estimation.GetTransformationEstimationType() ==
-        TransformationEstimationType::ColoredICP) {
-        utility::LogError(" ColoredICP requires pre-computed color-gradients.");
+                TransformationEstimationType::ColoredICP &&
+        !target.HasPointAttr("color_gradients")) {
+        target_down_pyramid[num_iterations - 1].EstimateColorGradients(
+                30, max_correspondence_distances[num_iterations - 1] * 2.0);
     }
 
-    for (int k = num_iterations - 2; k >= 0; k--) {
+    for (int k = num_iterations - 2; k >= 0; --k) {
         source_down_pyramid[k] =
                 source_down_pyramid[k + 1].VoxelDownSample(voxel_sizes[k]);
         target_down_pyramid[k] =
@@ -239,7 +242,7 @@ static RegistrationResult DoSingleScaleIterationsICP(
         const core::Device &device,
         const core::Dtype &dtype) {
     RegistrationResult result;
-    for (int j = 0; j < criteria.max_iteration_; j++) {
+    for (int j = 0; j < criteria.max_iteration_; ++j) {
         result = GetRegistrationResultAndCorrespondences(
                 source.GetPoints(), target_nns, max_correspondence_distance,
                 transformation);
@@ -301,7 +304,8 @@ RegistrationResult RegistrationMultiScaleICP(
     std::vector<t::geometry::PointCloud> target_down_pyramid(num_iterations);
     std::tie(source_down_pyramid, target_down_pyramid) =
             InitializePointCloudPyramidForMultiScaleICP(
-                    source, target, voxel_sizes, estimation, num_iterations);
+                    source, target, voxel_sizes, max_correspondence_distances,
+                    estimation, num_iterations);
 
     // Transformation tensor is always of shape {4,4}, type Float64 on CPU:0.
     core::Tensor transformation =
@@ -312,7 +316,7 @@ RegistrationResult RegistrationMultiScaleICP(
     double prev_inlier_rmse = 0;
 
     // ---- Iterating over different resolution scale START -------------------
-    for (int64_t i = 0; i < num_iterations; i++) {
+    for (int64_t i = 0; i < num_iterations; ++i) {
         source_down_pyramid[i].Transform(transformation.To(device, dtype));
 
         // Initialize Neighbor Search.
