@@ -480,7 +480,7 @@ OPEN3D_HOST_DEVICE void ComputeEigenvector1(const scalar_t* A,
     scalar_t max_abs_comp;
 
     if (absM00 >= absM11) {
-        max_abs_comp = OPEN3D_MAX(absM00, absM01);
+        max_abs_comp = max(absM00, absM01);
         if (max_abs_comp > 0) {
             if (absM00 >= absM01) {
                 m01 /= m00;
@@ -502,7 +502,7 @@ OPEN3D_HOST_DEVICE void ComputeEigenvector1(const scalar_t* A,
             return;
         }
     } else {
-        max_abs_comp = OPEN3D_MAX(absM11, absM01);
+        max_abs_comp = max(absM11, absM01);
         if (max_abs_comp > 0) {
             if (absM11 >= absM01) {
                 m01 /= m11;
@@ -577,7 +577,7 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseNormalsWithFastEigen3x3(
         scalar_t det = (b00 * c00 - A[1] * c01 + A[2] * c02) / (p * p * p);
 
         scalar_t half_det = det * 0.5;
-        half_det = OPEN3D_MIN(OPEN3D_MAX(half_det, -1.0), 1.0);
+        half_det = min(max(half_det, (scalar_t)-1.0), (scalar_t)1.0);
 
         scalar_t angle = acos(half_det) / 3.0;
         const scalar_t two_thrids_pi = 2.09439510239319549;
