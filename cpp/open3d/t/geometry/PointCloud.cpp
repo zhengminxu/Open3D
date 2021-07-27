@@ -31,6 +31,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "open3d/core/CUDAUtils.h"
 #include "open3d/core/EigenConverter.h"
 #include "open3d/core/ShapeUtil.h"
 #include "open3d/core/Tensor.h"
@@ -222,6 +223,54 @@ PointCloud PointCloud::VoxelDownSample(
     }
 
     return pcd_down;
+}
+
+void PointCloud::EstimateColorGradients(
+        const int max_knn /* = 30*/,
+        const utility::optional<double> radius /*= utility::nullopt*/) {
+    if (!HasPointColors() || !HasPointNormals()) {
+        utility::LogError(
+                "PointCloud must have colors and normals attribute "
+                "to compute color gradients.");
+    }
+
+    core::Dtype dtype = this->GetPointColors().GetDtype();
+    if (dtype != core::Dtype::Float32 && dtype != core::Dtype::Float64) {
+        utility::LogError(
+                "Only Float32 and Float64 type color attribute supported for "
+                "estimating color gradient.");
+    }
+
+    if (!radius.has_value()) {
+        utility::LogError(
+                "KNN Search based EstimateColorGradient is not implemented "
+                "yet. Please provide radius parameter value.");
+    }
+
+    const core::Device device = GetDevice();
+    const core::Device::DeviceType device_type = device.GetType();
+
+    this->SetPointAttr(
+            "color_gradients",
+            core::Tensor::Empty({GetPoints().GetLength(), 3}, dtype, device));
+
+    // Compute and set `color_gradients` attribute.
+    if (device_type == core::Device::DeviceType::CPU) {
+        kernel::pointcloud::EstimateColorGradientsUsingHybridSearchCPU(
+                this->GetPoints().Contiguous(),
+                this->GetPointNormals().Contiguous(),
+                this->GetPointColors().Contiguous(),
+                this->GetPointAttr("color_gradients"), radius.value(), max_knn);
+    } else if (device_type == core::Device::DeviceType::CUDA) {
+        CUDA_CALL(
+                kernel::pointcloud::EstimateColorGradientsUsingHybridSearchCUDA,
+                this->GetPoints().Contiguous(),
+                this->GetPointNormals().Contiguous(),
+                this->GetPointColors().Contiguous(),
+                this->GetPointAttr("color_gradients"), radius.value(), max_knn);
+    } else {
+        utility::LogError("Unimplemented device");
+    }
 }
 
 static PointCloud CreatePointCloudWithNormals(
