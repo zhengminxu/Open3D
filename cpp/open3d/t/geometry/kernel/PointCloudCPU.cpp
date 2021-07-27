@@ -236,15 +236,15 @@ void EstimateNormalsFromCovariancesCPU(const core::Tensor& covariances,
     int64_t n = covariances.GetLength();
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        auto covariances_ptr = covariances.GetDataPtr<scalar_t>();
-        auto normals_ptr = normals.GetDataPtr<scalar_t>();
+        const scalar_t* covariances_ptr = covariances.GetDataPtr<scalar_t>();
+        scalar_t* normals_ptr = normals.GetDataPtr<scalar_t>();
 
         core::ParallelFor(
                 covariances.GetDevice(), n, [&](int64_t workload_idx) {
                     int64_t covariances_offset = 9 * workload_idx;
                     int64_t normals_offset = 3 * workload_idx;
                     scalar_t normals_output[3] = {0};
-                    EstimatePointWiseNormalsWithFastEigen3x3(
+                    EstimatePointWiseNormalsWithFastEigen3x3<scalar_t>(
                             covariances_ptr + covariances_offset,
                             normals_output);
 

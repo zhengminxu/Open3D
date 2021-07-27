@@ -242,7 +242,7 @@ void PointCloud::EstimateNormals(
         this->SetPointNormals(core::Tensor::Empty({GetPoints().GetLength(), 3},
                                                   dtype, device));
     } else {
-        this->SetPointNormals(GetPointNormals().Contiguous());
+        this->SetPointNormals(GetPointNormals().To(dtype).Contiguous());
     }
 
     // Computes and set `covariances` attribute using Hybrid or KNN Search.

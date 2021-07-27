@@ -307,10 +307,10 @@ void EstimateCovariancesUsingHybridSearchCPU
             tree.HybridSearch(points, radius, max_nn);
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        auto points_ptr = points.GetDataPtr<scalar_t>();
-        auto neighbour_indices_ptr = indices.GetDataPtr<int64_t>();
-        auto neighbour_counts_ptr = counts.GetDataPtr<int64_t>();
-        auto covariances_ptr = covariances.GetDataPtr<scalar_t>();
+        const scalar_t* points_ptr = points.GetDataPtr<scalar_t>();
+        int64_t* neighbour_indices_ptr = indices.GetDataPtr<int64_t>();
+        int64_t* neighbour_counts_ptr = counts.GetDataPtr<int64_t>();
+        scalar_t* covariances_ptr = covariances.GetDataPtr<scalar_t>();
 
         core::ParallelFor(
                 points.GetDevice(), n, [=] OPEN3D_DEVICE(int64_t workload_idx) {

@@ -271,7 +271,7 @@ __global__ void EstimateNormalsFromCovariancesCUDAKernel(
     int64_t covariances_offset = 9 * workload_idx;
     int64_t normals_offset = 3 * workload_idx;
     scalar_t normals_output[3] = {0};
-    EstimatePointWiseNormalsWithFastEigen3x3(
+    EstimatePointWiseNormalsWithFastEigen3x3<scalar_t>(
             covariances_ptr + covariances_offset, normals_output);
 
     if ((normals_output[0] * normals_output[0] +
