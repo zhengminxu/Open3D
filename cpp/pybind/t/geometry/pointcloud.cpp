@@ -138,6 +138,14 @@ void pybind_pointcloud(py::module& m) {
             "a depth image and a camera model.\n\n Given depth value d at (u, "
             "v) image coordinate, the corresponding 3d point is:\n z = d / "
             "depth_scale\n\n x = (u - cx) * z / fx\n\n y = (v - cy) * z / fy");
+    pointcloud.def(
+            "estimate_color_gradients", &PointCloud::EstimateColorGradients,
+            py::call_guard<py::gil_scoped_release>(), py::arg("max_nn") = 30,
+            py::arg("radius") = py::none(),
+            "Function to estimate point color gradients. The pointcloud must "
+            "have colors and normals attributes. It uses KNN search if "
+            "only max_nn parameter is provided, and HybridSearch if "
+            "radius parameter is also provided.");
     pointcloud.def_static(
             "create_from_rgbd_image", &PointCloud::CreateFromRGBDImage,
             py::call_guard<py::gil_scoped_release>(), "rgbd_image"_a,
