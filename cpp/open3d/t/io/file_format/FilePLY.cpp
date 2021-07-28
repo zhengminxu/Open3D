@@ -34,6 +34,7 @@
 #include "open3d/utility/FileSystem.h"
 #include "open3d/utility/Logging.h"
 #include "open3d/utility/ProgressReporters.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -341,10 +342,15 @@ bool WritePointCloudToPLY(const std::string &filename,
         utility::LogWarning("Write PLY failed: point cloud has 0 points.");
         return false;
     }
+    utility::Timer time0, time1, time2, time3, time4;
 
+    time0.Start();
     geometry::TensorMap t_map = pointcloud.GetPointAttr();
     long num_points = static_cast<long>(pointcloud.GetPoints().GetLength());
+    time0.Stop();
+    utility::LogInfo("Time 0: {}", time0.GetDuration());
 
+    time1.Start();
     // Make sure all the attributes have same size.
     if (!t_map.IsSizeSynchronized()) {
         for (auto const &it : t_map) {
@@ -357,7 +363,10 @@ bool WritePointCloudToPLY(const std::string &filename,
             }
         }
     }
+    time1.Stop();
+    utility::LogInfo("Time 1: {}", time1.GetDuration());
 
+    time2.Start();
     p_ply ply_file =
             ply_create(filename.c_str(),
                        bool(params.write_ascii) ? PLY_ASCII : PLY_LITTLE_ENDIAN,
@@ -367,7 +376,10 @@ bool WritePointCloudToPLY(const std::string &filename,
                             filename);
         return false;
     }
+    time2.Stop();
+    utility::LogInfo("Time 2: {}", time2.GetDuration());
 
+    time3.Start();
     ply_add_comment(ply_file, "Created by Open3D");
     ply_add_element(ply_file, "vertex", num_points);
 
@@ -414,9 +426,13 @@ bool WritePointCloudToPLY(const std::string &filename,
         return false;
     }
 
+    time3.Stop();
+    utility::LogInfo("Time 3: {}", time3.GetDuration());
+
     utility::CountingProgressReporter reporter(params.update_progress);
     reporter.SetTotal(num_points);
 
+    time4.Start();
     for (int64_t i = 0; i < num_points; i++) {
         DISPATCH_DTYPE_TO_TEMPLATE(pointcloud.GetPoints().GetDtype(), [&]() {
             const scalar_t *data_ptr =
@@ -461,6 +477,8 @@ bool WritePointCloudToPLY(const std::string &filename,
             reporter.Update(i);
         }
     }
+    time4.Stop();
+    utility::LogInfo("Time 4: {}", time4.GetDuration());
 
     reporter.Finish();
     ply_close(ply_file);

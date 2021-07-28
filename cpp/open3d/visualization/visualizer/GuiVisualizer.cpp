@@ -1012,7 +1012,8 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
                 utility::Timer time_estimate_normals, time_normalize_normals;
                 time_estimate_normals.Start();
                 if (!cloud->HasNormals()) {
-                    cloud->EstimateNormals();
+                    cloud->EstimateNormals(
+                            open3d::geometry::KDTreeSearchParamKNN(10));
                 }
                 time_estimate_normals.Stop();
                 utility::LogInfo(" -- EstimateNormals: {}",

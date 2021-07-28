@@ -71,7 +71,7 @@ static const std::unordered_map<std::string, std::string>
                  "removed from the PointCloud."},
                 {"quality", "Quality of the output file."},
                 {"write_ascii",
-                 "Set to ``True`` to output in ascii format, otherwise binary "
+                 "Set to ``False`` to output in binary, otherwise ascii format "
                  "format will be used."},
                 {"write_vertex_normals",
                  "Set to ``False`` to not write any vertex normals, even if "
