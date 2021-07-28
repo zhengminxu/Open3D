@@ -243,7 +243,7 @@ void EstimateColorGradientsUsingHybridSearchCPU
          const core::Tensor& colors,
          core::Tensor& color_gradients,
          const double& radius,
-         const int64_t& max_nn) {
+         const int& max_nn) {
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
@@ -301,8 +301,7 @@ void EstimateColorGradientsUsingKNNSearchCPU
          const core::Tensor& normals,
          const core::Tensor& colors,
          core::Tensor& color_gradients,
-         const double& radius,
-         const int64_t& max_nn) {
+         const int& max_nn) {
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
