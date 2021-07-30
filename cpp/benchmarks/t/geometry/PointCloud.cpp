@@ -28,6 +28,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include "open3d/core/CUDAUtils.h"
 #include "open3d/core/Tensor.h"
 #include "open3d/io/PointCloudIO.h"
 #include "open3d/t/io/PointCloudIO.h"
@@ -47,22 +48,22 @@ void FromLegacyPointCloud(benchmark::State& state, const core::Device& device) {
 
     // Warm up.
     t::geometry::PointCloud pcd = t::geometry::PointCloud::FromLegacyPointCloud(
-            legacy_pcd, core::Dtype::Float32, device);
+            legacy_pcd, core::Float32, device);
     (void)pcd;
 
     for (auto _ : state) {
         t::geometry::PointCloud pcd =
                 t::geometry::PointCloud::FromLegacyPointCloud(
-                        legacy_pcd, core::Dtype::Float32, device);
+                        legacy_pcd, core::Float32, device);
+        core::cuda::Synchronize(device);
     }
 }
 
 void ToLegacyPointCloud(benchmark::State& state, const core::Device& device) {
     int64_t num_points = 1000000;  // 1M
     PointCloud pcd(device);
-    pcd.SetPoints(core::Tensor({num_points, 3}, core::Dtype::Float32, device));
-    pcd.SetPointColors(
-            core::Tensor({num_points, 3}, core::Dtype::Float32, device));
+    pcd.SetPoints(core::Tensor({num_points, 3}, core::Float32, device));
+    pcd.SetPointColors(core::Tensor({num_points, 3}, core::Float32, device));
 
     // Warm up.
     open3d::geometry::PointCloud legacy_pcd = pcd.ToLegacyPointCloud();
@@ -70,6 +71,7 @@ void ToLegacyPointCloud(benchmark::State& state, const core::Device& device) {
 
     for (auto _ : state) {
         open3d::geometry::PointCloud legacy_pcd = pcd.ToLegacyPointCloud();
+        core::cuda::Synchronize(device);
     }
 }
 
@@ -101,58 +103,29 @@ void VoxelDownSample(benchmark::State& state,
 
     for (auto _ : state) {
         pcd.VoxelDownSample(voxel_size, backend);
+        core::cuda::Synchronize(device);
     }
 }
 
-void ReadTensorPointCloud(benchmark::State& state,
-                          const std::string& file_path) {
-    t::geometry::PointCloud pcd;
-    t::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
+void Transform(benchmark::State& state, const core::Device& device) {
+    PointCloud pcd;
+    t::io::ReadPointCloud(path, pcd, {"auto", false, false, false});
+    pcd = pcd.To(device);
+
+    core::Dtype dtype = pcd.GetPoints().GetDtype();
+    core::Tensor transformation = core::Tensor::Init<double>({{1, 0, 0, 1.0},
+                                                              {0, 1, 0, 2.0},
+                                                              {0, 0, 1, 3.0},
+                                                              {0, 0, 0, 1}},
+                                                             device)
+                                          .To(dtype);
+
+    // Warm Up.
+    PointCloud pcd_transformed = pcd.Transform(transformation);
 
     for (auto _ : state) {
-        t::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
-    }
-}
-
-void ReadLegacyPointCloud(benchmark::State& state,
-                          const std::string& file_path) {
-    open3d::geometry::PointCloud pcd;
-    open3d::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
-
-    for (auto _ : state) {
-        open3d::io::ReadPointCloud(file_path, pcd,
-                                   {"auto", false, false, false});
-    }
-}
-
-void WriteTensorPointCloud(benchmark::State& state,
-                           const std::string& file_path) {
-    t::geometry::PointCloud pcd;
-    t::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
-    utility::LogInfo("Type: {}, points: {}",
-                     pcd.GetPoints().GetDtype().ToString(),
-                     pcd.GetPoints().GetLength());
-//     t::geometry::PointCloud pcd_points(pcd.GetPoints());
-
-    t::io::WritePointCloud("t_pcd_0.ply", pcd);
-    int i = 0;
-    for (auto _ : state) {
-        std::string filename_loop = "t_pcd_" + std::to_string(++i) + ".ply";
-        t::io::WritePointCloud(filename_loop, pcd);
-    }
-}
-
-void WriteLegacyPointCloud(benchmark::State& state,
-                           const std::string& file_path) {
-    open3d::geometry::PointCloud pcd;
-    open3d::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
-
-//     open3d::geometry::PointCloud pcd_points(pcd.points_);
-    open3d::io::WritePointCloud("l_pcd_0.ply", pcd);
-    int i = 0;
-    for (auto _ : state) {
-        std::string filename_loop = "l_pcd_" + std::to_string(++i) + ".ply";
-        open3d::io::WritePointCloud(filename_loop, pcd);
+        pcd_transformed = pcd.Transform(transformation);
+        core::cuda::Synchronize(device);
     }
 }
 
@@ -208,23 +181,13 @@ BENCHMARK_CAPTURE(LegacyVoxelDownSample, Legacy_0_32, 0.32)
         ->Unit(benchmark::kMillisecond);
 ENUM_VOXELDOWNSAMPLE_BACKEND()
 
-BENCHMARK_CAPTURE(ReadTensorPointCloud, PLY, path)
+BENCHMARK_CAPTURE(Transform, CPU, core::Device("CPU:0"))
         ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(ReadLegacyPointCloud, PLY, path)
+#ifdef BUILD_CUDA_MODULE
+BENCHMARK_CAPTURE(Transform, CUDA, core::Device("CUDA:0"))
         ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_CAPTURE(ReadTensorPointCloud, PCD, path_pcd)
-        ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_CAPTURE(ReadLegacyPointCloud, PCD, path_pcd)
-        ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_CAPTURE(WriteTensorPointCloud, PLY, path)
-        ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_CAPTURE(WriteLegacyPointCloud, PLY, path)
-        ->Unit(benchmark::kMillisecond);
+#endif
 
 }  // namespace geometry
 }  // namespace t

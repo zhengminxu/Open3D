@@ -28,8 +28,8 @@
 
 #include "open3d/core/CUDAUtils.h"
 #include "open3d/core/Dispatch.h"
+#include "open3d/core/ParallelFor.h"
 #include "open3d/core/Tensor.h"
-#include "open3d/core/kernel/CUDALauncher.cuh"
 #include "open3d/t/geometry/kernel/GeometryIndexer.h"
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/pipelines/kernel/RGBDOdometryImpl.h"
@@ -146,8 +146,7 @@ void ComputeOdometryResultPointToPlaneCUDA(
     const int64_t rows = source_vertex_indexer.GetShape(0);
     const int64_t cols = source_vertex_indexer.GetShape(1);
 
-    core::Tensor global_sum =
-            core::Tensor::Zeros({29}, core::Dtype::Float32, device);
+    core::Tensor global_sum = core::Tensor::Zeros({29}, core::Float32, device);
     float* global_sum_ptr = global_sum.GetDataPtr<float>();
 
     const int kThreadSize = 16;
@@ -159,7 +158,7 @@ void ComputeOdometryResultPointToPlaneCUDA(
             source_vertex_indexer, target_vertex_indexer, target_normal_indexer,
             ti, global_sum_ptr, rows, cols, depth_outlier_trunc,
             depth_huber_delta);
-    OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
+    core::cuda::Synchronize();
     DecodeAndSolve6x6(global_sum, delta, inlier_residual, inlier_count);
 }
 
@@ -254,8 +253,7 @@ void ComputeOdometryResultIntensityCUDA(
     const int64_t rows = source_vertex_indexer.GetShape(0);
     const int64_t cols = source_vertex_indexer.GetShape(1);
 
-    core::Tensor global_sum =
-            core::Tensor::Zeros({29}, core::Dtype::Float32, device);
+    core::Tensor global_sum = core::Tensor::Zeros({29}, core::Float32, device);
     float* global_sum_ptr = global_sum.GetDataPtr<float>();
 
     const int kThreadSize = 16;
@@ -269,7 +267,7 @@ void ComputeOdometryResultIntensityCUDA(
             target_intensity_dx_indexer, target_intensity_dy_indexer,
             source_vertex_indexer, ti, global_sum_ptr, rows, cols,
             depth_outlier_trunc, intensity_huber_delta);
-    OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
+    core::cuda::Synchronize();
     DecodeAndSolve6x6(global_sum, delta, inlier_residual, inlier_count);
 }
 
@@ -376,8 +374,7 @@ void ComputeOdometryResultHybridCUDA(const core::Tensor& source_depth,
     const int64_t rows = source_vertex_indexer.GetShape(0);
     const int64_t cols = source_vertex_indexer.GetShape(1);
 
-    core::Tensor global_sum =
-            core::Tensor::Zeros({29}, core::Dtype::Float32, device);
+    core::Tensor global_sum = core::Tensor::Zeros({29}, core::Float32, device);
     float* global_sum_ptr = global_sum.GetDataPtr<float>();
 
     const int kThreadSize = 16;
@@ -392,7 +389,7 @@ void ComputeOdometryResultHybridCUDA(const core::Tensor& source_depth,
             target_intensity_dx_indexer, target_intensity_dy_indexer,
             source_vertex_indexer, ti, global_sum_ptr, rows, cols,
             depth_outlier_trunc, depth_huber_delta, intensity_huber_delta);
-    OPEN3D_CUDA_CHECK(cudaDeviceSynchronize());
+    core::cuda::Synchronize();
     DecodeAndSolve6x6(global_sum, delta, inlier_residual, inlier_count);
 }
 
