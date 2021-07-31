@@ -68,22 +68,6 @@ void WriteTensorPointCloud(benchmark::State& state,
 
     t::io::WritePointCloud("/home/rey/t_pcd_0.ply", pcd);
 
-    t::geometry::PointCloud pcd_saved;
-    t::io::ReadPointCloud("/home/rey/t_pcd_0.ply", pcd_saved, {"auto", false, false, false});
-
-    std::cout << " Points Same ? "
-              << pcd.GetPointAttr("points").AllClose(
-                         pcd_saved.GetPointAttr("points"))
-              << std::endl;
-    std::cout << " Normals Same ? "
-              << pcd.GetPointAttr("normals").AllClose(
-                         pcd_saved.GetPointAttr("normals"))
-              << std::endl;
-    std::cout << " Colors Same ? "
-              << pcd.GetPointAttr("colors").AllClose(
-                         pcd_saved.GetPointAttr("colors"))
-              << std::endl;
-
     int i = 0;
     for (auto _ : state) {
         std::string filename_loop =
