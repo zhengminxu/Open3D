@@ -38,7 +38,7 @@ namespace geometry {
 
 static const std::string path_pcd =
         std::string(TEST_DATA_DIR) + "/fragment.pcd";
-static const std::string path_ply = "/home/rey/bedroom.ply";
+static const std::string path_ply = "/home/rey/boardroom.ply";
 
 void ReadTensorPointCloud(benchmark::State& state,
                           const std::string& file_path) {
