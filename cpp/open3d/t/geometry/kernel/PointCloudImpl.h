@@ -41,6 +41,7 @@
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/utility/Logging.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -245,16 +246,25 @@ void EstimateCovariancesUsingHybridSearchCPU
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
+    utility::Timer time_index;
+    time_index.Start();
     core::nns::NearestNeighborSearch tree(points);
     bool check = tree.HybridIndex(radius);
     if (!check) {
         utility::LogError(
                 "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
     }
+    time_index.Stop();
+    utility::LogInfo("  NNS Hybrid Search Index setup took {} ms",
+                     time_index.GetDuration());
 
+    utility::Timer time_nns;
+    time_nns.Start();
     core::Tensor indices, distance, counts;
     std::tie(indices, distance, counts) =
             tree.HybridSearch(points, radius, max_nn);
+    time_nns.Stop();
+    utility::LogInfo("  NNS Hybrid Search took {} ms", time_nns.GetDuration());
 
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
         const scalar_t* points_ptr = points.GetDataPtr<scalar_t>();
@@ -295,16 +305,25 @@ void EstimateCovariancesUsingKNNSearchCPU
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
+    utility::Timer time_index;
+    time_index.Start();
     core::nns::NearestNeighborSearch tree(points);
     bool check = tree.KnnIndex();
     if (!check) {
         utility::LogError("KnnIndex is not set.");
     }
+    time_index.Stop();
+    utility::LogInfo("  NNS KNN Search Index setup took {} ms",
+                     time_index.GetDuration());
 
+    utility::Timer time_nns;
+    time_nns.Start();
     core::Tensor indices, distance;
     std::tie(indices, distance) = tree.KnnSearch(points, max_nn);
+    time_nns.Stop();
+    utility::LogInfo("  NNS KNN Search took {} ms", time_nns.GetDuration());
 
-    indices = indices.Contiguous();
+    indices = indices.To(core::Int32).Contiguous();
     int32_t nn_count = static_cast<int32_t>(indices.GetShape()[1]);
 
     if (nn_count < 3) {

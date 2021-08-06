@@ -75,6 +75,7 @@ void ToLegacyPointCloud(benchmark::State& state, const core::Device& device) {
 }
 
 static const std::string path = std::string(TEST_DATA_DIR) + "/fragment.ply";
+// static const std::string path = "/home/rey/bedroom.ply";
 
 void LegacyVoxelDownSample(benchmark::State& state, float voxel_size) {
     auto pcd = open3d::io::CreatePointCloudFromFile(path);
@@ -157,7 +158,6 @@ void LegacyEstimateNormals(
 
     // Warp up
     pcd_down->EstimateNormals(search_param, true);
-
     for (auto _ : state) {
         pcd_down->EstimateNormals(search_param, true);
     }
@@ -223,6 +223,18 @@ BENCHMARK_CAPTURE(Transform, CUDA, core::Device("CUDA:0"))
         ->Unit(benchmark::kMillisecond);
 #endif
 
+BENCHMARK_CAPTURE(LegacyEstimateNormals,
+                  Legacy Hybrid[0.02 | 30 | 0.06],
+                  0.02,
+                  open3d::geometry::KDTreeSearchParamHybrid(0.06, 30))
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(LegacyEstimateNormals,
+                  Legacy KNN[0.02 | 30],
+                  0.02,
+                  open3d::geometry::KDTreeSearchParamKNN(30))
+        ->Unit(benchmark::kMillisecond);
+
 BENCHMARK_CAPTURE(EstimateNormals,
                   CPU F32 Hybrid[0.02 | 30 | 0.06],
                   core::Device("CPU:0"),
@@ -282,18 +294,6 @@ BENCHMARK_CAPTURE(EstimateNormals,
         ->Unit(benchmark::kMillisecond);
 // KNN Support for Float64 is missing on CUDA.
 #endif
-
-BENCHMARK_CAPTURE(LegacyEstimateNormals,
-                  Legacy Hybrid[0.02 | 30 | 0.06],
-                  0.02,
-                  open3d::geometry::KDTreeSearchParamHybrid(0.06, 30))
-        ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_CAPTURE(LegacyEstimateNormals,
-                  Legacy KNN[0.02 | 30],
-                  0.02,
-                  open3d::geometry::KDTreeSearchParamKNN(30))
-        ->Unit(benchmark::kMillisecond);
 
 }  // namespace geometry
 }  // namespace t

@@ -40,6 +40,7 @@
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/t/geometry/kernel/Transform.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -255,6 +256,8 @@ void PointCloud::EstimateNormals(
 
     if (radius.has_value()) {
         utility::LogDebug("Using Hybrid Search for computing covariances");
+        utility::Timer time_covar;
+        time_covar.Start();
         // Computes and sets `covariances` attribute using Hybrid Search
         // mehtod.
         if (device_type == core::Device::DeviceType::CPU) {
@@ -270,8 +273,13 @@ void PointCloud::EstimateNormals(
         } else {
             utility::LogError("Unimplemented device");
         }
+        time_covar.Stop();
+        utility::LogInfo(" Covariance estimation took {} ms",
+                         time_covar.GetDuration());
     } else {
         utility::LogDebug("Using KNN Search for computing covariances");
+        utility::Timer time_covar;
+        time_covar.Start();
         // Computes and sets `covariances` attribute using KNN Search method.
         if (device_type == core::Device::DeviceType::CPU) {
             kernel::pointcloud::EstimateCovariancesUsingKNNSearchCPU(
@@ -289,8 +297,14 @@ void PointCloud::EstimateNormals(
         } else {
             utility::LogError("Unimplemented device");
         }
+        time_covar.Stop();
+
+        utility::LogInfo(" Covariances estimation took {} ms",
+                         time_covar.GetDuration());
     }
 
+    utility::Timer time_normal;
+    time_normal.Start();
     // Estimate `normal` of each point using its `covariance` matrix.
     if (device_type == core::Device::DeviceType::CPU) {
         kernel::pointcloud::EstimateNormalsFromCovariancesCPU(
@@ -303,6 +317,10 @@ void PointCloud::EstimateNormals(
     } else {
         utility::LogError("Unimplemented device");
     }
+    time_normal.Stop();
+
+    utility::LogInfo(" Normal estimation estimation took {} ms",
+                     time_normal.GetDuration());
 
     // TODO (@rishabh): Don't remove covariances attribute, when
     // EstimateCovariance functionality is exposed.
