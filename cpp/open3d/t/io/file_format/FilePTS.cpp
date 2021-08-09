@@ -28,6 +28,7 @@
 
 #include "open3d/io/FileFormatIO.h"
 #include "open3d/t/io/PointCloudIO.h"
+#include "open3d/t/io/file_format/FileXYZIRGB.h"
 #include "open3d/utility/FileSystem.h"
 #include "open3d/utility/Helper.h"
 #include "open3d/utility/Logging.h"
@@ -77,53 +78,33 @@ bool ReadPointCloudFromPTS(const std::string &filename,
         // Store data start position.
         int64_t start_pos = ftell(file.GetFILE());
 
-        double *points_ptr = nullptr;
-        double *intensities_ptr = nullptr;
-        uint8_t *colors_ptr = nullptr;
         size_t num_fields = 0;
 
         if ((line_buffer = file.ReadLine())) {
             num_fields = utility::SplitString(line_buffer, " ").size();
 
+            // Go to data start position.
+            fseek(file.GetFILE(), start_pos, 0);
+
             // X Y Z I R G B.
             if (num_fields == 7) {
-                pointcloud.SetPoints(
-                        core::Tensor({num_points, 3}, core::Float64));
-                points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
-                pointcloud.SetPointAttr(
-                        "intensities",
-                        core::Tensor({num_points, 1}, core::Float64));
-                intensities_ptr = pointcloud.GetPointAttr("intensities")
-                                          .GetDataPtr<double>();
-                pointcloud.SetPointColors(
-                        core::Tensor({num_points, 3}, core::UInt8));
-                colors_ptr = pointcloud.GetPointColors().GetDataPtr<uint8_t>();
+                return ReadXYZIRGB(pointcloud, num_points, file, line_buffer,
+                                   reporter, core::UInt8);
             }
             // X Y Z R G B.
             else if (num_fields == 6) {
-                pointcloud.SetPoints(
-                        core::Tensor({num_points, 3}, core::Float64));
-                points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
-                pointcloud.SetPointColors(
-                        core::Tensor({num_points, 3}, core::UInt8));
-                colors_ptr = pointcloud.GetPointColors().GetDataPtr<uint8_t>();
+                return ReadXYZRGB(pointcloud, num_points, file, line_buffer,
+                                  reporter, core::UInt8);
             }
             // X Y Z I.
             else if (num_fields == 4) {
-                pointcloud.SetPoints(
-                        core::Tensor({num_points, 3}, core::Float64));
-                points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
-                pointcloud.SetPointAttr(
-                        "intensities",
-                        core::Tensor({num_points, 1}, core::Float64));
-                intensities_ptr = pointcloud.GetPointAttr("intensities")
-                                          .GetDataPtr<double>();
+                return ReadXYZI(pointcloud, num_points, file, line_buffer,
+                                reporter);
             }
             // X Y Z.
             else if (num_fields == 3) {
-                pointcloud.SetPoints(
-                        core::Tensor({num_points, 3}, core::Float64));
-                points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
+                return ReadXYZ(pointcloud, num_points, file, line_buffer,
+                               reporter);
             } else {
                 utility::LogWarning("Read PTS failed: unknown pts format: {}",
                                     line_buffer);
@@ -131,66 +112,11 @@ bool ReadPointCloudFromPTS(const std::string &filename,
             }
         }
 
-        // Go to data start position.
-        fseek(file.GetFILE(), start_pos, 0);
-
-        int64_t idx = 0;
-        while (idx < num_points && (line_buffer = file.ReadLine())) {
-            double x, y, z, i;
-            int r, g, b;
-            // X Y Z I R G B.
-            if (num_fields == 7 &&
-                (sscanf(line_buffer, "%lf %lf %lf %lf %d %d %d", &x, &y, &z, &i,
-                        &r, &g, &b) == 7)) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
-                intensities_ptr[idx] = i;
-                colors_ptr[3 * idx + 0] = r;
-                colors_ptr[3 * idx + 1] = g;
-                colors_ptr[3 * idx + 2] = b;
-            }
-            // X Y Z R G B.
-            else if (num_fields == 6 &&
-                     (sscanf(line_buffer, "%lf %lf %lf %d %d %d", &x, &y, &z,
-                             &r, &g, &b) == 6)) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
-                colors_ptr[3 * idx + 0] = r;
-                colors_ptr[3 * idx + 1] = g;
-                colors_ptr[3 * idx + 2] = b;
-            }
-            // X Y Z I.
-            else if (num_fields == 4 && (sscanf(line_buffer, "%lf %lf %lf %lf",
-                                                &x, &y, &z, &i) == 4)) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
-                intensities_ptr[idx] = i;
-            }
-            // X Y Z.
-            else if (num_fields == 3 &&
-                     sscanf(line_buffer, "%lf %lf %lf", &x, &y, &z) == 3) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
-            } else {
-                utility::LogWarning("Read PTS failed at line: {}", line_buffer);
-                return false;
-            }
-            idx++;
-            if (idx % 1000 == 0) {
-                reporter.Update(idx);
-            }
-        }
-
-        reporter.Finish();
-        return true;
     } catch (const std::exception &e) {
         utility::LogWarning("Read PTS failed with exception: {}", e.what());
         return false;
     }
+    return false;
 }
 
 core::Tensor ConvertColorTensorToUint8(const core::Tensor &color_in) {
