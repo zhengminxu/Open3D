@@ -7,9 +7,9 @@ target_sources(core PRIVATE
     EigenConverter.cpp
     Indexer.cpp
     MemoryManager.cpp
+    MemoryManagerCached.cpp
     MemoryManagerCPU.cpp
     MemoryManagerStatistic.cpp
-    NumpyIO.cpp
     ShapeUtil.cpp
     Tensor.cpp
     TensorKey.cpp
@@ -60,6 +60,7 @@ target_sources(core PRIVATE
 )
 
 target_sources(core PRIVATE
+    nns/FixedRadiusSearchOps.cpp
     nns/FixedRadiusIndex.cpp
     nns/NanoFlannIndex.cpp
     nns/NearestNeighborSearch.cpp
@@ -68,8 +69,7 @@ target_sources(core PRIVATE
 
 if (BUILD_CUDA_MODULE)
     target_sources(core PRIVATE
-        MemoryManagerCUDACached.cu
-        MemoryManagerCUDASimple.cu
+        MemoryManagerCUDA.cpp
     )
 
     target_sources(core PRIVATE
@@ -99,7 +99,7 @@ if (BUILD_CUDA_MODULE)
     )
 
     target_sources(core PRIVATE
-        nns/FixedRadiusSearch.cu
+        nns/FixedRadiusSearchOps.cu
     )
 endif()
 

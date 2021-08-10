@@ -24,32 +24,5 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#pragma once
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-namespace open3d {
-namespace core {
-namespace kernel {
-
-inline int GetMaxThreads() {
-#ifdef _OPENMP
-    return omp_get_max_threads();
-#else
-    return 1;
-#endif
-}
-
-inline bool InParallel() {
-#ifdef _OPENMP
-    return omp_in_parallel();
-#else
-    return false;
-#endif
-}
-
-}  // namespace kernel
-}  // namespace core
-}  // namespace open3d
+#include "open3d/core/ParallelFor.h"
+#include "open3d/t/geometry/kernel/TransformImpl.h"

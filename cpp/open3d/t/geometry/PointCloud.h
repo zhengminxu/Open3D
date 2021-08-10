@@ -351,8 +351,8 @@ public:
     static PointCloud CreateFromDepthImage(
             const Image &depth,
             const core::Tensor &intrinsics,
-            const core::Tensor &extrinsics = core::Tensor::Eye(
-                    4, core::Dtype::Float32, core::Device("CPU:0")),
+            const core::Tensor &extrinsics =
+                    core::Tensor::Eye(4, core::Float32, core::Device("CPU:0")),
             float depth_scale = 1000.0f,
             float depth_max = 3.0f,
             int stride = 1,
@@ -386,29 +386,29 @@ public:
     static PointCloud CreateFromRGBDImage(
             const RGBDImage &rgbd_image,
             const core::Tensor &intrinsics,
-            const core::Tensor &extrinsics = core::Tensor::Eye(
-                    4, core::Dtype::Float32, core::Device("CPU:0")),
+            const core::Tensor &extrinsics =
+                    core::Tensor::Eye(4, core::Float32, core::Device("CPU:0")),
             float depth_scale = 1000.0f,
             float depth_max = 3.0f,
             int stride = 1,
             bool with_normals = false);
 
     /// Create a PointCloud from a legacy Open3D PointCloud.
-    static PointCloud FromLegacyPointCloud(
+    static PointCloud FromLegacy(
             const open3d::geometry::PointCloud &pcd_legacy,
-            core::Dtype dtype = core::Dtype::Float32,
+            core::Dtype dtype = core::Float32,
             const core::Device &device = core::Device("CPU:0"));
 
     /// Convert to a legacy Open3D PointCloud.
-    open3d::geometry::PointCloud ToLegacyPointCloud() const;
+    open3d::geometry::PointCloud ToLegacy() const;
 
     /// Project a point cloud to a depth image.
     geometry::Image ProjectToDepthImage(
             int width,
             int height,
             const core::Tensor &intrinsics,
-            const core::Tensor &extrinsics = core::Tensor::Eye(
-                    4, core::Dtype::Float32, core::Device("CPU:0")),
+            const core::Tensor &extrinsics =
+                    core::Tensor::Eye(4, core::Float32, core::Device("CPU:0")),
             float depth_scale = 1000.0f,
             float depth_max = 3.0f);
 
@@ -417,8 +417,8 @@ public:
             int width,
             int height,
             const core::Tensor &intrinsics,
-            const core::Tensor &extrinsics = core::Tensor::Eye(
-                    4, core::Dtype::Float32, core::Device("CPU:0")),
+            const core::Tensor &extrinsics =
+                    core::Tensor::Eye(4, core::Float32, core::Device("CPU:0")),
             float depth_scale = 1000.0f,
             float depth_max = 3.0f);
 

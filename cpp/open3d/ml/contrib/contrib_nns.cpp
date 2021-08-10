@@ -27,6 +27,7 @@
 #include <numeric>
 
 #include "open3d/core/nns/NearestNeighborSearch.h"
+#include "open3d/utility/Parallel.h"
 
 namespace open3d {
 namespace ml {
@@ -62,7 +63,7 @@ const core::Tensor KnnSearch(const core::Tensor& query_points,
     core::Tensor indices;
     core::Tensor distances;
     std::tie(indices, distances) = nns.KnnSearch(query_points, knn);
-    return indices.To(core::Dtype::Int32);
+    return indices.To(core::Int32);
 }
 
 const core::Tensor RadiusSearch(const core::Tensor& query_points,
@@ -76,10 +77,10 @@ const core::Tensor RadiusSearch(const core::Tensor& query_points,
                           dataset_points.GetDtype().ToString(),
                           query_points.GetDtype().ToString());
     }
-    if (query_batches.GetDtype() != core::Dtype::Int32) {
+    if (query_batches.GetDtype() != core::Int32) {
         utility::LogError("query_batches must be of dtype Int32.");
     }
-    if (dataset_batches.GetDtype() != core::Dtype::Int32) {
+    if (dataset_batches.GetDtype() != core::Int32) {
         utility::LogError("dataset_batches must be of dtype Int32.");
     }
 
@@ -181,9 +182,10 @@ const core::Tensor RadiusSearch(const core::Tensor& query_points,
 
     // Convert to the required output format. Pad with -1.
     core::Tensor result = core::Tensor::Full(
-            {num_query_points, max_num_neighbors}, -1, core::Dtype::Int64);
+            {num_query_points, max_num_neighbors}, -1, core::Int64);
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) \
+        num_threads(utility::EstimateMaxThreads())
     for (int64_t batch_idx = 0; batch_idx < num_batches; ++batch_idx) {
         int32_t result_start_idx = query_prefix_indices[batch_idx];
         int32_t result_end_idx = query_prefix_indices[batch_idx + 1];
@@ -214,7 +216,7 @@ const core::Tensor RadiusSearch(const core::Tensor& query_points,
         }
     }
 
-    return result.To(core::Dtype::Int32);
+    return result.To(core::Int32);
 }
 }  // namespace contrib
 }  // namespace ml

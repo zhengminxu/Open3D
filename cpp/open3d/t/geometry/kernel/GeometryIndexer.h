@@ -28,6 +28,7 @@
 
 #include <unordered_map>
 
+#include "open3d/core/CUDAUtils.h"
 #include "open3d/core/Tensor.h"
 #include "open3d/utility/Helper.h"
 #include "open3d/utility/Logging.h"
@@ -47,14 +48,14 @@ public:
                      const core::Tensor& extrinsics,
                      float scale = 1.0f) {
         intrinsics.AssertShape({3, 3});
-        intrinsics.AssertDtype(core::Dtype::Float64);
+        intrinsics.AssertDtype(core::Float64);
         intrinsics.AssertDevice(core::Device("CPU:0"));
         if (!intrinsics.IsContiguous()) {
             utility::LogError("Intrinsics is not contiguous");
         }
 
         extrinsics.AssertShape({4, 4});
-        extrinsics.AssertDtype(core::Dtype::Float64);
+        extrinsics.AssertDtype(core::Float64);
         extrinsics.AssertDevice(core::Device("CPU:0"));
         if (!extrinsics.IsContiguous()) {
             utility::LogError("Extrinsics is not contiguous");

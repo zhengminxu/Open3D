@@ -57,9 +57,9 @@ TEST_P(TSDFVoxelGridPermuteDevices, Integrate) {
 
     for (auto backend : backends) {
         float voxel_size = 0.008;
-        t::geometry::TSDFVoxelGrid voxel_grid({{"tsdf", core::Dtype::Float32},
-                                               {"weight", core::Dtype::UInt16},
-                                               {"color", core::Dtype::UInt16}},
+        t::geometry::TSDFVoxelGrid voxel_grid({{"tsdf", core::Float32},
+                                               {"weight", core::UInt16},
+                                               {"color", core::UInt16}},
                                               voxel_size, 0.04f, 16, 1000,
                                               device, backend);
 
@@ -101,7 +101,7 @@ TEST_P(TSDFVoxelGridPermuteDevices, Integrate) {
             voxel_grid.Integrate(depth, color, intrinsic_t, extrinsic_t);
         }
 
-        auto pcd = voxel_grid.ExtractSurfacePoints().ToLegacyPointCloud();
+        auto pcd = voxel_grid.ExtractSurfacePoints().ToLegacy();
         auto pcd_gt = *io::CreatePointCloudFromFile(
                 std::string(TEST_DATA_DIR) + "/RGBD/example_tsdf_pcd.ply");
         auto result = pipelines::registration::EvaluateRegistration(pcd, pcd_gt,
@@ -127,9 +127,9 @@ TEST_P(TSDFVoxelGridPermuteDevices, DISABLED_Raycast) {
 
     for (auto backend : backends) {
         float voxel_size = 3.0f / 512.0f;
-        t::geometry::TSDFVoxelGrid voxel_grid({{"tsdf", core::Dtype::Float32},
-                                               {"weight", core::Dtype::UInt16},
-                                               {"color", core::Dtype::UInt16}},
+        t::geometry::TSDFVoxelGrid voxel_grid({{"tsdf", core::Float32},
+                                               {"weight", core::UInt16},
+                                               {"color", core::UInt16}},
                                               voxel_size, 0.04f, 16, 1000,
                                               device, backend);
 
@@ -198,7 +198,7 @@ TEST_P(TSDFVoxelGridPermuteDevices, DISABLED_Raycast) {
                     t::geometry::Image vertex(result[MaskCode::VertexMap]);
                     visualization::DrawGeometries(
                             {std::make_shared<open3d::geometry::Image>(
-                                    vertex.ToLegacyImage())});
+                                    vertex.ToLegacy())});
 
                     // There are CPU/CUDA numerical differences around edges, so
                     // we need to be tolerant.
@@ -212,7 +212,7 @@ TEST_P(TSDFVoxelGridPermuteDevices, DISABLED_Raycast) {
                               vertex_map_gt)
                                      .Abs()
                                      .Ge(1e-5))
-                                    .To(core::Dtype::Int64)
+                                    .To(core::Int64)
                                     .Sum({0, 1, 2})
                                     .Item<int64_t>();
                     EXPECT_LE(

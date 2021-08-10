@@ -31,10 +31,10 @@
 #include <string>
 
 #ifdef BUILD_CUDA_MODULE
-#include "open3d/core/CUDAState.cuh"
+#include "open3d/core/CUDAUtils.h"
 #endif
 
-#include "open3d/utility/Logging.h"
+#include "open3d/Open3D.h"
 #include "tests/UnitTest.h"
 
 #ifdef BUILD_CUDA_MODULE
@@ -52,6 +52,7 @@ bool ShallDisableP2P(int argc, char** argv) {
 #endif
 
 int main(int argc, char** argv) {
+    open3d::utility::CPUInfo::GetInstance().Print();
 #ifdef BUILD_CUDA_MODULE
     if (ShallDisableP2P(argc, argv)) {
         std::shared_ptr<open3d::core::CUDAState> cuda_state =
