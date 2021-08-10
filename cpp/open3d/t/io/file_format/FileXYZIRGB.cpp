@@ -43,8 +43,8 @@ bool ReadXYZIRGB(geometry::PointCloud &pointcloud,
                  const char *line_buffer,
                  utility::CountingProgressReporter &reporter,
                  const core::Dtype &color_dtype) {
-    pointcloud.SetPoints(core::Tensor({num_points, 3}, core::Float64));
-    auto points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
+    pointcloud.SetPointPositions(core::Tensor({num_points, 3}, core::Float64));
+    auto positions_ptr = pointcloud.GetPointPositions().GetDataPtr<double>();
     pointcloud.SetPointAttr("intensities",
                             core::Tensor({num_points, 1}, core::Float64));
     auto intensities_ptr =
@@ -61,9 +61,9 @@ bool ReadXYZIRGB(geometry::PointCloud &pointcloud,
             // X Y Z I R G B.
             if (sscanf(line_buffer, "%lf %lf %lf %lf %d %d %d", &x, &y, &z, &i,
                        &r, &g, &b) == 7) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
+                positions_ptr[3 * idx + 0] = x;
+                positions_ptr[3 * idx + 1] = y;
+                positions_ptr[3 * idx + 2] = z;
                 intensities_ptr[idx] = i;
                 colors_ptr[3 * idx + 0] = r;
                 colors_ptr[3 * idx + 1] = g;
@@ -87,9 +87,9 @@ bool ReadXYZIRGB(geometry::PointCloud &pointcloud,
             // X Y Z I R G B.
             if (sscanf(line_buffer, "%lf %lf %lf %lf %lf %lf %lf", &x, &y, &z,
                        &i, &r, &g, &b) == 7) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
+                positions_ptr[3 * idx + 0] = x;
+                positions_ptr[3 * idx + 1] = y;
+                positions_ptr[3 * idx + 2] = z;
                 intensities_ptr[idx] = i;
                 colors_ptr[3 * idx + 0] = r;
                 colors_ptr[3 * idx + 1] = g;
@@ -119,8 +119,8 @@ bool ReadXYZRGB(geometry::PointCloud &pointcloud,
                 const char *line_buffer,
                 utility::CountingProgressReporter &reporter,
                 const core::Dtype &color_dtype) {
-    pointcloud.SetPoints(core::Tensor({num_points, 3}, core::Float64));
-    auto points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
+    pointcloud.SetPointPositions(core::Tensor({num_points, 3}, core::Float64));
+    auto positions_ptr = pointcloud.GetPointPositions().GetDataPtr<double>();
     pointcloud.SetPointColors(core::Tensor({num_points, 3}, color_dtype));
 
     if (color_dtype == core::UInt8) {
@@ -133,9 +133,9 @@ bool ReadXYZRGB(geometry::PointCloud &pointcloud,
             // X Y Z R G B.
             if (sscanf(line_buffer, "%lf %lf %lf %d %d %d", &x, &y, &z, &r, &g,
                        &b) == 6) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
+                positions_ptr[3 * idx + 0] = x;
+                positions_ptr[3 * idx + 1] = y;
+                positions_ptr[3 * idx + 2] = z;
                 colors_ptr[3 * idx + 0] = r;
                 colors_ptr[3 * idx + 1] = g;
                 colors_ptr[3 * idx + 2] = b;
@@ -158,9 +158,9 @@ bool ReadXYZRGB(geometry::PointCloud &pointcloud,
             // X Y Z R G B.
             if (sscanf(line_buffer, "%lf %lf %lf %lf %lf %lf", &x, &y, &z, &r,
                        &g, &b) == 6) {
-                points_ptr[3 * idx + 0] = x;
-                points_ptr[3 * idx + 1] = y;
-                points_ptr[3 * idx + 2] = z;
+                positions_ptr[3 * idx + 0] = x;
+                positions_ptr[3 * idx + 1] = y;
+                positions_ptr[3 * idx + 2] = z;
                 colors_ptr[3 * idx + 0] = r;
                 colors_ptr[3 * idx + 1] = g;
                 colors_ptr[3 * idx + 2] = b;
@@ -188,8 +188,8 @@ bool ReadXYZI(geometry::PointCloud &pointcloud,
               utility::filesystem::CFile &file,
               const char *line_buffer,
               utility::CountingProgressReporter &reporter) {
-    pointcloud.SetPoints(core::Tensor({num_points, 3}, core::Float64));
-    auto points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
+    pointcloud.SetPointPositions(core::Tensor({num_points, 3}, core::Float64));
+    auto positions_ptr = pointcloud.GetPointPositions().GetDataPtr<double>();
     pointcloud.SetPointAttr("intensities",
                             core::Tensor({num_points, 1}, core::Float64));
     auto intensities_ptr =
@@ -200,9 +200,9 @@ bool ReadXYZI(geometry::PointCloud &pointcloud,
         double x, y, z, i;
         // X Y Z I.
         if (sscanf(line_buffer, "%lf %lf %lf %lf", &x, &y, &z, &i) == 4) {
-            points_ptr[3 * idx + 0] = x;
-            points_ptr[3 * idx + 1] = y;
-            points_ptr[3 * idx + 2] = z;
+            positions_ptr[3 * idx + 0] = x;
+            positions_ptr[3 * idx + 1] = y;
+            positions_ptr[3 * idx + 2] = z;
             intensities_ptr[idx] = i;
         } else {
             utility::LogWarning("Read failed at line: {}", line_buffer);
@@ -221,8 +221,8 @@ bool ReadXYZN(geometry::PointCloud &pointcloud,
               utility::filesystem::CFile &file,
               const char *line_buffer,
               utility::CountingProgressReporter &reporter) {
-    pointcloud.SetPoints(core::Tensor({num_points, 3}, core::Float64));
-    auto points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
+    pointcloud.SetPointPositions(core::Tensor({num_points, 3}, core::Float64));
+    auto positions_ptr = pointcloud.GetPointPositions().GetDataPtr<double>();
     pointcloud.SetPointNormals(core::Tensor({num_points, 3}, core::Float64));
     auto normals_ptr = pointcloud.GetPointNormals().GetDataPtr<double>();
 
@@ -232,9 +232,9 @@ bool ReadXYZN(geometry::PointCloud &pointcloud,
         // X Y Z NX NY NZ.
         if (sscanf(line_buffer, "%lf %lf %lf %lf %lf %lf", &x, &y, &z, &nx, &ny,
                    &nz) == 6) {
-            points_ptr[3 * idx + 0] = x;
-            points_ptr[3 * idx + 1] = y;
-            points_ptr[3 * idx + 2] = z;
+            positions_ptr[3 * idx + 0] = x;
+            positions_ptr[3 * idx + 1] = y;
+            positions_ptr[3 * idx + 2] = z;
             normals_ptr[3 * idx + 0] = nx;
             normals_ptr[3 * idx + 1] = ny;
             normals_ptr[3 * idx + 2] = nz;
@@ -255,8 +255,8 @@ bool ReadXYZ(geometry::PointCloud &pointcloud,
              utility::filesystem::CFile &file,
              const char *line_buffer,
              utility::CountingProgressReporter &reporter) {
-    pointcloud.SetPoints(core::Tensor({num_points, 3}, core::Float64));
-    auto points_ptr = pointcloud.GetPoints().GetDataPtr<double>();
+    pointcloud.SetPointPositions(core::Tensor({num_points, 3}, core::Float64));
+    auto positions_ptr = pointcloud.GetPointPositions().GetDataPtr<double>();
     pointcloud.SetPointAttr("intensities",
                             core::Tensor({num_points, 1}, core::Float64));
 
@@ -265,9 +265,9 @@ bool ReadXYZ(geometry::PointCloud &pointcloud,
         double x, y, z;
         // X Y Z.
         if (sscanf(line_buffer, "%lf %lf %lf", &x, &y, &z) == 3) {
-            points_ptr[3 * idx + 0] = x;
-            points_ptr[3 * idx + 1] = y;
-            points_ptr[3 * idx + 2] = z;
+            positions_ptr[3 * idx + 0] = x;
+            positions_ptr[3 * idx + 1] = y;
+            positions_ptr[3 * idx + 2] = z;
         } else {
             utility::LogWarning("Read failed at line: {}", line_buffer);
             return false;
@@ -280,7 +280,23 @@ bool ReadXYZ(geometry::PointCloud &pointcloud,
     return true;
 }
 
+open3d::io::FileGeometry ReadFileGeometryTypeXYZIRGB(const std::string &path) {
+    return open3d::io::CONTAINS_POINTS;
+}
+
+open3d::io::FileGeometry ReadFileGeometryTypeXYZRGB(const std::string &path) {
+    return open3d::io::CONTAINS_POINTS;
+}
+
 open3d::io::FileGeometry ReadFileGeometryTypeXYZI(const std::string &path) {
+    return open3d::io::CONTAINS_POINTS;
+}
+
+open3d::io::FileGeometry ReadFileGeometryTypeXYZN(const std::string &path) {
+    return open3d::io::CONTAINS_POINTS;
+}
+
+open3d::io::FileGeometry ReadFileGeometryTypeXYZ(const std::string &path) {
     return open3d::io::CONTAINS_POINTS;
 }
 
@@ -406,6 +422,157 @@ bool ReadPointCloudFromXYZ(const std::string &filename,
     }
 }
 
+static core::Tensor ConvertColorsToDouble(const core::Tensor &colors) {
+    double normalization_factor = 1.0;
+    const core::Dtype point_color_dtype = colors.GetDtype();
+
+    if (point_color_dtype == core::UInt8) {
+        normalization_factor =
+                1.0 / static_cast<double>(std::numeric_limits<uint8_t>::max());
+    } else if (point_color_dtype == core::UInt16) {
+        normalization_factor =
+                1.0 / static_cast<double>(std::numeric_limits<uint16_t>::max());
+    } else if (point_color_dtype != core::Float32 &&
+               point_color_dtype != core::Float64) {
+        utility::LogError(
+                "Dtype {} of color attribute is not supported for "
+                "conversion to Float64 and will be skipped. "
+                "Supported dtypes include UInt8, UIn16, Float32, and "
+                "Float64",
+                point_color_dtype.ToString());
+    }
+
+    if (normalization_factor != 1.0) {
+        return colors.To(core::Float64) * normalization_factor;
+
+    } else {
+        return colors;
+    }
+}
+
+bool WritePointCloudToXYZIRGB(const std::string &filename,
+                              const geometry::PointCloud &pointcloud,
+                              const open3d::io::WritePointCloudOption &params) {
+    if (!pointcloud.HasPointAttr("intensities") ||
+        !pointcloud.HasPointColors()) {
+        return false;
+    }
+
+    try {
+        utility::filesystem::CFile file;
+        if (!file.Open(filename, "w")) {
+            utility::LogWarning("Write XYZIRGB failed: unable to open file: {}",
+                                filename);
+            return false;
+        }
+        utility::CountingProgressReporter reporter(params.update_progress);
+        const core::Tensor positions =
+                pointcloud.GetPointPositions().To(core::Float64);
+        const core::Tensor intensities =
+                pointcloud.GetPointAttr("intensities").To(core::Float64);
+        const core::Tensor colors =
+                ConvertColorsToDouble(pointcloud.GetPointColors());
+
+        if (positions.GetLength() != intensities.GetLength()) {
+            utility::LogWarning(
+                    "Write XYZIRGB failed: Positions ({}) and intensities ({}) "
+                    "have different lengths.",
+                    positions.GetLength(), intensities.GetLength());
+            return false;
+        }
+        if (positions.GetLength() != colors.GetLength()) {
+            utility::LogWarning(
+                    "Write XYZIRGB failed: Positions ({}) and colors ({}) have "
+                    "different lengths.",
+                    positions.GetLength(), colors.GetLength());
+            return false;
+        }
+        reporter.SetTotal(positions.GetLength());
+
+        auto positions_ptr = positions.GetDataPtr<double>();
+        auto intensity_ptr = intensities.GetDataPtr<double>();
+        auto colors_ptr = colors.GetDataPtr<double>();
+
+        for (int i = 0; i < positions.GetLength(); i++) {
+            if (fprintf(file.GetFILE(),
+                        "%.10f %.10f %.10f %.10f %.10f %.10f %.10f\n",
+                        positions_ptr[3 * i], positions_ptr[3 * i + 1],
+                        positions_ptr[3 * i + 2], intensity_ptr[3 * i],
+                        colors_ptr[3 * i], colors_ptr[3 * i + 1],
+                        colors_ptr[3 * i + 2]) < 0) {
+                utility::LogWarning(
+                        "Write XYZIRGB failed: unable to write file: {}",
+                        filename);
+                return false;  // error happened during writing.
+            }
+            if (i % 1000 == 0) {
+                reporter.Update(i);
+            }
+        }
+        reporter.Finish();
+        return true;
+    } catch (const std::exception &e) {
+        utility::LogWarning("Write XYZIRGB failed with exception: {}",
+                            e.what());
+        return false;
+    }
+}
+
+bool WritePointCloudToXYZRGB(const std::string &filename,
+                             const geometry::PointCloud &pointcloud,
+                             const open3d::io::WritePointCloudOption &params) {
+    if (!pointcloud.HasPointColors()) {
+        return false;
+    }
+
+    try {
+        utility::filesystem::CFile file;
+        if (!file.Open(filename, "w")) {
+            utility::LogWarning("Write XYZRGB failed: unable to open file: {}",
+                                filename);
+            return false;
+        }
+        utility::CountingProgressReporter reporter(params.update_progress);
+        const core::Tensor positions =
+                pointcloud.GetPointPositions().To(core::Float64);
+
+        const core::Tensor colors =
+                ConvertColorsToDouble(pointcloud.GetPointColors());
+
+        if (positions.GetLength() != colors.GetLength()) {
+            utility::LogWarning(
+                    "Write XYZRGB failed: Positions ({}) and colors ({}) have "
+                    "different lengths.",
+                    positions.GetLength(), colors.GetLength());
+            return false;
+        }
+        reporter.SetTotal(positions.GetLength());
+
+        auto positions_ptr = positions.GetDataPtr<double>();
+        auto colors_ptr = colors.GetDataPtr<double>();
+
+        for (int i = 0; i < positions.GetLength(); i++) {
+            if (fprintf(file.GetFILE(), "%.10f %.10f %.10f %.10f %.10f %.10f\n",
+                        positions_ptr[3 * i], positions_ptr[3 * i + 1],
+                        positions_ptr[3 * i + 2], colors_ptr[3 * i],
+                        colors_ptr[3 * i + 1], colors_ptr[3 * i + 2]) < 0) {
+                utility::LogWarning(
+                        "Write XYZRGB failed: unable to write file: {}",
+                        filename);
+                return false;  // error happened during writing.
+            }
+            if (i % 1000 == 0) {
+                reporter.Update(i);
+            }
+        }
+        reporter.Finish();
+        return true;
+    } catch (const std::exception &e) {
+        utility::LogWarning("Write XYZRGB failed with exception: {}", e.what());
+        return false;
+    }
+}
+
 bool WritePointCloudToXYZI(const std::string &filename,
                            const geometry::PointCloud &pointcloud,
                            const open3d::io::WritePointCloudOption &params) {
@@ -421,31 +588,28 @@ bool WritePointCloudToXYZI(const std::string &filename,
             return false;
         }
         utility::CountingProgressReporter reporter(params.update_progress);
-        const core::Tensor &points = pointcloud.GetPoints();
-        if (!points.GetShape().IsCompatible({utility::nullopt, 3})) {
-            utility::LogWarning(
-                    "Write XYZI failed: Shape of points is {}, but it should "
-                    "be Nx3.",
-                    points.GetShape());
-            return false;
-        }
-        const core::Tensor &intensities =
-                pointcloud.GetPointAttr("intensities");
-        if (points.GetShape(0) != intensities.GetShape(0)) {
-            utility::LogWarning(
-                    "Write XYZI failed: Points ({}) and intensities ({}) have "
-                    "different lengths.",
-                    points.GetShape(0), intensities.GetShape(0));
-            return false;
-        }
-        reporter.SetTotal(points.GetShape(0));
+        const core::Tensor positions =
+                pointcloud.GetPointPositions().To(core::Float64);
+        const core::Tensor intensities =
+                pointcloud.GetPointAttr("intensities").To(core::Float64);
 
-        for (int i = 0; i < points.GetShape(0); i++) {
+        if (positions.GetLength() != intensities.GetLength()) {
+            utility::LogWarning(
+                    "Write XYZI failed: Positions ({}) and intensities ({}) "
+                    "have different lengths.",
+                    positions.GetLength(), intensities.GetLength());
+            return false;
+        }
+
+        reporter.SetTotal(positions.GetLength());
+
+        auto positions_ptr = positions.GetDataPtr<double>();
+        auto intensity_ptr = intensities.GetDataPtr<double>();
+
+        for (int i = 0; i < positions.GetLength(); i++) {
             if (fprintf(file.GetFILE(), "%.10f %.10f %.10f %.10f\n",
-                        points[i][0].Item<double>(),
-                        points[i][1].Item<double>(),
-                        points[i][2].Item<double>(),
-                        intensities[i][0].Item<double>()) < 0) {
+                        positions_ptr[3 * i], positions_ptr[3 * i + 1],
+                        positions_ptr[3 * i + 2], intensity_ptr[3 * i]) < 0) {
                 utility::LogWarning(
                         "Write XYZI failed: unable to write file: {}",
                         filename);
@@ -459,6 +623,98 @@ bool WritePointCloudToXYZI(const std::string &filename,
         return true;
     } catch (const std::exception &e) {
         utility::LogWarning("Write XYZI failed with exception: {}", e.what());
+        return false;
+    }
+}
+
+bool WritePointCloudToXYZN(const std::string &filename,
+                           const geometry::PointCloud &pointcloud,
+                           const open3d::io::WritePointCloudOption &params) {
+    if (!pointcloud.HasPointNormals()) {
+        return false;
+    }
+
+    try {
+        utility::filesystem::CFile file;
+        if (!file.Open(filename, "w")) {
+            utility::LogWarning("Write XYZN failed: unable to open file: {}",
+                                filename);
+            return false;
+        }
+        utility::CountingProgressReporter reporter(params.update_progress);
+        const core::Tensor positions =
+                pointcloud.GetPointPositions().To(core::Float64);
+        const core::Tensor normals =
+                pointcloud.GetPointNormals().To(core::Float64);
+
+        if (positions.GetLength() != normals.GetLength()) {
+            utility::LogWarning(
+                    "Write XYZN failed: Positions ({}) and normals ({}) "
+                    "have different lengths.",
+                    positions.GetLength(), normals.GetLength());
+            return false;
+        }
+        reporter.SetTotal(positions.GetLength());
+
+        auto positions_ptr = positions.GetDataPtr<double>();
+        auto normals_ptr = normals.GetDataPtr<double>();
+
+        for (int i = 0; i < positions.GetLength(); i++) {
+            if (fprintf(file.GetFILE(), "%.10f %.10f %.10f %.10f %.10f %.10f\n",
+                        positions_ptr[3 * i], positions_ptr[3 * i + 1],
+                        positions_ptr[3 * i + 2], normals_ptr[3 * i],
+                        normals_ptr[3 * i + 1], normals_ptr[3 * i + 2]) < 0) {
+                utility::LogWarning(
+                        "Write XYZN failed: unable to write file: {}",
+                        filename);
+                return false;  // error happened during writing.
+            }
+            if (i % 1000 == 0) {
+                reporter.Update(i);
+            }
+        }
+        reporter.Finish();
+        return true;
+    } catch (const std::exception &e) {
+        utility::LogWarning("Write XYZN failed with exception: {}", e.what());
+        return false;
+    }
+}
+
+bool WritePointCloudToXYZ(const std::string &filename,
+                          const geometry::PointCloud &pointcloud,
+                          const open3d::io::WritePointCloudOption &params) {
+    try {
+        utility::filesystem::CFile file;
+        if (!file.Open(filename, "w")) {
+            utility::LogWarning("Write XYZ failed: unable to open file: {}",
+                                filename);
+            return false;
+        }
+        utility::CountingProgressReporter reporter(params.update_progress);
+        const core::Tensor positions =
+                pointcloud.GetPointPositions().To(core::Float64);
+
+        reporter.SetTotal(positions.GetLength());
+
+        auto positions_ptr = positions.GetDataPtr<double>();
+
+        for (int i = 0; i < positions.GetLength(); i++) {
+            if (fprintf(file.GetFILE(), "%.10f %.10f %.10f\n",
+                        positions_ptr[3 * i], positions_ptr[3 * i + 1],
+                        positions_ptr[3 * i + 2]) < 0) {
+                utility::LogWarning(
+                        "Write XYZ failed: unable to write file: {}", filename);
+                return false;  // error happened during writing.
+            }
+            if (i % 1000 == 0) {
+                reporter.Update(i);
+            }
+        }
+        reporter.Finish();
+        return true;
+    } catch (const std::exception &e) {
+        utility::LogWarning("Write XYZ failed with exception: {}", e.what());
         return false;
     }
 }

@@ -69,7 +69,7 @@ bool ReadPointCloudFromPTS(const std::string &filename,
                     "Read PTS failed: number of points must be >= 0.");
             return false;
         } else if (num_points == 0) {
-            pointcloud.SetPoints(core::Tensor({0, 3}, core::Float64));
+            pointcloud.SetPointPositions(core::Tensor({0, 3}, core::Float64));
             return true;
         }
         utility::CountingProgressReporter reporter(params.update_progress);
@@ -147,12 +147,13 @@ bool WritePointCloudToPTS(const std::string &filename,
         int64_t num_points = 0;
 
         if (!pointcloud.IsEmpty()) {
-            num_points = pointcloud.GetPoints().GetLength();
+            num_points = pointcloud.GetPointPositions().GetLength();
         }
 
         // Assert attribute shapes.
-        if (pointcloud.HasPoints()) {
-            pointcloud.GetPoints().AssertShape(core::SizeVector{num_points, 3});
+        if (pointcloud.HasPointPositions()) {
+            pointcloud.GetPointPositions().AssertShape(
+                    core::SizeVector{num_points, 3});
         }
         if (pointcloud.HasPointColors()) {
             pointcloud.GetPointColors().AssertShape(
@@ -177,7 +178,7 @@ bool WritePointCloudToPTS(const std::string &filename,
         core::Tensor colors;
 
         if (num_points > 0) {
-            points_ptr = pointcloud.GetPoints()
+            points_ptr = pointcloud.GetPointPositions()
                                  .To(core::Float64)
                                  .GetDataPtr<double>();
         }
