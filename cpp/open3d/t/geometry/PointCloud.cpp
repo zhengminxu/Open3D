@@ -259,26 +259,60 @@ void PointCloud::EstimateColorGradients(
     const core::Device device = GetDevice();
     const core::Device::DeviceType device_type = device.GetType();
 
-    this->SetPointAttr("color_gradients",
-                       core::Tensor::Empty({GetPointPositions().GetLength(), 3},
-                                           dtype, device));
+    if (!this->HasPointAttr("color_gradients")) {
+        this->SetPointAttr(
+                "color_gradients",
+                core::Tensor::Empty({GetPointPositions().GetLength(), 3}, dtype,
+                                    device));
+    } else {
+        if (this->GetPointAttr("color_gradients").GetDtype() != dtype) {
+            utility::LogError(
+                    "color_gradients attribute must be of same dtype as "
+                    "points.");
+        }
+        // If color_gradients attribute is already present, do not re-compute.
+        return;
+    }
 
     // Compute and set `color_gradients` attribute.
-    if (device_type == core::Device::DeviceType::CPU) {
-        kernel::pointcloud::EstimateColorGradientsUsingHybridSearchCPU(
-                this->GetPointPositions().Contiguous(),
-                this->GetPointNormals().Contiguous(),
-                this->GetPointColors().Contiguous(),
-                this->GetPointAttr("color_gradients"), radius.value(), max_knn);
-    } else if (device_type == core::Device::DeviceType::CUDA) {
-        CUDA_CALL(
-                kernel::pointcloud::EstimateColorGradientsUsingHybridSearchCUDA,
-                this->GetPointPositions().Contiguous(),
-                this->GetPointNormals().Contiguous(),
-                this->GetPointColors().Contiguous(),
-                this->GetPointAttr("color_gradients"), radius.value(), max_knn);
+    if (radius.has_value()) {
+        utility::LogDebug("Using Hybrid Search for computing color_gradients");
+        if (device_type == core::Device::DeviceType::CPU) {
+            kernel::pointcloud::EstimateColorGradientsUsingHybridSearchCPU(
+                    this->GetPointPositions().Contiguous(),
+                    this->GetPointNormals().Contiguous(),
+                    this->GetPointColors().Contiguous(),
+                    this->GetPointAttr("color_gradients"), radius.value(),
+                    max_knn);
+        } else if (device_type == core::Device::DeviceType::CUDA) {
+            CUDA_CALL(kernel::pointcloud::
+                              EstimateColorGradientsUsingHybridSearchCUDA,
+                      this->GetPoints().Contiguous(),
+                      this->GetPointNormals().Contiguous(),
+                      this->GetPointColors().Contiguous(),
+                      this->GetPointAttr("color_gradients"), radius.value(),
+                      max_knn);
+        } else {
+            utility::LogError("Unimplemented device");
+        }
     } else {
-        utility::LogError("Unimplemented device");
+        utility::LogDebug("Using KNN Search for computing color_gradients");
+        if (device_type == core::Device::DeviceType::CPU) {
+            kernel::pointcloud::EstimateColorGradientsUsingKNNSearchCPU(
+                    this->GetPointPositions().Contiguous(),
+                    this->GetPointNormals().Contiguous(),
+                    this->GetPointColors().Contiguous(),
+                    this->GetPointAttr("color_gradients"), max_knn);
+        } else if (device_type == core::Device::DeviceType::CUDA) {
+            CUDA_CALL(kernel::pointcloud::
+                              EstimateColorGradientsUsingKNNSearchCUDA,
+                      this->GetPoints().Contiguous(),
+                      this->GetPointNormals().Contiguous(),
+                      this->GetPointColors().Contiguous(),
+                      this->GetPointAttr("color_gradients"), max_knn);
+        } else {
+            utility::LogError("Unimplemented device");
+        }
     }
 }
 

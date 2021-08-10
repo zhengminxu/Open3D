@@ -183,10 +183,10 @@ OPEN3D_HOST_DEVICE void EstimatePointWiseColorGradientKernel(
         // approximate image gradient of vt's tangential plane
         // projection (p') of a point p on a plane defined by
         // normal n, where o is the closest point to p on the
-        // plane, is given by: 
+        // plane, is given by:
         // p' = p - [(p - o).dot(n)] * n p'
         // => p - [(p.dot(n) - s)] * n [where s = o.dot(n)]
-        
+
         // Computing the scalar s.
         scalar_t s = vt[0] * nt[0] + vt[1] * nt[1] + vt[2] * nt[2];
 
@@ -300,6 +300,60 @@ void EstimateColorGradientsUsingHybridSearchCPU
                             points_ptr, normals_ptr, colors_ptr, idx_offset,
                             neighbour_indices_ptr + neighbour_offset,
                             neighbour_count, color_gradients_ptr);
+                });
+    });
+
+    core::cuda::Synchronize(points.GetDevice());
+}
+
+#if defined(__CUDACC__)
+void EstimateColorGradientsUsingKNNSearchCUDA
+#else
+void EstimateColorGradientsUsingKNNSearchCPU
+#endif
+        (const core::Tensor& points,
+         const core::Tensor& normals,
+         const core::Tensor& colors,
+         core::Tensor& color_gradients,
+         const int64_t& max_nn) {
+    core::Dtype dtype = points.GetDtype();
+    int64_t n = points.GetLength();
+
+    core::nns::NearestNeighborSearch tree(points);
+
+    bool check = tree.KnnIndex();
+    if (!check) {
+        utility::LogError("KnnIndex is not set.");
+    }
+
+    core::Tensor indices, distance;
+    std::tie(indices, distance) = tree.KnnSearch(points, max_nn);
+
+    indices = indices.To(core::Int32).Contiguous();
+    int64_t nn_count = indices.GetShape()[1];
+
+    if (nn_count < 4) {
+        utility::LogError(
+                "Not enought neighbors to compute Covariances / Normals. Try "
+                "changing the search parameter.");
+    }
+
+    DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        auto points_ptr = points.GetDataPtr<scalar_t>();
+        auto normals_ptr = normals.GetDataPtr<scalar_t>();
+        auto colors_ptr = colors.GetDataPtr<scalar_t>();
+        auto neighbour_indices_ptr = indices.GetDataPtr<int32_t>();
+        auto color_gradients_ptr = color_gradients.GetDataPtr<scalar_t>();
+
+        core::ParallelFor(
+                points.GetDevice(), n, [=] OPEN3D_DEVICE(int64_t workload_idx) {
+                    int32_t neighbour_offset = max_nn * workload_idx;
+                    int32_t idx_offset = 3 * workload_idx;
+
+                    EstimatePointWiseColorGradientKernel(
+                            points_ptr, normals_ptr, colors_ptr, idx_offset,
+                            neighbour_indices_ptr + neighbour_offset, nn_count,
+                            color_gradients_ptr);
                 });
     });
 
