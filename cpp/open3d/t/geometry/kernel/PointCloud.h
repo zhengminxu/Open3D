@@ -103,6 +103,22 @@ void ProjectCUDA(
         float depth_max);
 #endif
 
+void EstimateColorGradientsUsingHybridSearchCPU(const core::Tensor& points,
+                                                const core::Tensor& normals,
+                                                const core::Tensor& colors,
+                                                core::Tensor& color_gradient,
+                                                const double& radius,
+                                                const int64_t& max_nn);
+
+#ifdef BUILD_CUDA_MODULE
+void EstimateColorGradientsUsingHybridSearchCUDA(const core::Tensor& points,
+                                                 const core::Tensor& normals,
+                                                 const core::Tensor& colors,
+                                                 core::Tensor& color_gradient,
+                                                 const double& radius,
+                                                 const int64_t& max_nn);
+#endif
+
 }  // namespace pointcloud
 }  // namespace kernel
 }  // namespace geometry
