@@ -76,6 +76,8 @@ void ToLegacyPointCloud(benchmark::State& state, const core::Device& device) {
 
 static const std::string path = std::string(TEST_DATA_DIR) + "/fragment.ply";
 
+static const std::string local_test_path = "/home/rey/bedroom_wn_wc.ply";
+
 void LegacyVoxelDownSample(benchmark::State& state, float voxel_size) {
     auto pcd = open3d::io::CreatePointCloudFromFile(path);
     for (auto _ : state) {
@@ -131,7 +133,7 @@ void EstimateNormals(benchmark::State& state,
                      const int max_nn,
                      const utility::optional<double> radius) {
     t::geometry::PointCloud pcd;
-    t::io::ReadPointCloud(path, pcd, {"auto", false, false, false});
+    t::io::ReadPointCloud(local_test_path, pcd, {"auto", false, false, false});
 
     pcd = pcd.To(device).VoxelDownSample(voxel_size);
     pcd.SetPointPositions(pcd.GetPointPositions().To(dtype));
@@ -151,7 +153,8 @@ void LegacyEstimateNormals(
         const double voxel_size,
         const open3d::geometry::KDTreeSearchParam& search_param) {
     open3d::geometry::PointCloud pcd;
-    open3d::io::ReadPointCloud(path, pcd, {"auto", false, false, false});
+    open3d::io::ReadPointCloud(local_test_path, pcd,
+                               {"auto", false, false, false});
 
     auto pcd_down = pcd.VoxelDownSample(voxel_size);
 

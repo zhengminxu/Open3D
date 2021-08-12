@@ -41,6 +41,7 @@
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/utility/Logging.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -245,17 +246,31 @@ void EstimateCovariancesUsingHybridSearchCPU
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
+    utility::Timer search_index_time, search_time, compute_time, total_time;
+    total_time.Start();
+
+    search_index_time.Start();
     core::nns::NearestNeighborSearch tree(points);
     bool check = tree.HybridIndex(radius);
     if (!check) {
         utility::LogError(
                 "NearestNeighborSearch::FixedRadiusIndex Index is not set.");
     }
+    search_index_time.Stop();
+    utility::LogInfo("EstimateCovariances HybridSearch Index took: {} ms.",
+                     search_index_time.GetDuration());
 
     core::Tensor indices, distance, counts;
+    search_time.Start();
     std::tie(indices, distance, counts) =
             tree.HybridSearch(points, radius, max_nn);
+    // HybridSearch is not synchronized.
+    core::cuda::Synchronize(points.GetDevice());
+    search_time.Stop();
+    utility::LogInfo("EstimateCovariances HybridSearch took: {} ms.",
+                     search_time.GetDuration());
 
+    compute_time.Start();
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
         const scalar_t* points_ptr = points.GetDataPtr<scalar_t>();
         int32_t* neighbour_indices_ptr = indices.GetDataPtr<int32_t>();
@@ -281,7 +296,16 @@ void EstimateCovariancesUsingHybridSearchCPU
                           });
     });
 
+    compute_time.Stop();
+    utility::LogInfo(
+            "EstimateCovariances HybridSearch covariance computation took: {} "
+            "ms.",
+            compute_time.GetDuration());
+
     core::cuda::Synchronize(points.GetDevice());
+    total_time.Stop();
+    utility::LogInfo("EstimateCovariances HybridSearch Total Time: {} ms.",
+                     total_time.GetDuration());
 }
 
 #if defined(__CUDACC__)
@@ -295,14 +319,26 @@ void EstimateCovariancesUsingKNNSearchCPU
     core::Dtype dtype = points.GetDtype();
     int64_t n = points.GetLength();
 
+    utility::Timer search_index_time, search_time, compute_time, total_time;
+    total_time.Start();
+
+    search_index_time.Start();
     core::nns::NearestNeighborSearch tree(points);
     bool check = tree.KnnIndex();
     if (!check) {
         utility::LogError("KnnIndex is not set.");
     }
+    search_index_time.Stop();
+    utility::LogInfo("EstimateCovariances KNN Search Index took: {} ms.",
+                     search_index_time.GetDuration());
 
     core::Tensor indices, distance;
+    search_time.Start();
     std::tie(indices, distance) = tree.KnnSearch(points, max_nn);
+    core::cuda::Synchronize(points.GetDevice());
+    search_time.Stop();
+    utility::LogInfo("EstimateCovariances KNN Search took: {} ms.",
+                     search_time.GetDuration());
 
     indices = indices.Contiguous();
     int32_t nn_count = static_cast<int32_t>(indices.GetShape()[1]);
@@ -313,6 +349,7 @@ void EstimateCovariancesUsingKNNSearchCPU
                 "changing the search parameter.");
     }
 
+    compute_time.Start();
     DISPATCH_FLOAT_DTYPE_TO_TEMPLATE(dtype, [&]() {
         auto points_ptr = points.GetDataPtr<scalar_t>();
         auto neighbour_indices_ptr = indices.GetDataPtr<int32_t>();
@@ -332,8 +369,15 @@ void EstimateCovariancesUsingKNNSearchCPU
                             covariances_ptr + covariances_offset);
                 });
     });
+    compute_time.Stop();
+    utility::LogInfo(
+            "EstimateCovariances KNN covariance computation took: {} ms.",
+            compute_time.GetDuration());
 
     core::cuda::Synchronize(points.GetDevice());
+    total_time.Stop();
+    utility::LogInfo("EstimateCovariances KNN Total Time: {} ms.",
+                     total_time.GetDuration());
 }
 
 template <typename scalar_t>

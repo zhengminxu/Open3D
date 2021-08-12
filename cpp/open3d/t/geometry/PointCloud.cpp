@@ -40,6 +40,7 @@
 #include "open3d/t/geometry/kernel/GeometryMacros.h"
 #include "open3d/t/geometry/kernel/PointCloud.h"
 #include "open3d/t/geometry/kernel/Transform.h"
+#include "open3d/utility/Timer.h"
 
 namespace open3d {
 namespace t {
@@ -236,6 +237,9 @@ PointCloud PointCloud::VoxelDownSample(
 void PointCloud::EstimateNormals(
         const int max_knn /* = 30*/,
         const utility::optional<double> radius /*= utility::nullopt*/) {
+    utility::Timer total_time, covar_time, normal_time;
+
+    total_time.Start();
     core::Dtype dtype = this->GetPointPositions().GetDtype();
     if (dtype != core::Dtype::Float32 && dtype != core::Dtype::Float64) {
         utility::LogError(
@@ -262,6 +266,7 @@ void PointCloud::EstimateNormals(
             core::Tensor::Empty({GetPointPositions().GetLength(), 3, 3}, dtype,
                                 device));
 
+    covar_time.Start();
     if (radius.has_value()) {
         utility::LogDebug("Using Hybrid Search for computing covariances");
         // Computes and sets `covariances` attribute using Hybrid Search
@@ -294,7 +299,11 @@ void PointCloud::EstimateNormals(
             utility::LogError("Unimplemented device");
         }
     }
+    covar_time.Stop();
+    utility::LogInfo("EstimateNormals: Computing Covariances took {} ms.",
+                     covar_time.GetDuration());
 
+    normal_time.Start();
     // Estimate `normal` of each point using its `covariance` matrix.
     if (device_type == core::Device::DeviceType::CPU) {
         kernel::pointcloud::EstimateNormalsFromCovariancesCPU(
@@ -308,9 +317,18 @@ void PointCloud::EstimateNormals(
         utility::LogError("Unimplemented device");
     }
 
+    normal_time.Stop();
+    utility::LogInfo(
+            "EstimateNormals: Computing Normals from Covariances took {} ms.",
+            normal_time.GetDuration());
+
     // TODO (@rishabh): Don't remove covariances attribute, when
     // EstimateCovariance functionality is exposed.
     RemovePointAttr("covariances");
+
+    total_time.Stop();
+    utility::LogInfo(" Total EstimateNormals took {} ms.",
+                     total_time.GetDuration());
 }
 
 static PointCloud CreatePointCloudWithNormals(
