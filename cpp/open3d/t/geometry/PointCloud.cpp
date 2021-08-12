@@ -287,7 +287,7 @@ void PointCloud::EstimateColorGradients(
         } else if (device_type == core::Device::DeviceType::CUDA) {
             CUDA_CALL(kernel::pointcloud::
                               EstimateColorGradientsUsingHybridSearchCUDA,
-                      this->GetPoints().Contiguous(),
+                      this->GetPointPositions().Contiguous(),
                       this->GetPointNormals().Contiguous(),
                       this->GetPointColors().Contiguous(),
                       this->GetPointAttr("color_gradients"), radius.value(),
@@ -306,7 +306,7 @@ void PointCloud::EstimateColorGradients(
         } else if (device_type == core::Device::DeviceType::CUDA) {
             CUDA_CALL(kernel::pointcloud::
                               EstimateColorGradientsUsingKNNSearchCUDA,
-                      this->GetPoints().Contiguous(),
+                      this->GetPointPositions().Contiguous(),
                       this->GetPointNormals().Contiguous(),
                       this->GetPointColors().Contiguous(),
                       this->GetPointAttr("color_gradients"), max_knn);
