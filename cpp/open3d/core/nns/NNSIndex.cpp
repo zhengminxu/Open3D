@@ -36,8 +36,7 @@ int NNSIndex::GetDimension() const {
 }
 
 size_t NNSIndex::GetDatasetSize() const {
-    SizeVector shape = dataset_points_.GetShape();
-    return static_cast<size_t>(shape[0]);
+    return static_cast<size_t>(dataset_points_.GetLength());
 }
 
 Dtype NNSIndex::GetDtype() const { return dataset_points_.GetDtype(); }
