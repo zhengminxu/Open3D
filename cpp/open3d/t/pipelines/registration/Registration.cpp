@@ -100,11 +100,12 @@ RegistrationResult EvaluateRegistration(const geometry::PointCloud &source,
 
 RegistrationResult RegistrationICP(const geometry::PointCloud &source,
                                    const geometry::PointCloud &target,
-                                   double max_correspondence_distance,
+                                   const double max_correspondence_distance,
                                    const core::Tensor &init_source_to_target,
                                    const TransformationEstimation &estimation,
-                                   const ICPConvergenceCriteria &criteria) {
-    return RegistrationMultiScaleICP(source, target, {-1}, {criteria},
+                                   const ICPConvergenceCriteria &criteria,
+                                   const double voxel_size) {
+    return RegistrationMultiScaleICP(source, target, {voxel_size}, {criteria},
                                      {max_correspondence_distance},
                                      init_source_to_target, estimation);
 }
@@ -203,8 +204,8 @@ InitializePointCloudPyramidForMultiScaleICP(
     std::vector<t::geometry::PointCloud> source_down_pyramid(num_iterations);
     std::vector<t::geometry::PointCloud> target_down_pyramid(num_iterations);
 
-    if (voxel_sizes[num_iterations - 1] == -1) {
-        source_down_pyramid[num_iterations - 1] = source.Clone();
+    if (voxel_sizes[num_iterations - 1] < 0) {
+        source_down_pyramid[num_iterations - 1] = source;
         target_down_pyramid[num_iterations - 1] = target;
     } else {
         source_down_pyramid[num_iterations - 1] =
@@ -217,8 +218,23 @@ InitializePointCloudPyramidForMultiScaleICP(
     if (estimation.GetTransformationEstimationType() ==
                 TransformationEstimationType::ColoredICP &&
         !target.HasPointAttr("color_gradients")) {
+        double search_radius;
+
+        // if `voxel_size` for highest resolution is not given, then use
+        // `max_correspondence_distance` as a guess. However this is not a good
+        // guess, and performance will be impacted.
+        // if `voxel_size` is given, then use it for the search radius guess.
+        if (voxel_sizes[num_iterations - 1] < 0) {
+            utility::LogWarning(
+                    "Providing voxel_size for colored_icp may give better "
+                    "performance.");
+            search_radius = max_correspondence_distance * 2.0;
+        } else {
+            search_radius = voxel_sizes[num_iterations - 1] * 2.0;
+        }
+
         target_down_pyramid[num_iterations - 1].EstimateColorGradients(
-                30, max_correspondence_distance * 2.0);
+                20, search_radius);
     }
 
     for (int k = num_iterations - 2; k >= 0; k--) {

@@ -56,7 +56,6 @@ namespace registration {
 static std::tuple<geometry::PointCloud, geometry::PointCloud>
 LoadTensorPointCloudFromFile(const std::string& source_pointcloud_filename,
                              const std::string& target_pointcloud_filename,
-                             const double voxel_downsample_factor,
                              const core::Dtype& dtype,
                              const core::Device& device) {
     geometry::PointCloud source, target;
@@ -68,16 +67,6 @@ LoadTensorPointCloudFromFile(const std::string& source_pointcloud_filename,
 
     source = source.To(device);
     target = target.To(device);
-
-    // Eliminates the case of impractical values (including negative).
-    if (voxel_downsample_factor > 0.001) {
-        source = source.VoxelDownSample(voxel_downsample_factor);
-        target = target.VoxelDownSample(voxel_downsample_factor);
-    } else {
-        utility::LogWarning(
-                "VoxelDownsample: Impractical voxel size [< 0.001], skiping "
-                "downsampling.");
-    }
 
     source.SetPointPositions(source.GetPointPositions().To(dtype));
     source.SetPointNormals(source.GetPointNormals().To(dtype));
@@ -139,8 +128,8 @@ static void BenchmarkRegistrationICP(benchmark::State& state,
     }
 
     std::tie(source, target) = LoadTensorPointCloudFromFile(
-            source_pointcloud_filename, target_pointcloud_filename,
-            voxel_downsampling_factor, dtype, device);
+            source_pointcloud_filename, target_pointcloud_filename, dtype,
+            device);
 
     RegistrationResult reg_result(init_trans);
 
@@ -149,14 +138,16 @@ static void BenchmarkRegistrationICP(benchmark::State& state,
             source, target, max_correspondence_distance, init_trans,
             *estimation,
             ICPConvergenceCriteria(relative_fitness, relative_rmse,
-                                   max_iterations));
+                                   max_iterations),
+            voxel_downsampling_factor);
 
     for (auto _ : state) {
         reg_result = RegistrationICP(
                 source, target, max_correspondence_distance, init_trans,
                 *estimation,
                 ICPConvergenceCriteria(relative_fitness, relative_rmse,
-                                       max_iterations));
+                                       max_iterations),
+                voxel_downsampling_factor);
         core::cuda::Synchronize(device);
     }
 }

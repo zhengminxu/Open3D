@@ -257,7 +257,7 @@ void pybind_registration_methods(py::module &m) {
           "init_source_to_target"_a =
                   core::Tensor::Eye(4, core::Float64, core::Device("CPU:0")),
           "estimation_method"_a = TransformationEstimationPointToPoint(),
-          "criteria"_a = ICPConvergenceCriteria());
+          "criteria"_a = ICPConvergenceCriteria(), "voxel_size"_a = -1);
     docstring::FunctionDocInject(m, "registration_icp",
                                  map_shared_argument_docstrings);
 
