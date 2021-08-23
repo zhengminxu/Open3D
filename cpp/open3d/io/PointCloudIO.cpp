@@ -143,6 +143,7 @@ bool WritePointCloud(const std::string &filename,
                       pointcloud.points_.size());
     return success;
 }
+
 bool WritePointCloud(const std::string &filename,
                      const geometry::PointCloud &pointcloud,
                      bool write_ascii /* = false*/,

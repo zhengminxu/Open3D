@@ -73,16 +73,16 @@ void WriteTensorPointCloud(benchmark::State& state,
                            const std::string& file_path) {
     t::geometry::PointCloud pcd;
     t::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
-    utility::LogInfo("Type: {}, points: {}",
-                     pcd.GetPointPositions().GetDtype().ToString(),
-                     pcd.GetPointPositions().GetLength());
-    //     t::geometry::PointCloud pcd_points(pcd.GetPointPositions());
 
-    t::io::WritePointCloud("t_pcd_0.ply", pcd);
+    t::io::WritePointCloud(
+            "t_pcd_0.pcd", pcd,
+            open3d::io::WritePointCloudOption(false, false, false, {}));
     int i = 0;
     for (auto _ : state) {
-        std::string filename_loop = "t_pcd_" + std::to_string(++i) + ".ply";
-        t::io::WritePointCloud(filename_loop, pcd);
+        std::string filename_loop = "t_pcd_" + std::to_string(++i) + ".pcd";
+        t::io::WritePointCloud(
+                filename_loop, pcd,
+                open3d::io::WritePointCloudOption(false, false, false, {}));
     }
 }
 
@@ -91,12 +91,15 @@ void WriteLegacyPointCloud(benchmark::State& state,
     open3d::geometry::PointCloud pcd;
     open3d::io::ReadPointCloud(file_path, pcd, {"auto", false, false, false});
 
-    //     open3d::geometry::PointCloud pcd_points(pcd.points_);
-    open3d::io::WritePointCloud("l_pcd_0.ply", pcd);
+    open3d::io::WritePointCloud(
+            "l_pcd_0.pcd", pcd,
+            open3d::io::WritePointCloudOption(false, false, false, {}));
     int i = 0;
     for (auto _ : state) {
-        std::string filename_loop = "l_pcd_" + std::to_string(++i) + ".ply";
-        open3d::io::WritePointCloud(filename_loop, pcd);
+        std::string filename_loop = "l_pcd_" + std::to_string(++i) + ".pcd";
+        open3d::io::WritePointCloud(
+                filename_loop, pcd,
+                open3d::io::WritePointCloudOption(false, false, false, {}));
     }
 }
 
@@ -117,6 +120,12 @@ BENCHMARK_CAPTURE(ReadLegacyPointCloud, PCD, path_pcd)
 
 // BENCHMARK_CAPTURE(WriteLegacyPointCloud, PLY, path_ply)
 //         ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(WriteTensorPointCloud, PCD, path_pcd)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(WriteLegacyPointCloud, PCD, path_pcd)
+        ->Unit(benchmark::kMillisecond);
 
 }  // namespace geometry
 }  // namespace t
