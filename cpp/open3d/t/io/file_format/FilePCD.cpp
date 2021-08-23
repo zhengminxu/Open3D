@@ -124,8 +124,6 @@ core::Dtype GetDtypeFromPCDHeaderField(char type, int size) {
 }
 
 bool CheckHeader(PCDHeader &header) {
-    utility::LogInfo("Checking Header");
-
     if (header.points <= 0 || header.pointsize <= 0) {
         utility::LogWarning("[CheckHeader] PCD has no data.");
         return false;
