@@ -963,8 +963,13 @@ int WriteElementDataToFileASCII<uint64_t>(const uint64_t &data, FILE *file) {
 }
 
 template <typename scalar_t>
-size_t WriteElementDataToFileBIN(const scalar_t &data, FILE *file) {
-    return fwrite(&data, sizeof(scalar_t), 1, file);
+inline void WriteElementDataToFileBuffer(const scalar_t &data,
+                                         std::vector<char> &buffer_t) {
+    const char *rhs_ptr = reinterpret_cast<const char *>(&data);
+    for (size_t byte = 0; byte < sizeof(scalar_t); byte++) {
+        char val = *(rhs_ptr + byte);
+        buffer_t.push_back(val);
+    }
 }
 
 bool WritePCDData(FILE *file,
@@ -1034,7 +1039,7 @@ bool WritePCDData(FILE *file,
         }
     } else if (header.datatype == PCD_DATA_BINARY) {
         std::vector<char> buffer_t;
-        buffer_t.reserve(header.elementnum * header.points);
+        buffer_t.reserve(header.pointsize * header.points);
 
         for (int64_t i = 0; i < num_points; ++i) {
             for (auto &it : attribute_ptrs) {
@@ -1044,12 +1049,8 @@ bool WritePCDData(FILE *file,
 
                     for (int idx_offset = it.group_size_ * i;
                          idx_offset < it.group_size_ * (i + 1); ++idx_offset) {
-                        const char *rhs_ptr = reinterpret_cast<const char *>(
-                                &data_ptr[idx_offset]);
-                        for (size_t byte = 0; byte < sizeof(scalar_t); byte++) {
-                            char val = *(rhs_ptr + byte);
-                            buffer_t.push_back(val);
-                        }
+                        WriteElementDataToFileBuffer(data_ptr[idx_offset],
+                                                     buffer_t);
                     }
                 });
             }
@@ -1066,15 +1067,17 @@ bool WritePCDData(FILE *file,
         // 50%-75% compressing buffer
         // 75%-100% writing compressed buffer
         reporter.SetTotal(int(report_total));
-        int strip_size = header.points;
-        std::uint32_t buffer_size =
-                (std::uint32_t)(header.elementnum * header.points);
-        std::unique_ptr<float[]> buffer(new float[buffer_size]);
-        std::unique_ptr<float[]> buffer_compressed(new float[buffer_size * 2]);
-        for (int64_t i = 0; i < num_points; ++i) {
-            utility::LogError("Unimplemented");
 
-            int idx = 0;
+        std::vector<char> buffer_t;
+        const std::uint32_t buffer_size_in_bytes =
+                header.pointsize * header.points;
+        buffer_t.reserve(buffer_size_in_bytes);
+
+        std::vector<char> buffer_compressed(2 * buffer_size_in_bytes);
+
+        // buffer_compressed.reserve(2 * buffer_size_in_bytes);
+
+        for (int64_t i = 0; i < num_points; ++i) {
             for (auto &it : attribute_ptrs) {
                 DISPATCH_DTYPE_TO_TEMPLATE(it.dtype_, [&]() {
                     const scalar_t *data_ptr =
@@ -1082,11 +1085,8 @@ bool WritePCDData(FILE *file,
 
                     for (int idx_offset = it.group_size_ * i;
                          idx_offset < it.group_size_ * (i + 1); ++idx_offset) {
-                        // TODO : This might not be correct to read. Find
-                        // alternative to dump scalar_t type in buffer instead
-                        // of type casting to float.
-                        buffer[idx * strip_size + i] =
-                                static_cast<float>(data_ptr[idx_offset]);
+                        WriteElementDataToFileBuffer(data_ptr[idx_offset],
+                                                     buffer_t);
                     }
                 });
             }
@@ -1095,22 +1095,56 @@ bool WritePCDData(FILE *file,
                 reporter.Update(i);
             }
         }
+/*
+        std::vector<char> buffer_t(header.pointsize * header.points);
+        // buffer_t.reserve(header.pointsize * header.points);
+        int strip_size = header.pointsize;
+        for (int64_t i = 0; i < num_points; ++i) {
+            int idx = 0;
+            for (auto &it : attribute_ptrs) {
+                DISPATCH_DTYPE_TO_TEMPLATE(it.dtype_, [&]() {
+                    const scalar_t *data_ptr =
+                            static_cast<const scalar_t *>(it.data_ptr_);
 
-        std::uint32_t buffer_size_in_bytes = buffer_size * sizeof(float);
-        std::uint32_t size_compressed =
-                lzf_compress(buffer.get(), buffer_size_in_bytes,
-                             buffer_compressed.get(), buffer_size_in_bytes * 2);
+                    for (int idx_offset = 0; idx_offset < it.group_size_;
+                         ++idx_offset) {
+                        const char *rhs_ptr = reinterpret_cast<const char *>(
+                                &data_ptr[i * it.group_size_ + idx_offset]);
+                        for (size_t byte = 0; byte < sizeof(scalar_t); byte++) {
+                            buffer_t[(idx * strip_size + i) + byte] =
+                                    *(rhs_ptr + byte);
+                            // buffer_t.push_back(val);
+                        }
+                        idx++;
+
+                        // WriteElementDataToFileBuffer(data_ptr[idx_offset],
+                        //                              buffer_t);
+                    }
+                });
+            }
+
+            if (i % 1000 == 0) {
+                reporter.Update(i);
+            }
+        }
+*/
+
+        std::uint32_t size_compressed = lzf_compress(
+                buffer_t.data(), buffer_size_in_bytes, buffer_compressed.data(),
+                buffer_size_in_bytes * 2);
         if (size_compressed == 0) {
-            utility::LogWarning("[WritePCDData] Failed to compress data.");
+            utility::LogInfo("[WritePCDData] Failed to compress data.");
             return false;
         }
-        utility::LogDebug(
+
+        utility::LogInfo(
                 "[WritePCDData] {:d} bytes data compressed into {:d} bytes.",
                 buffer_size_in_bytes, size_compressed);
+
         reporter.Update(int(report_total * 0.75));
         fwrite(&size_compressed, sizeof(size_compressed), 1, file);
         fwrite(&buffer_size_in_bytes, sizeof(buffer_size_in_bytes), 1, file);
-        fwrite(buffer_compressed.get(), 1, size_compressed, file);
+        fwrite(buffer_compressed.data(), 1, size_compressed, file);
     }
     reporter.Finish();
     return true;
