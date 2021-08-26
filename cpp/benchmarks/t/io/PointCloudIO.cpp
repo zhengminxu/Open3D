@@ -267,6 +267,84 @@ BENCHMARK_CAPTURE(IOReadTensorPointCloud,
                   "test_tpcd_bin_compressed.ply")
         ->Unit(benchmark::kMillisecond);
 
+BENCHMARK_CAPTURE(IOWriteLegacyPointCloud,
+                  PTS ASCII UNCOMPRESSED,
+                  input_path_pcd,
+                  "test_lpcd_ascii.pts",
+                  true,
+                  false)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOReadLegacyPointCloud,
+                  PTS ASCII UNCOMPRESSED,
+                  "test_lpcd_ascii.pts")
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOWriteTensorPointCloud,
+                  PTS ASCII UNCOMPRESSED,
+                  input_path_pcd,
+                  "test_tpcd_ascii.pts",
+                  true,
+                  false)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOReadTensorPointCloud,
+                  PTS ASCII UNCOMPRESSED,
+                  "test_tpcd_ascii.pts")
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOWriteLegacyPointCloud,
+                  PTS BINARY UNCOMPRESSED,
+                  input_path_pcd,
+                  "test_lpcd_bin.pts",
+                  false,
+                  false)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOReadLegacyPointCloud,
+                  PTS BINARY UNCOMPRESSED,
+                  "test_lpcd_bin.pts")
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOWriteTensorPointCloud,
+                  PTS BINARY UNCOMPRESSED,
+                  input_path_pcd,
+                  "test_tpcd_bin.pts",
+                  false,
+                  false)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOReadTensorPointCloud,
+                  PTS BINARY UNCOMPRESSED,
+                  "test_tpcd_bin.pts")
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOWriteLegacyPointCloud,
+                  PTS BINARY COMPRESSED,
+                  input_path_pcd,
+                  "test_lpcd_bin_compressed.pts",
+                  false,
+                  true)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOReadLegacyPointCloud,
+                  PTS BINARY COMPRESSED,
+                  "test_lpcd_bin_compressed.pts")
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOWriteTensorPointCloud,
+                  PTS BINARY COMPRESSED,
+                  input_path_pcd,
+                  "test_tpcd_bin_compressed.pts",
+                  false,
+                  true)
+        ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_CAPTURE(IOReadTensorPointCloud,
+                  PTS BINARY COMPRESSED,
+                  "test_tpcd_bin_compressed.pts")
+        ->Unit(benchmark::kMillisecond);
+
 }  // namespace geometry
 }  // namespace t
 }  // namespace open3d
