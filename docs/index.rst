@@ -32,16 +32,26 @@ Open3D: A Modern Library for 3D Data Processing
 
 .. toctree::
     :maxdepth: 2
-    :caption: Tutorial
+    :caption: Tutorial Legacy API
 
-    tutorial/geometry/index
-    tutorial/pipelines/index
-    tutorial/visualization/index
-    tutorial/core/index
-    tutorial/reconstruction_system/index
-    tutorial/sensor/index
+    tutorial/legacy_api/geometry/index
+    tutorial/legacy_api/pipelines/index
+    tutorial/legacy_api/visualization/index
+    tutorial/legacy_api/reconstruction_system/index
+    tutorial/legacy_api/sensor/index
     tutorial/reference
 
+.. toctree::
+    :maxdepth: 2
+    :caption: Tutorial Tensor API (New)
+
+    tutorial/tensor_api/geometry/index
+    tutorial/tensor_api/pipelines/index
+    tutorial/tensor_api/visualization/index
+    tutorial/tensor_api/core/index
+    tutorial/tensor_api/reconstruction_system/index
+    tutorial/tensor_api/sensor/index
+    tutorial/reference
 
 .. toctree::
     :maxdepth: 1
